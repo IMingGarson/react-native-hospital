@@ -43,9 +43,8 @@ export default function LoginScreen() {
         return;
       }
       try {
-        // for android emulator http://10.0.2.2:5000
         // https://stackoverflow.com/questions/70972106/how-to-configure-proxy-in-emulators-in-new-versions-of-android-studio
-        const apiUrl = `http://10.0.2.2:5000/api/${ role === "0" ? "user" : "patient"}/signin`
+        const apiUrl = `https://allgood.peiren.info/api/${ role === "0" ? "user" : "patient"}/signin`
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
@@ -54,7 +53,6 @@ export default function LoginScreen() {
           body: JSON.stringify({
             email,
             password,
-            role,
           }),
         });
   
@@ -73,11 +71,9 @@ export default function LoginScreen() {
               Alert.alert('登入成功');
               // 醫護人員登入後會前往病人列表
               if (resRole === 'M') {
-                // navigation.dispatch(StackActions.replace('nurse'));
                 router.replace('/nurse');
               } else {
                 // 病人登入後會前往評量頁面
-                // navigation.dispatch(StackActions.replace('survey'));
                 router.replace('/survey');
               }
             }

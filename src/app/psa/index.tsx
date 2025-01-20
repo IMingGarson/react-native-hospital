@@ -2,30 +2,57 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
-import { AsyncStorageGetItem } from '../utils';
-
-interface PSAData {
-  date: string;
-  psa: number;
-}
+import { PatientProgressionData, PSAData } from '../interfaces';
+import { AsyncStorageGetItem, isJsonString } from '../utils';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 
 export default function PSAList() {
+  const [patients, setPatients] = useState<PatientProgressionData[]>([]);
+  const [patientName, setPatientName] = useState<string>("");
+  const [patientId, setPickPatientID] = useState<number>(1);
+  const [pickedIndex, setPickedIndex] = useState<number>(0);
   const [psaData, setPsaData] = useState<PSAData[]>([]);
-  const [date, setDate] = useState<string>('');
   const [psa, setPsa] = useState<string>('');
-  const [searchStartDate, setSearchStartDate] = useState<string>('');
-  const [searchEndDate, setSearchEndDate] = useState<string>('');
+  const [searchStartDate, setSearchStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [searchEndDate, setSearchEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [addDate, setAddDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [currentRole, setCurrentRole] = useState<string>('');
   const [isSearchModalVisible, setSearchModalVisible] = useState<boolean>(false);
+  const [showStartDate, setShowStartDate] = useState<boolean>(false);
+  const [showEndDate, setShowEndDate] = useState<boolean>(false);
+  const [showAddDate, setShowAddDate] = useState<boolean>(false);
   const [isCreateModalVisible, setCreateModalVisible] = useState<boolean>(false);
-  const [patientId, setPatientID] = useState<string>('');
   const router = useRouter();
-
-  const validateDate = (date: string) => {
-    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-    return datePattern.test(date);
+  const searchStartDateonChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
+    if (typeof selectedDate !== 'undefined') {
+      setSearchStartDate(selectedDate.toISOString().split('T')[0]);
+    }
+    setShowStartDate(false);
   };
-
+  const searchEndDateonChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
+    if (searchStartDate && selectedDate && selectedDate < new Date(searchStartDate)) {
+      Alert.alert('錯誤', '結束日期不可早於開始日期');
+      setShowEndDate(false);
+      return;
+    }
+    if (typeof selectedDate !== 'undefined') {
+      setSearchEndDate(selectedDate.toISOString().split('T')[0]);
+    }
+    setShowEndDate(false);
+  }
+  const addDateonChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      if (selectedDate > new Date()) {
+        Alert.alert('錯誤', '不可選擇未來日期');
+        setShowAddDate(false);
+        return;
+      }
+      setAddDate(selectedDate?.toISOString().split('T')[0]);
+    }
+    setShowAddDate(false);
+  }
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -37,7 +64,7 @@ export default function PSAList() {
         }
         setCurrentRole(role as string);
         if (role === 'P') {
-          const response = await fetch('http://10.0.2.2:5000/api/patient/psa', {
+          const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -47,7 +74,19 @@ export default function PSAList() {
 
           const data = await response.json();
           if (response.ok) {
-            setPsaData(data.psa);
+            setPsaData(data.psa.sort((a: PSAData, b: PSAData) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0)));
+          }
+        } else {
+          const patientData = await AsyncStorageGetItem('patientData') as string;
+          if (typeof patientData === 'string' && isJsonString(patientData)) {
+            const pData = JSON.parse(patientData).map((d: PatientProgressionData) => {
+              return {
+                id: d.id,
+                name: d.name,
+              }
+            });
+            setPatients(pData);
+            setPickPatientID(pData[0].id);
           }
         }
       } catch (error) {
@@ -59,6 +98,7 @@ export default function PSAList() {
   }, []);
 
   const addPSAData = async () => {
+    const date = addDate;
     if (!date || !psa) {
       Alert.alert('錯誤', '請輸入日期跟數值');
       return;
@@ -67,19 +107,21 @@ export default function PSAList() {
       Alert.alert('錯誤', 'PSA 資料有誤'); 
       return;
     }
-    if (!validateDate(date)) {
-      Alert.alert('錯誤', '日期資料有誤');
+    if (currentRole === 'M' && pickedIndex >= patients.length) {
+      Alert.alert('錯誤', '病患資料有誤'); 
       return;
     }
     try {
+      const patientId = patients && currentRole === 'M' ? patients[pickedIndex].id : 0;
+      const body = currentRole === 'M' ? { date, psa: parseFloat(psa), pid: patientId } : { date, psa: parseFloat(psa) }
       const token = await AsyncStorageGetItem('jwt');
-      const response = await fetch('http://10.0.2.2:5000/api/patient/psa', {
+      const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ date, psa: parseFloat(psa) }),
+        body: JSON.stringify(body),
       });
 
       await response.json();
@@ -90,23 +132,36 @@ export default function PSAList() {
       Alert.alert('錯誤', '無法新增PSA記錄');
       console.error('無法新增PSA記錄:', error);
     }
-    const newPSAData: PSAData = { date, psa: parseFloat(psa) };
-    setPsaData((prevData) => [...prevData, newPSAData]);
-    setDate('');
+    const updatedData = [...psaData, { date, psa: parseFloat(psa) } as PSAData];
+    const mergedData: PSAData[] = Object.values(
+        updatedData.reduce((acc: { [key: string]: PSAData }, entry: PSAData) => {
+            if (!acc[entry.date]) {
+                acc[entry.date] = { date: entry.date, psa: entry.psa };
+            } else {
+                acc[entry.date].psa = entry.psa;
+            }
+            return acc;
+        }, {} as { [key: string]: PSAData })
+    ).sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
+    setPsaData(mergedData);
     setPsa('');
     setCreateModalVisible(false);
   };
 
   const searchPSAData = async () => {
-    const startDate = validateDate(searchStartDate) ? searchStartDate : '1901-01-01';
-    const endDate = validateDate(searchEndDate) ? searchEndDate : '2300-12-31';
-    if (currentRole === 'M' && !patientId) {
-      Alert.alert('錯誤', '病患 ID 有誤');
-      return;
+    const startDate = searchStartDate;
+    const endDate = searchEndDate;
+    if (pickedIndex < patients.length) {
+      setPickPatientID(patients[pickedIndex].id);
+      setPatientName(patients[pickedIndex].name);
     }
+
     try {
       const token = await AsyncStorageGetItem('jwt');
-      const response = await fetch(`http://10.0.2.2:5000/api/patient/psa_on_date?start_date=${startDate}&end_date=${endDate}&pid=${patientId}`, {
+      const url = currentRole === 'M' 
+        ? `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${startDate}&end_date=${endDate}&pid=${patientId}&role=${currentRole}`
+        : `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${startDate}&end_date=${endDate}&role=${currentRole}`;
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -116,32 +171,40 @@ export default function PSAList() {
 
       const data = await response.json();
       if (response.ok) {
-        setPsaData(data.psa);
+        setPsaData(data?.psa?.sort((a: PSAData, b: PSAData) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0)));
       }
     } catch (error) {
-      Alert.alert('錯誤', '無法新增PSA記錄');
-      console.error('無法新增PSA記錄:', error);
+      Alert.alert('錯誤', '無法搜尋PSA記錄');
+      console.error('無法搜尋PSA記錄:', error);
     }
     setSearchModalVisible(false);
   };
 
   const showPSAData = () => {
-    return psaData.filter((item) => {
+    return psaData?.filter((item) => {
       const date = new Date(item.date);
-      const startDate = validateDate(searchStartDate) ? new Date(searchStartDate) : new Date('1901-01-01');
-      const endDate = validateDate(searchEndDate) ? new Date(searchEndDate) : new Date('2300-12-31');
-      return date >= startDate && date <= endDate;
+      return date >= new Date(searchStartDate) && date <= new Date(searchEndDate);
     });
   };
 
+  const onPicked = (pickedIndex: number) => {
+    if (pickedIndex < patients.length) {
+      setPickedIndex(pickedIndex);
+      setPickPatientID(patients[pickedIndex].id);
+      setPatientName(patients[pickedIndex].name);
+    }
+  }
+  
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>PSA 資料</Text>
-        { currentRole === 'M' && patientId && (
-          <Text style={styles.title}>{`病人 ID: ${patientId}`}</Text>
-        )}
-        { showPSAData().map((item, index) => (
+        { currentRole === 'M' && patientName.length > 0 ? (
+          <Text style={styles.title}>
+            病人名稱: {`${patientName}`}
+          </Text>
+        ) : null}
+        { showPSAData()?.map((item, index) => (
           <View key={index} style={styles.listItem}>
             <Text style={styles.listItemText}>日期: {item.date}</Text>
             <Text style={[styles.listItemText, styles.listPSAText]}>PSA: {item.psa}</Text>
@@ -153,11 +216,12 @@ export default function PSAList() {
           <Button title="搜尋" onPress={() => setSearchModalVisible(true)} />
         </View>
         <View style={styles.modalBottons}>
-          <Button disabled={currentRole === 'M' }title="新增" onPress={() => setCreateModalVisible(true)} />
+          <Button title="新增" onPress={() => setCreateModalVisible(true)} />
         </View>
       </View>
       <BottomTabs role={currentRole} />
-      {/* Search Modal */}
+
+      {/* 搜尋 PSA 的 Modal */}
       <Modal
         visible={isSearchModalVisible}
         transparent={true}
@@ -168,25 +232,45 @@ export default function PSAList() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>搜尋資料</Text>
             { currentRole === 'M' && (
-              <TextInput
-                style={styles.input}
-                placeholder="病患ID"
-                value={patientId}
-                onChangeText={setPatientID}
-              />
+              <Picker
+                style={styles.picker}
+                selectedValue={patientId - 1}
+                onValueChange={(v) => onPicked(v)}
+              > 
+              { patients.map((d, i) => {
+                  return <Picker.Item style={styles.pickerItem} key={i} label={d.name} value={i} />
+                })
+              }
+              </Picker>
             )}
+            { showStartDate && (
+              <DateTimePicker
+                display='calendar'
+                value={new Date()}
+                mode="date"
+                onChange={searchStartDateonChange}
+              />
+            )}   
             <TextInput
+              readOnly
               style={styles.input}
-              placeholder="起始日期: (2024-01-01)"
               value={searchStartDate}
-              onChangeText={setSearchStartDate}
             />
+            <Button onPress={() => setShowStartDate(true)} title="開始日期" />
+            { showEndDate && (
+              <DateTimePicker
+                display='calendar'
+                value={new Date()}
+                mode="date"
+                onChange={searchEndDateonChange}
+              />
+            )}   
             <TextInput
+              readOnly
               style={styles.input}
-              placeholder="結束日期: (2024-12-31)"
               value={searchEndDate}
-              onChangeText={setSearchEndDate}
             />
+            <Button onPress={() => setShowEndDate(true)} title="結束日期" />
             <View style={styles.modalButtonContainer}>
               <Button title="搜尋" onPress={searchPSAData} />
               <Button title="取消" onPress={() => setSearchModalVisible(false)} />
@@ -195,7 +279,7 @@ export default function PSAList() {
         </View>
       </Modal>
 
-      {/* Create Modal */}
+      {/* 醫護人員新增 PSA 的 Modal */}
       <Modal
         visible={isCreateModalVisible}
         transparent={true}
@@ -205,12 +289,32 @@ export default function PSAList() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>新增資料</Text>
+            { currentRole === 'M' && (
+              <Picker
+                style={styles.picker}
+                selectedValue={patientId - 1}
+                onValueChange={(v) => onPicked(v)}
+              > 
+              { patients.map((d, i) => {
+                  return <Picker.Item style={styles.pickerItem} key={i} label={d.name} value={i} />
+                })
+              }
+              </Picker>
+            )}
+            { showAddDate && (
+              <DateTimePicker
+                display='calendar'
+                value={new Date()}
+                mode="date"
+                onChange={addDateonChange}
+              />
+            )}   
             <TextInput
+              readOnly
               style={styles.input}
-              placeholder="日期: (2025-01-01)"
-              value={date}
-              onChangeText={setDate}
+              value={addDate}
             />
+            <Button onPress={() => setShowAddDate(true)} title="選擇日期" />
             <TextInput
               style={styles.input}
               placeholder="PSA 數值"
@@ -265,7 +369,8 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginBottom: 10,
+    borderRadius: 15,
   },
   modalBottons: {
     width: '50%',
@@ -275,12 +380,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   input: {
+    fontSize: 18,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 5,
     padding: 10,
-    marginBottom: 10,
+    marginVertical: 5,
   },
   submitButton: {
     padding: 15,
@@ -308,7 +414,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    // marginBottom: 20,
     color: '#663300',
   },
   modalButtonContainer: {
@@ -316,4 +422,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 20,
   },
+  picker: {
+    backgroundColor: '#fff',
+    padding: 10,
+  },
+  pickerItem: {
+    fontSize: 18,
+    color: '#000'
+  }
 });

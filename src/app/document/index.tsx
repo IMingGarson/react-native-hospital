@@ -33,16 +33,16 @@ const isJsonString = (data: string | null) => {
 export default function PDFScreen() {
   const [currentPDF, setCurrentPDF] = useState<PDFInterface>({ id: '1', title: 'PDF 1', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 });
   const [pdfs] = useState<PDFInterface[]>([
-    { id: '1', title: '單元一', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '2', title: '單元二', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '3', title: '單元三', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '4', title: '單元四', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '5', title: '單元五', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '6', title: '單元六', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '7', title: '單元七', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '8', title: '單元八', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '9', title: '單元九', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '10', title: '單元十', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '1', title: '糖尿病的預防與管理指南', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '2', title: '認識高血壓：症狀與治療', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '3', title: '健康飲食的五大黃金法則', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '4', title: '心臟病的早期警訊與預防', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '5', title: '戒菸成功的10個實用技巧', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '6', title: '運動與健康：每天10分鐘就夠', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '7', title: '遠離壓力：正念練習入門', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '8', title: '失眠困擾？改善睡眠的好方法', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '9', title: '疫苗的重要性與接種須知', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '10', title: '認識骨質疏鬆與日常保養', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
   ]);
   const [progress, setProgress] = useState<ProgressState>({});
   const [startTime, setStartTime] = useState<number>(Date.now());
@@ -66,7 +66,7 @@ export default function PDFScreen() {
     }
     if (role === 'P') {
       try {
-        const response = await fetch('http://10.0.2.2:5000/api/patient/get', {
+        const response = await fetch('https://allgood.peiren.info/api/patient/get', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -108,6 +108,15 @@ export default function PDFScreen() {
       } finally {
         setLoading(false);
       }
+    } else {
+      // default data
+      const currentProgress: ProgressState = {};
+      pdfs.forEach((document: PDFInterface) => {
+        currentProgress[document.id] = { ...document };
+      });
+      setProgress(currentProgress);
+      setCurrentPDF(pdfs[0]);
+      setLoading(false);
     }
   }
 
@@ -121,7 +130,7 @@ export default function PDFScreen() {
       ...prev,
       [currentPDF.id]: {
         ...currentPDF,
-        duration: accumulatedTime + progress[currentPDF.id].duration
+        duration: accumulatedTime + progress[currentPDF.id].duration,
       }
     }));
     setCurrentPDF(progress[pdfId]);
@@ -157,17 +166,17 @@ export default function PDFScreen() {
             id: documentId,
             title: progress[documentId].title,
             uri: progress[documentId].uri,
-            duration: accumulatedTime + (progress[documentId]?.duration || 0)
+            duration: accumulatedTime + progress[documentId].duration
           }
         }
         return {
           id: documentId,
           title: progress[documentId].title,
           uri: progress[documentId].uri,
-          duration: progress[documentId].duration,
+          duration: progress[documentId].duration
         }
       });
-      const response = await fetch('http://10.0.2.2:5000/api/patient/update_data', {
+      const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -187,6 +196,7 @@ export default function PDFScreen() {
     }
     router.reload();
   };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -202,7 +212,7 @@ export default function PDFScreen() {
         style={styles.picker}
       >
         {pdfs.map((pdf) => (
-          <Picker.Item style={styles.pickerText} key={pdf.id} label={pdf.title} value={pdf.id} />
+          <Picker.Item style={styles.pickerText} key={pdf.id} label={`${pdf.id}. ${pdf.title}`} value={pdf.id} />
         ))}
       </Picker>
       { currentPDF && <PdfViewer path={currentPDF.uri} />}

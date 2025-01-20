@@ -52,7 +52,7 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      const response = await fetch('http://10.0.2.2:5000/api/patient', {
+      const response = await fetch('https://allgood.peiren.info/api/patient', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ export default function RegisterScreen() {
     <View style={styles.ScreenContainer}>
       <S.Content testID="register-screen-content">
         <S.View>
-            <S.Text>Email</S.Text>
+            <S.Text>帳號</S.Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={[

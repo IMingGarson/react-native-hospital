@@ -1,68 +1,21 @@
- 
- import React, { useEffect, useState } from 'react';
-import { Alert, GestureResponderEvent, View, Text, TextInput, Modal, TouchableOpacity, FlatList, StyleSheet, Animated } from "react-native";
-import { AsyncStorageGetItem } from '../utils';
+import React, { useEffect, useState } from 'react';
+import { Alert, GestureResponderEvent, View, Text, TouchableOpacity, FlatList, StyleSheet, Animated } from "react-native";
+import { AsyncStorageGetItem, AsyncStorageSetItem, isJsonString } from '../utils';
 import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
-
-interface Document {
-  title: string;
-  content: string;
-  duration: number;
-}
-
-interface Video {
-  id: string;
-  title: string;
-  uri: string;
-  watched: boolean;
-  timestamp: number;
-  duration: number;
-}
-
-interface Survey {
-  symptom: string;
-  hasSymptom: boolean;
-  severity: number;
-  customSymptom: string | null;
-}
-
-interface PatientProgressionData {
-  id: number,
-  name: string,
-  video: Video[],
-  survey: Survey[],
-  document: Document[]
-}
+import { Document, Video, PatientProgressionData } from '../interfaces';
 
 type AccordionProps = {
   item: PatientProgressionData,
+  type?: string,
   onNotify: (event: GestureResponderEvent) => void
 }
 
 export default function NurseScreen() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
-
-  function isJsonString(data: string | null) {
-    if (!data) {
-      return false;
-    }
-    try {
-        JSON.parse(data);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e: unknown) {
-      // console.error("isJsonString", e);
-      return false;
-    }
-    return true;
-  }
 
   const fetchPatientData = async () => {
     try {
@@ -79,7 +32,7 @@ export default function NurseScreen() {
         Alert.alert('錯誤', '無法取得資料');
         router.replace('/login');
       }
-      const response = await fetch('http://10.0.2.2:5000/api/patient', {
+      const response = await fetch('https://allgood.peiren.info/api/patient', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -88,15 +41,19 @@ export default function NurseScreen() {
       });
       const data = await response.json();
       if (response.ok) {
-        const patients = data.patients.map((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; }) => {
+        const patients = data.patients.map((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string, survey_data: string }[] }) => {
           return {
             id: d.id,
             name: d.name,
             document: isJsonString(d.document_progression_data) ? JSON.parse(d.document_progression_data) : [],
             video: isJsonString(d.video_progression_data) ? JSON.parse(d.video_progression_data) : [],
             survey: isJsonString(d.survey_data) ? JSON.parse(d.survey_data) : [],
+            records: d.symptom_records.map((s: { date: string, survey_data: string }) => {
+             return { date: s.date, data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []}
+            })
           }
         });
+        await AsyncStorageSetItem('patientData', JSON.stringify(patients));
         setPatientData(patients);
       } else {
         Alert.alert('失敗', data.message);
@@ -114,54 +71,6 @@ export default function NurseScreen() {
     fetchPatientData();
   }, []);
 
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-    let generatedPassword = '';
-    for (let i = 0; i < 6; i++) {
-      generatedPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setPassword(generatedPassword);
-  };
-
-  const handleSubmit = async () => {
-    if (!email && !name) {
-      Alert.alert('錯誤', '必須提供 Email 或名稱');
-      return;
-    }
-    if (!password) {
-      Alert.alert('錯誤', '請輸入密碼');
-      return;
-    }
-    try {
-      const response = await fetch('http://10.0.2.2:5000/api/patient', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        Alert.alert('成功', '資料建立完成');
-      } else {
-        Alert.alert('失敗', data.message);
-      }
-    } catch (error) {
-      Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
-      console.error(error);
-    } finally {
-      setModalVisible(false);
-      setEmail('');
-      setName('');
-      setPassword('');
-    }
-  };
-
   const ListItemAccordion = ({ item, onNotify }: AccordionProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -173,19 +82,6 @@ export default function NurseScreen() {
         }
     };
 
-    const severity = (text: string) => {
-      switch (text) {
-        case '0':
-          return '無';
-        case '1':
-          return '小'
-        case '2':
-          return '中'
-        default:
-          return '大';
-      }
-    }
-
     const timeStamp = (time: number) => {
       const minutes = ~~(time / 60);
       const seconds = ~~(time % 60);
@@ -196,19 +92,24 @@ export default function NurseScreen() {
       }
       return `${minuteString} 分 ${secondString} 秒`;
     }
-      
+
     return (
-        <View style={styles.item}>
-          <TouchableOpacity activeOpacity={1} onPress={toggleExpand} style={styles.header}>
+        <View style={styles.item} >
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={toggleExpand}
+            style={styles.header}
+          >
               <Text style={styles.name}>{`ID: ${item.id}`}</Text>
               <Text style={styles.name}>{`姓名: ${item.name}`}</Text>
           </TouchableOpacity>
           <Animated.View
-              style={[styles.content, {'display': isExpanded ? 'flex' : 'none'}]}
-              pointerEvents='auto'
+            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); }} 
+            style={[styles.content, {'display': isExpanded ? 'flex' : 'none'}]}
+            pointerEvents='auto'
           >
             <View style={styles.hiddenContent}>
-              <Text style={styles.progressTitle}>🎥 影片進度：</Text>
+              <Text style={styles.progressTitle}>🎥 影片進度</Text>
               { item.video.map((v: Video, idx: number) => {
                   return (
                     <View key={idx.toString()}>
@@ -224,7 +125,7 @@ export default function NurseScreen() {
                     </View>
                   )
               })}
-              <Text style={styles.progressTitle}>📄 文件進度：</Text>
+              <Text style={styles.progressTitle}>📄 文件進度</Text>
               { item.document.map((d: Document, idx: number) => {
                 return (
                   <View key={idx} >
@@ -240,65 +141,17 @@ export default function NurseScreen() {
                   </View>
                 )
               })}
-              <Text style={styles.progressTitle}>📋 病人狀況：</Text>
-              { item.survey.map((s: Survey, idx: number) => {
-                if (s.hasSymptom) {
-                  if (s.symptom === '其他' && s.customSymptom) {
-                    return (
-                      <View key={idx} style={styles.progress}>
-                        <View style={styles.tagContainer}>
-                          <Text style={styles.symptomText}>{`${idx + 1}. ${s.customSymptom}`}</Text>
-                          <View style={[styles.tag, styles.warning]}>
-                            <Text style={styles.tagText}>有症狀</Text>
-                          </View>
-                          <Text style={styles.severityText}>嚴重程度：{severity(s.severity.toString())}</Text>
-                        </View>
-                      </View>
-                    )
-                  }
-                  return (
-                    <View key={idx} style={styles.progress}>
-                      <View style={styles.tagContainer}>
-                        <Text style={styles.symptomText}>{`${idx + 1}. ${s.symptom}`}</Text>
-                        <View style={[styles.tag, styles.warning]}>
-                          <Text style={styles.tagText}>有症狀</Text>
-                        </View>
-                        <Text style={styles.severityText}>嚴重程度：{severity(s.severity.toString())}</Text>
-                      </View>
-                    </View>
-                  )
-                } else {
-                  if (s.symptom === '其他' && s.customSymptom) {
-                    return (
-                      <View key={idx} style={styles.progress}>
-                        <View style={styles.tagContainer}>
-                          <Text style={styles.symptomText}>{`${idx + 1}. ${s.customSymptom}`}</Text>
-                          <View style={[styles.tag, styles.warning]}>
-                            <Text style={styles.tagText}>有症狀</Text>
-                          </View>
-                          <Text style={styles.severityText}>嚴重程度：{severity(s.severity.toString())}</Text>
-                        </View>
-                      </View>
-                    )
-                  }
-                  return (
-                    <View key={idx} style={styles.progress}>
-                      <View style={styles.tagContainer}>
-                        <Text style={styles.symptomText}>{`${idx + 1}. ${s.symptom}`}</Text>
-                        <View style={[styles.tag, styles.normal]}>
-                          <Text style={styles.tagText}>無症狀</Text>
-                        </View>
-                        <Text style={styles.severityText}>{''}</Text>
-                      </View>
-                    </View>
-                  )
-                }
-              })}
+              <Text style={styles.progressTitle}>
+                📋 病人狀況 {'  '}
+                <Text style={styles.more} onPress={() => { router.push({ pathname: `/records/${item.id}` }); }}>
+                  查看資料
+                </Text>
+              </Text>
               <TouchableOpacity
                 style={styles.notifyButton}
                 onPress={onNotify}
               >
-                  <Text style={styles.notifyText}>通知病人觀看影片或文件</Text>
+                <Text style={styles.notifyText}>通知病人觀看影片或文件</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -320,64 +173,6 @@ export default function NurseScreen() {
   }
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={styles.floatingButtonText}>{'+'}</Text>
-      </TouchableOpacity>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>新增資料</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="名稱"
-              value={name}
-              onChangeText={setName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="密碼"
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity
-              style={styles.generateButton}
-              onPress={generatePassword}
-            >
-              <Text style={styles.generateButtonText}>自動產生密碼</Text>
-            </TouchableOpacity>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.buttonText}>送出</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>取消</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
       <FlatList
         style={{ paddingVertical: 12, paddingHorizontal: 16 }}
         data={patientData}
@@ -455,12 +250,17 @@ const styles = StyleSheet.create({
       fontFamily: 'System',
       marginVertical: 10,
     },
+    more: {
+      fontSize: 20,
+      color: '#000',
+      fontWeight: 'normal',
+      textAlign: 'right',
+    },
     progress: {
       fontSize: 18,
       color: '#663300',
       fontFamily: 'System',
       marginVertical: 8,
-      // marginBottom: 18,
     },
     notifyButton: {
       padding: 12,

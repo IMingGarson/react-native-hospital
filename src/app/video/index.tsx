@@ -11,27 +11,15 @@ import {
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEventListener  } from 'expo';
-import { AsyncStorageGetItem } from '../utils';
+import { AsyncStorageGetItem, isJsonString } from '../utils';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
-
-interface VideoInterface {
-  id: string;
-  title: string;
-  uri: string;
-  watched: boolean;
-  timestamp: number;
-  duration: number;
-}
-
-interface ProgressState {
-  [key: string]: VideoInterface;
-}
+import { VideoInterface, ProgressState } from '../interfaces';
 
 export default function VideoScreen() {
   const [currentVideo, setCurrentVideo] = useState<VideoInterface>({
     id: '1', 
-    title: '影片 1',
+    title: '正確洗手方法，你做對了嗎？',
     uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4',
     timestamp: 0,
     watched: false,
@@ -44,7 +32,7 @@ export default function VideoScreen() {
   const [videos] = useState<VideoInterface[]>([
     {
       id: '1', 
-      title: '影片 1',
+      title: '正確洗手方法，你做對了嗎？',
       uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4',
       timestamp: 0,
       watched: false,
@@ -52,7 +40,7 @@ export default function VideoScreen() {
     },
     {
       id: '2', 
-      title: '影片 2',
+      title: '遠離三高：健康飲食祕訣',
       uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
       timestamp: 0,
       watched: false,
@@ -60,7 +48,7 @@ export default function VideoScreen() {
     },
     {
       id: '3', 
-      title: '影片 3',
+      title: '如何輕鬆養成規律運動習慣？',
       uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       timestamp: 0,
       watched: false,
@@ -68,19 +56,6 @@ export default function VideoScreen() {
     }
   ]);
   const [currentRole, setCurrentRole] = useState<string>("");
-
-  const isJsonString = (data: string | null) => {
-    if (!data) {
-      return false;
-    }
-    try {
-        JSON.parse(data);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e: unknown) {
-      return false;
-    }
-    return true;
-  }
 
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt');
@@ -98,7 +73,7 @@ export default function VideoScreen() {
     }
     if (role === 'P') {
       try {
-        const response = await fetch('http://10.0.2.2:5000/api/patient/get', {
+        const response = await fetch('https://allgood.peiren.info/api/patient/get', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -173,8 +148,8 @@ export default function VideoScreen() {
         }
       });
       setStartTime(Date.now());
-      // http://10.0.2.2:5000
-      const response = await fetch('http://10.0.2.2:5000/api/patient/update_data', {
+      // https://allgood.peiren.info
+      const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

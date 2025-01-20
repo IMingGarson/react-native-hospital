@@ -32,6 +32,9 @@ export const AsyncStorageGetItem = async (key: string) => {
         if (!store) {
             return null;
         }
+        if (!isJsonString(store)) {
+            return null;
+        }
         const parsedData: Store = JSON.parse(store);
         if (new Date(parsedData.ttl) < (new Date())) {
             return null;
@@ -42,6 +45,20 @@ export const AsyncStorageGetItem = async (key: string) => {
         return null;
     }
 }
+
+export const isJsonString = (data: string | null) => {
+    if (!data) {
+        return false;
+    }
+    try {
+        JSON.parse(data);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e: unknown) {
+        return false;
+    }
+    return true;
+}
+
 
 const getExpireDatetime = (seconds: number) => {
     const now = new Date();

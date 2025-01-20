@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Expo Router Typescript",
-    "slug": "expo-router-typescript",
+    "slug": "hospital-allgood",
     "scheme": "app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,14 +19,16 @@
       "assets/*"
     ],
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.peiren.allgood"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/app-icon.png",
         "backgroundColor": "#222"
       },
-      "package": "com.haytherecharlie.exporoutertypescript"
+      "package": "com.haytherecharlie.exporoutertypescript",
+      "orientation": "default"
     },
     "web": {
       "favicon": "./src/assets/images/app-icon.png",
@@ -47,7 +49,11 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "861dff78-8223-47e5-b92c-45d4f6ef4bdf"
       }
-    }
+    },
+    "owner": "nickfury95"
   }
 }

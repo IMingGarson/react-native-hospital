@@ -6,6 +6,7 @@ import VideoScreen from "./video";
 import SurveyScreen from "./survey";
 import DocumentScreen from "./document";
 import PSAListScreen from "./psa";
+import SurveyRecordScreen from "./records/[id]";
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -23,6 +24,7 @@ export default function App() {
             <Stack.Screen name="document" component={DocumentScreen} />
             <Stack.Screen name="survey" component={SurveyScreen}/>
             <Stack.Screen name="psa" component={PSAListScreen}/>
+            <Stack.Screen name="records/:id" component={SurveyRecordScreen} />
           </Stack.Navigator>
       </NavigationContainer>
     </NavigationIndependentTree>

@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons, Foundation, MaterialIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Foundation, MaterialIcons, AntDesign } from "@expo/vector-icons";
 import { useRouter, Link } from "expo-router";
 import { Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { AsyncStorageRemoveItem } from "../utils";
@@ -34,26 +34,26 @@ export default function BottomTabs({ role, customedStyle }: Props) {
         ) : (<View style={bottomsList.tabItem}>
             <Link href="/survey"><MaterialIcons name="question-answer" size={24} color="black" style={bottomsList.tabIcon} /></Link>
               <Link href="/survey">
-                <Text style={bottomsList.tabText}>自我評量</Text>
+                <Text style={bottomsList.tabText}>症狀</Text>
               </Link>
           </View>)
         }
         <View style={[bottomsList.tabItem]}>
         <Foundation name="play-video" style={bottomsList.tabIcon} />
           <Link href="/video">
-              <Text style={bottomsList.tabText}>衛教影片</Text>
+              <Text style={bottomsList.tabText}>影片</Text>
           </Link>
         </View>
         <View style={bottomsList.tabItem}>
-          <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon}/>
+          <AntDesign name="form" style={bottomsList.tabIcon} />
           <Link href="/psa">
-              <Text style={bottomsList.tabText}>PSA紀錄</Text>
+              <Text style={bottomsList.tabText}>PSA</Text>
           </Link>
         </View>
         <View style={bottomsList.tabItem}>
           <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon}/>
           <Link href="/document">
-              <Text style={bottomsList.tabText}>衛教文件</Text>
+              <Text style={bottomsList.tabText}>手冊</Text>
           </Link>
         </View>
         <View style={bottomsList.tabItem}>

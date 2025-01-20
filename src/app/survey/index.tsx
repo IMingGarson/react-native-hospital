@@ -7,18 +7,14 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  Button,
 } from 'react-native';
 import { appTheme } from 'src/config/theme'
-import { AsyncStorageGetItem } from '../utils';
+import { Survey } from '../interfaces';
+import { AsyncStorageGetItem, isJsonString } from '../utils';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
-
-interface Survey {
-  symptom: string;
-  hasSymptom: boolean;
-  severity: number;
-  customSymptom: string | null;
-}
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const symptoms = ["尿失禁", "頻尿", "腹瀉", "便祕", "疲憊", "情緒低落", "緊張", "缺乏活力", "熱潮紅", "其他"];
 
@@ -31,21 +27,10 @@ export default function SurveyScreen() {
           customSymptom: symptom === "其他" ? "" : null,
       }))
   );
+  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [showDate, setShowDate] = useState<boolean>(false);
   const [currentRole, setCurrentRole] = useState<string>("");
   const router = useRouter();
-  const isJsonString = (data: string | null) => {
-    if (!data) {
-      return false;
-    }
-    try {
-        JSON.parse(data);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e: unknown) {
-      // console.error("isJsonString", e);
-      return false;
-    }
-    return true;
-  }
 
   const fetchData = async () => {
     try {
@@ -62,7 +47,7 @@ export default function SurveyScreen() {
           Alert.alert('錯誤', '無法取得資料');
           router.replace('/login');
         }
-        const response = await fetch('http://10.0.2.2:5000/api/patient/get', {
+        const response = await fetch('https://allgood.peiren.info/api/patient/get', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -77,7 +62,7 @@ export default function SurveyScreen() {
           }
         }
     } catch (error) {
-        console.error('獲取評量記錄時發生錯誤:', error);
+        console.error('獲取問卷記錄時發生錯誤:', error);
     }
   }
   useEffect(() => { fetchData(); }, []);
@@ -115,8 +100,8 @@ export default function SurveyScreen() {
           Alert.alert('錯誤', '無法儲存進度');
           return;
         }
-        // http://10.0.2.2:5000
-        const response = await fetch('http://10.0.2.2:5000/api/patient/update_data', {
+        // https://allgood.peiren.info
+        const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -130,10 +115,28 @@ export default function SurveyScreen() {
         if (response.ok) {
           Alert.alert('成功', '儲存進度成功');
         }
+        await fetch('https://allgood.peiren.info/api/patient/symptom_survey', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            survey_data: JSON.stringify(answers),
+            date: date,
+          }),
+        });
     } catch (error) {
         Alert.alert('失敗', '儲存進度時發生錯誤');
         console.error('儲存進度時發生錯誤:', error);
     }
+  };
+
+  const onDateChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
+    if (typeof selectedDate !== 'undefined') {
+      setDate(selectedDate.toISOString().split('T')[0]);
+    }
+    setShowDate(false);
   };
 
   return (
@@ -198,9 +201,22 @@ export default function SurveyScreen() {
             )}
           </View>
         ))}
-
+        { showDate && (
+          <DateTimePicker
+            display='spinner'
+            value={new Date()}
+            mode="date"
+            onChange={onDateChange}
+          />
+        )}
+        <TextInput
+          readOnly
+          style={styles.input}
+          value={date}
+        />
+        <Button onPress={() => setShowDate(true)} title="選擇日期" />
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>儲存問卷</Text>
+          <Text style={styles.submitButtonText}>儲存</Text>
         </TouchableOpacity>
       </ScrollView>
       <BottomTabs role={currentRole} customedStyle={{"position": "absolute"}} />
@@ -276,17 +292,20 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   input: {
+    fontSize: 20,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 5,
     padding: 10,
+    marginBottom: 10,
   },
   submitButton: {
     padding: 15,
     backgroundColor: "#007BFF",
     borderRadius: 5,
     alignItems: "center",
+    marginTop: 20,
   },
   submitButtonText: {
     color: "#fff",
