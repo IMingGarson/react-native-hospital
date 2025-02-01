@@ -4,7 +4,6 @@ import { AsyncStorageGetItem, AsyncStorageSetItem, isJsonString } from '../utils
 import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
 import { Document, Video, PatientProgressionData } from '../interfaces';
-// import { usePushNotifications } from '../utils/usePushNotification';
 
 type AccordionProps = {
   item: PatientProgressionData,
@@ -15,12 +14,8 @@ export default function NurseScreen() {
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
-  // const { expoPushToken, notification } = usePushNotifications();
-  // const data = JSON.stringify(notification, undefined, 2);
 
   const fetchPatientData = async () => {
-    // console.log("Token:", expoPushToken?.data ?? "None");
-    // console.log("Data:", data);
     try {
       const token = await AsyncStorageGetItem('jwt');
       const role = await AsyncStorageGetItem('role');

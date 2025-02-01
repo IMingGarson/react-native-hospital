@@ -5,6 +5,7 @@ import { appTheme } from 'src/config/theme'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from "expo-router";
+import { usePushNotifications } from '../utils/usePushNotification';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ export default function RegisterScreen() {
   const [show, setShow] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const router = useRouter();
+  const { expoPushToken } = usePushNotifications();
 
   const onChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
     const currentDate = selectedDate;
@@ -62,7 +64,8 @@ export default function RegisterScreen() {
           password,
           name,
           birthday: date.toISOString().split('T')[0],
-          inviteCode
+          inviteCode,
+          pushToken: expoPushToken
         }),
       });
 
