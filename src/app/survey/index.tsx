@@ -227,9 +227,10 @@ export default function SurveyScreen() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: appTheme.background,
+    paddingTop: 45,
   },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingBottom: 80,
   },
   questionContainer: {

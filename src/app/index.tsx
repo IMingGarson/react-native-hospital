@@ -15,17 +15,17 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <NavigationIndependentTree>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="login" screenOptions={{ headerShown: true, headerTitle: "登入帳號" }}>
-            <Stack.Screen name="login" component={LoginScreen} />
-            <Stack.Screen name="register" component={RegisterScreen} />
-            <Stack.Screen name="nurse" component={NurseScreen} />
-            <Stack.Screen name="video" component={VideoScreen} />
-            <Stack.Screen name="document" component={DocumentScreen} />
-            <Stack.Screen name="survey" component={SurveyScreen}/>
-            <Stack.Screen name="psa" component={PSAListScreen}/>
-            <Stack.Screen name="records/:id" component={SurveyRecordScreen} />
-          </Stack.Navigator>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="login" screenOptions={{ headerShown: true, headerTitle: "登入帳號" }}>
+          <Stack.Screen name="login" component={LoginScreen} />
+          <Stack.Screen name="register" component={RegisterScreen} />
+          <Stack.Screen name="nurse" component={NurseScreen} />
+          <Stack.Screen name="video" component={VideoScreen} />
+          <Stack.Screen name="document" component={DocumentScreen} />
+          <Stack.Screen name="survey" component={SurveyScreen}/>
+          <Stack.Screen name="psa" component={PSAListScreen}/>
+          <Stack.Screen name="records/:id" component={SurveyRecordScreen} />
+        </Stack.Navigator>
       </NavigationContainer>
     </NavigationIndependentTree>
   )

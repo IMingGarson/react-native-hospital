@@ -136,7 +136,8 @@ const styles = StyleSheet.create({
     item: {
         backgroundColor: '#fff6e5',
         overflow: 'hidden',
-        paddingVertical: 20, 
+        paddingTop: 60,
+        paddingBottom: 20,
         paddingHorizontal: 16
     },
     button: {

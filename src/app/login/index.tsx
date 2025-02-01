@@ -1,7 +1,14 @@
 import styled from 'styled-components/native'
 import React, { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { StyleSheet, TextInput, View, TouchableOpacity, Alert, Text } from "react-native";
+import {
+  StyleSheet,
+  Alert,
+  View,
+  TextInput,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import { appTheme } from 'src/config/theme';
 import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils';
 import { Link } from 'expo-router';
@@ -93,16 +100,15 @@ export default function LoginScreen() {
       <View style={styles.ScreenContainer}>
         <S.Content testID="home-screen-content">
           <S.View>
-              <S.Text>帳號</S.Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={[
-                    styles.input
-                  ]}
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
+            <S.Text>帳號</S.Text>
+              <TextInput
+                style={[
+                  styles.input
+                ]}
+                value={email}
+                autoFocus={true}
+                onChangeText={setEmail}
+              />
               <S.Text>密碼</S.Text>
               <View style={styles.inputContainer}>
                 <TextInput
@@ -145,16 +151,15 @@ export default function LoginScreen() {
                   </View>
                 </View>
               </View>
-              <TouchableOpacity
-                onPress={handleSignIn}
-                style={[bottomsList.container]}
-              >
-                <View style={styles.button}>
-                  <S.Text>登入</S.Text>
-                </View>
-              </TouchableOpacity>
               <View style={bottomsList.container}>
-                <Link href="/register" style={styles.button}>
+                <TouchableOpacity
+                  onPress={handleSignIn}
+                >
+                  <View style={bottomsList.button}>
+                    <S.Text>登入</S.Text>
+                  </View>
+                </TouchableOpacity>
+                <Link href="/register" style={bottomsList.button}>
                   <S.Text>註冊</S.Text>
                 </Link>
               </View>
@@ -168,8 +173,19 @@ export default function LoginScreen() {
     container: {
       width: '100%',
       display: 'flex',
-      alignItems: 'center',
-    }
+      justifyContent: 'center',
+      flexDirection: 'row',
+    },
+    button: {
+      borderWidth: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderColor: 'gray',
+      color: '#000',
+      borderRadius: 5,
+      backgroundColor: '#fff',
+      marginHorizontal: 45,
+    },
   });
 
   const styles = StyleSheet.create({
@@ -186,16 +202,6 @@ export default function LoginScreen() {
     btn: {
       flexDirection: 'row',
       alignItems: 'center',
-    },
-    button: {
-      borderWidth: 1,
-      paddingTop: 10,
-      paddingBottom: 10,
-      paddingLeft: 20,
-      paddingRight: 20,
-      borderColor: 'black',
-      borderRadius: 5,
-      backgroundColor: 'transparent',
     },
     inputContainer: {
       flexDirection: 'row',

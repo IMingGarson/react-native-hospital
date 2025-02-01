@@ -28,7 +28,8 @@
         "backgroundColor": "#222"
       },
       "package": "com.haytherecharlie.exporoutertypescript",
-      "orientation": "default"
+      "orientation": "default",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./src/assets/images/app-icon.png",
@@ -52,8 +53,8 @@
       },
       "eas": {
         "projectId": "861dff78-8223-47e5-b92c-45d4f6ef4bdf"
-      }
-    },
-    "owner": "nickfury95"
+      },
+      "owner": "nickfury95"
+    }
   }
 }

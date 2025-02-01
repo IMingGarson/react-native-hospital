@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, GestureResponderEvent, View, Text, TouchableOpacity, FlatList, StyleSheet, Animated } from "react-native";
+import { Alert, View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView } from "react-native";
 import { AsyncStorageGetItem, AsyncStorageSetItem, isJsonString } from '../utils';
 import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
 import { Document, Video, PatientProgressionData } from '../interfaces';
+// import { usePushNotifications } from '../utils/usePushNotification';
 
 type AccordionProps = {
   item: PatientProgressionData,
-  type?: string,
-  onNotify: (event: GestureResponderEvent) => void
 }
 
 export default function NurseScreen() {
@@ -16,8 +15,12 @@ export default function NurseScreen() {
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
+  // const { expoPushToken, notification } = usePushNotifications();
+  // const data = JSON.stringify(notification, undefined, 2);
 
   const fetchPatientData = async () => {
+    // console.log("Token:", expoPushToken?.data ?? "None");
+    // console.log("Data:", data);
     try {
       const token = await AsyncStorageGetItem('jwt');
       const role = await AsyncStorageGetItem('role');
@@ -45,11 +48,14 @@ export default function NurseScreen() {
           return {
             id: d.id,
             name: d.name,
-            document: isJsonString(d.document_progression_data) ? JSON.parse(d.document_progression_data) : [],
+            document:isJsonString(d.document_progression_data) ? JSON.parse(d.document_progression_data) : [],
             video: isJsonString(d.video_progression_data) ? JSON.parse(d.video_progression_data) : [],
             survey: isJsonString(d.survey_data) ? JSON.parse(d.survey_data) : [],
-            records: d.symptom_records.map((s: { date: string, survey_data: string }) => {
-             return { date: s.date, data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []}
+            records: d.symptom_records?.map((s: { date: string, survey_data: string }) => {
+             return { 
+                date: s.date, 
+                data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []
+              }
             })
           }
         });
@@ -71,7 +77,35 @@ export default function NurseScreen() {
     fetchPatientData();
   }, []);
 
-  const ListItemAccordion = ({ item, onNotify }: AccordionProps) => {
+  const notifyPatient = async (pid: string, type: string, targetID: number = 0) => {
+    try {
+      const token = await AsyncStorageGetItem('jwt');
+      if (typeof token === 'string' && token.length) {
+        const response = await fetch('https://allgood.peiren.info/api/user/notify_patient', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ pid: pid, target_id: targetID, type: type }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          Alert.alert('通知成功', data.message);
+        } else {
+          Alert.alert('通知失敗', data.message);
+        }
+      } else {
+        Alert.alert('通知錯誤', '無法取得資料');
+        router.replace('/login');
+      }
+    } catch (error) {
+      Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
+      console.error(error);
+    }
+  };
+
+  const ListItemAccordion = ({ item }: AccordionProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     const toggleExpand = () => {
@@ -100,8 +134,8 @@ export default function NurseScreen() {
             onPress={toggleExpand}
             style={styles.header}
           >
-              <Text style={styles.name}>{`ID: ${item.id}`}</Text>
-              <Text style={styles.name}>{`姓名: ${item.name}`}</Text>
+            <Text style={styles.name}>{`ID: ${item.id}`}</Text>
+            <Text style={styles.name}>{`姓名: ${item.name}`}</Text>
           </TouchableOpacity>
           <Animated.View
             onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); }} 
@@ -109,16 +143,25 @@ export default function NurseScreen() {
             pointerEvents='auto'
           >
             <View style={styles.hiddenContent}>
+              <TouchableOpacity
+                style={styles.notifyButton}
+                onPress={() => notifyPatient(item.id.toString(), 'all')}
+              >
+                <Text style={styles.notifyText}>通知病人觀看影片或文件</Text>
+              </TouchableOpacity>
               <Text style={styles.progressTitle}>🎥 影片進度</Text>
               { item.video.map((v: Video, idx: number) => {
                   return (
                     <View key={idx.toString()}>
-                      <Text key={idx} style={styles.progress}>
-                        {`${idx + 1}. ${v.title}，累積觀看時間 ${timeStamp(v.duration)}`}
+                      <Text style={styles.progress}>
+                        {`${idx + 1}. ${v.title}`}
+                      </Text>
+                      <Text style={styles.progress}>
+                        {`累積閱讀時間 ${timeStamp(v.duration)}`}
                       </Text>
                       <TouchableOpacity
                         style={styles.notifyButton}
-                        onPress={onNotify}
+                        onPress={() => notifyPatient(item.id.toString(), 'video', idx + 1)}
                       >
                         <Text style={styles.notifyText}>通知病人觀看影片</Text>
                       </TouchableOpacity>
@@ -130,11 +173,14 @@ export default function NurseScreen() {
                 return (
                   <View key={idx} >
                     <Text style={styles.progress}>
-                      {`${idx + 1}. ${d.title}，累積閱讀時間 ${timeStamp(d.duration)}`}
+                      {`${idx + 1}. ${d.title}`}
+                    </Text>
+                    <Text style={styles.progress}>
+                      {`累積閱讀時間 ${timeStamp(d.duration)}`}
                     </Text>
                     <TouchableOpacity
                       style={styles.notifyButton}
-                      onPress={onNotify}
+                      onPress={() => notifyPatient(item.id.toString(), 'document', idx + 1)}
                     >
                       <Text style={styles.notifyText}>通知病人閱讀文件</Text>
                     </TouchableOpacity>
@@ -147,21 +193,10 @@ export default function NurseScreen() {
                   查看資料
                 </Text>
               </Text>
-              <TouchableOpacity
-                style={styles.notifyButton}
-                onPress={onNotify}
-              >
-                <Text style={styles.notifyText}>通知病人觀看影片或文件</Text>
-              </TouchableOpacity>
             </View>
           </Animated.View>
         </View>
     );
-  };
-  
-  // TODO: notify patient
-  const notifyPatient = async (patient: PatientProgressionData) => {
-    console.log(patient);
   };
 
   if (loading) {
@@ -173,18 +208,17 @@ export default function NurseScreen() {
   }
   return (
     <View style={styles.container}>
-      <FlatList
-        style={{ paddingVertical: 12, paddingHorizontal: 16 }}
-        data={patientData}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item }) => (
-          <ListItemAccordion
-            item={item}
-            onNotify={() => notifyPatient(item)}
-          />
-        )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
+      <ScrollView>
+        { patientData.length && patientData.map((p: PatientProgressionData, idx: number) => {
+          return (
+            <View key={idx.toString()}  style={{ paddingVertical: 5, paddingHorizontal: 8 }}>
+              <ListItemAccordion
+                item={p} 
+              />
+            </View>
+          )
+        })}
+      </ScrollView>
       <BottomTabs role={currentRole} />
     </View>
   );
@@ -194,7 +228,7 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#fff6e5',
-      paddingTop: 16,
+      paddingTop: 45,
     },
     floatingButton: {
       position: 'absolute',
@@ -251,10 +285,9 @@ const styles = StyleSheet.create({
       marginVertical: 10,
     },
     more: {
-      fontSize: 20,
-      color: '#000',
+      fontSize: 18,
       fontWeight: 'normal',
-      textAlign: 'right',
+      color: '#dc0530'
     },
     progress: {
       fontSize: 18,

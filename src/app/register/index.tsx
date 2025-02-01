@@ -1,5 +1,5 @@
 import styled from 'styled-components/native'
-import { StyleSheet, TextInput, View, Alert, TouchableOpacity, Button } from "react-native";
+import { StyleSheet, TextInput, View, Alert, TouchableOpacity, Button, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView } from "react-native";
 import React, { useState } from "react";
 import { appTheme } from 'src/config/theme'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -82,105 +82,101 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.ScreenContainer}>
-      <S.Content testID="register-screen-content">
-        <S.View>
-            <S.Text>帳號</S.Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[
-                  styles.input
-                ]}
-                value={email}
-                onChangeText={setEmail}
-              />
-            </View>
-            <S.Text>密碼</S.Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[
-                  styles.input
-                ]}
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <MaterialCommunityIcons
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.ScreenContainer}
+        enabled
+      >
+        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} overScrollMode='never'>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View>
+              <S.Text>帳號</S.Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input]}
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
+              <S.Text>密碼</S.Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input]}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <MaterialCommunityIcons
                   name={showPassword ? 'eye-off' : 'eye'}
                   size={20}
                   color="#000"
                   onPress={toggleShowPassword}
                   style={{ 'marginLeft': -30 }}
-              />
-            </View>
-            <S.Text>確認密碼</S.Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[
-                  styles.input
-                ]}
-                secureTextEntry={!showAgainPassword}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-              <MaterialCommunityIcons
-                  name={showAgainPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color="#000"
-                  onPress={toggleShowAgainPassword}
-                  style={{ 'marginLeft': -30 }}
-              />
-            </View>
-            <S.Text>姓名</S.Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[
-                  styles.input
-                ]}
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
-            <S.Text>生日</S.Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[
-                  styles.input
-                ]}
-                value={date?.toISOString().split('T')[0]}
-                readOnly
-              />
-              {show && (
-                <DateTimePicker
-                  display='spinner'
-                  value={date || new Date()}
-                  mode="date"
-                  onChange={onChange}
                 />
-              )}
-            </View>
-            <Button onPress={showMode} title="選擇日期" />
-            <S.Text>邀請碼</S.Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[
-                  styles.input
-                ]}
-                value={inviteCode}
-                onChangeText={setInviteCode}
-              />
-            </View>
-            <TouchableOpacity
-              onPress={handleSignup}
-              style={[bottomsList.container]}
-            >
-              <View style={styles.button}>
-                <S.Text>{loading ? '處理中' : '註冊'}</S.Text>
               </View>
-            </TouchableOpacity>
-        </S.View>
-      </S.Content>
-    </View>
+              <S.Text>確認密碼</S.Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input]}
+                  secureTextEntry={!showAgainPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                />
+                <MaterialCommunityIcons
+                    name={showAgainPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#000"
+                    onPress={toggleShowAgainPassword}
+                    style={{ 'marginLeft': -30 }}
+                />
+              </View>
+              <S.Text>姓名</S.Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input]}
+                  value={name}
+                  onChangeText={setName}
+                />
+              </View>
+              <S.Text>邀請碼</S.Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input]}
+                  value={inviteCode}
+                  onChangeText={setInviteCode}
+                />
+              </View>
+              <S.Text>生日</S.Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input]}
+                  value={date?.toISOString().split('T')[0]}
+                  readOnly
+                />
+                {show && (
+                  <DateTimePicker
+                    display='spinner'
+                    value={date || new Date()}
+                    mode="date"
+                    onChange={onChange}
+                  />
+                )}
+              </View>
+              <Button onPress={showMode} title="選擇日期" />
+          
+            </View>
+          </TouchableWithoutFeedback>
+          <TouchableOpacity
+            onPress={handleSignup}
+            style={bottomsList.container}
+            disabled={loading}
+          >
+            <View style={bottomsList.button}>
+              <S.Text>送出</S.Text>
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
   )
 }
 
@@ -189,16 +185,29 @@ const bottomsList = StyleSheet.create({
     width: '100%',
     display: 'flex',
     alignItems: 'center',
-  }
+    marginTop: 20,
+  },
+  button: {
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderColor: 'gray',
+    color: '#000',
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    marginHorizontal: 45,
+  },
 });
 
 const styles = StyleSheet.create({
     ScreenContainer: {
-      width: '100%',
-      flex: 1,
-      backgroundColor: appTheme.background,
-      justifyContent: 'center',      
+      flex: 1, 
+      height: '100%',
+      flexDirection: 'column', 
+      justifyContent: 'center',
+      backgroundColor: appTheme.background,   
       paddingHorizontal: 20,
+      paddingTop: 100,
     },
     button: {
       borderWidth: 1,
