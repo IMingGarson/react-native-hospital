@@ -154,13 +154,17 @@ export default function LoginScreen() {
               <View style={bottomsList.container}>
                 <TouchableOpacity
                   onPress={handleSignIn}
+                  style={{ zIndex: 999 }}
                 >
                   <View style={bottomsList.button}>
-                    <S.Text>登入</S.Text>
+                    <Text>登入</Text>
                   </View>
                 </TouchableOpacity>
+                <Link href="#" style={bottomsList.button} onPressIn={handleSignIn}>
+                  <Text>登入2</Text>
+                </Link>
                 <Link href="/register" style={bottomsList.button}>
-                  <S.Text>註冊</S.Text>
+                  <Text>註冊</Text>
                 </Link>
               </View>
           </S.View>

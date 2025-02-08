@@ -5,7 +5,7 @@ import { appTheme } from 'src/config/theme'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from "expo-router";
-import { usePushNotifications } from '../utils/usePushNotification';
+import { AsyncStorageGetItem } from '../utils';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -19,7 +19,6 @@ export default function RegisterScreen() {
   const [show, setShow] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const router = useRouter();
-  const { expoPushToken } = usePushNotifications();
 
   const onChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
     const currentDate = selectedDate;
@@ -52,6 +51,11 @@ export default function RegisterScreen() {
       Alert.alert('錯誤', '無效的邀請碼');
       return;
     }
+    const expoPushToken = await AsyncStorageGetItem('ExpoPushToken');
+    if (!expoPushToken) {
+      Alert.alert('錯誤', '無法取得Push Token');
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch('https://allgood.peiren.info/api/patient', {
@@ -65,7 +69,7 @@ export default function RegisterScreen() {
           name,
           birthday: date.toISOString().split('T')[0],
           inviteCode,
-          pushToken: expoPushToken
+          pushToken: expoPushToken ? expoPushToken : 'Invalid',
         }),
       });
 
