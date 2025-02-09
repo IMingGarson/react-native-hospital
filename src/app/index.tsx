@@ -1,7 +1,4 @@
- 
-/* eslint-disable @typescript-eslint/no-unused-vars */
- 
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import LoginScreen from './login';
 import RegisterScreen from "./register";
 import NurseScreen from "./nurse";
