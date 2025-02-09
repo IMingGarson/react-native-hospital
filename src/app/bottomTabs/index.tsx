@@ -26,34 +26,45 @@ export default function BottomTabs({ role, customedStyle }: Props) {
     <View style={[bottomsList.container, {...customedStyle}]}>
       { role === 'M' ? (
         <View style={bottomsList.tabItem}>
-          <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon}/>
-            <Link href="/nurse">
-                <Text style={bottomsList.tabText}>病人列表</Text>
+          <Link href="/nurse">
+            <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon}/>
+          </Link>
+          <Link href="/nurse">
+            <Text style={bottomsList.tabText}>病人列表</Text>
+          </Link>
+        </View>
+        ) : (
+          <View style={bottomsList.tabItem}>
+            <Link href="/survey">
+              <MaterialIcons name="question-answer" size={24} color="black" style={bottomsList.tabIcon} />
             </Link>
-        </View>
-        ) : (<View style={bottomsList.tabItem}>
-            <Link href="/survey"><MaterialIcons name="question-answer" size={24} color="black" style={bottomsList.tabIcon} /></Link>
-              <Link href="/survey">
-                <Text style={bottomsList.tabText}>症狀</Text>
-              </Link>
-          </View>)
-        }
+            <Link href="/survey">
+              <Text style={bottomsList.tabText}>症狀</Text>
+            </Link>
+          </View>
+        )}
         <View style={[bottomsList.tabItem]}>
-        <Foundation name="play-video" style={bottomsList.tabIcon} />
           <Link href="/video">
-              <Text style={bottomsList.tabText}>影片</Text>
+            <Foundation name="play-video" style={bottomsList.tabIcon} />
+          </Link>
+          <Link href="/video">
+            <Text style={bottomsList.tabText}>影片</Text>
           </Link>
         </View>
         <View style={bottomsList.tabItem}>
-          <AntDesign name="form" style={bottomsList.tabIcon} />
           <Link href="/psa">
-              <Text style={bottomsList.tabText}>PSA</Text>
+            <AntDesign name="form" style={bottomsList.tabIcon} />
+          </Link>
+          <Link href="/psa">
+            <Text style={bottomsList.tabText}>PSA</Text>
           </Link>
         </View>
         <View style={bottomsList.tabItem}>
-          <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon}/>
           <Link href="/document">
-              <Text style={bottomsList.tabText}>手冊</Text>
+            <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon}/>
+          </Link>
+          <Link href="/document">
+            <Text style={bottomsList.tabText}>手冊</Text>
           </Link>
         </View>
         <View style={bottomsList.tabItem}>

@@ -85,9 +85,7 @@ export default function LoginScreen() {
               }
             }
           }
-        } else if (response.status === 403) {
-          Alert.alert('登入錯誤', '請先驗證帳號後使用');
-        } else if (response.status === 401) {
+        } else {
           Alert.alert('登入錯誤', '帳號密碼有誤');
         }
       } catch (error) {
@@ -154,17 +152,14 @@ export default function LoginScreen() {
               <View style={bottomsList.container}>
                 <TouchableOpacity
                   onPress={handleSignIn}
-                  style={{ zIndex: 999 }}
+                  style={{ zIndex: 1 }}
                 >
                   <View style={bottomsList.button}>
-                    <Text>登入</Text>
+                    <Text style={{ fontSize: 20 }} >登入</Text>
                   </View>
                 </TouchableOpacity>
-                <Link href="#" style={bottomsList.button} onPressIn={handleSignIn}>
-                  <Text>登入2</Text>
-                </Link>
                 <Link href="/register" style={bottomsList.button}>
-                  <Text>註冊</Text>
+                  <Text style={{ fontSize: 20 }} >註冊</Text>
                 </Link>
               </View>
           </S.View>
@@ -179,6 +174,7 @@ export default function LoginScreen() {
       display: 'flex',
       justifyContent: 'center',
       flexDirection: 'row',
+      paddingTop: 20,
     },
     button: {
       borderWidth: 1,
@@ -211,7 +207,6 @@ export default function LoginScreen() {
       flexDirection: 'row',
       alignItems: 'center',
       borderColor: '#000',
-      paddingVertical: 10,
     },
     input: {
       width: '100%',

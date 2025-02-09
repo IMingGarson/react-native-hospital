@@ -225,7 +225,8 @@ export default function PDFScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff6e5',
+    backgroundColor: '#ffd59a',
+    paddingTop: 45,
   },
   loadingContainer: {
     flex: 1,

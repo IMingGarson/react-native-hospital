@@ -114,7 +114,7 @@ export default function SurveyRecordScreen() {
             { showDate && (
                 <DateTimePicker
                     display='calendar'
-                    value={new Date()}
+                    value={new Date(date)}
                     mode="date"
                     onChange={onChange}
                 />

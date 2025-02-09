@@ -246,7 +246,7 @@ export default function PSAList() {
             { showStartDate && (
               <DateTimePicker
                 display='calendar'
-                value={new Date()}
+                value={new Date(searchStartDate)}
                 mode="date"
                 onChange={searchStartDateonChange}
               />
@@ -260,7 +260,7 @@ export default function PSAList() {
             { showEndDate && (
               <DateTimePicker
                 display='calendar'
-                value={new Date()}
+                value={new Date(searchEndDate)}
                 mode="date"
                 onChange={searchEndDateonChange}
               />
@@ -336,12 +336,13 @@ export default function PSAList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff6e5',
+    backgroundColor: '#ffd59a',
     paddingTop: 45,
   },
   scrollContent: {
+    height: '100%',
     padding: 20,
-    paddingBottom: 80,
+    backgroundColor: '#fff6e5',
   },
   title: {
     fontSize: 22,
@@ -351,13 +352,13 @@ const styles = StyleSheet.create({
   },
   listItem: {
     padding: 16,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: '#d1a679',
+    borderRadius: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 5,
     marginBottom: 10,
   },
   listItemText: {
@@ -368,9 +369,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonContainer: {
+    backgroundColor: '#fff6e5',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    paddingBottom: 10,
     borderRadius: 15,
   },
   modalBottons: {
