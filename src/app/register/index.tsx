@@ -1,11 +1,12 @@
 import styled from 'styled-components/native'
-import { StyleSheet, TextInput, View, Alert, TouchableOpacity, Button, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView } from "react-native";
+import { Text, StyleSheet, TextInput, View, Alert, TouchableOpacity, Button, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView } from "react-native";
 import React, { useState } from "react";
 import { appTheme } from 'src/config/theme'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from "expo-router";
 import { AsyncStorageGetItem } from '../utils';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -89,6 +90,18 @@ export default function RegisterScreen() {
   };
 
   return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+          <TouchableOpacity 
+            style={{ zIndex: 1 }}
+            onPress={() => router.back()}
+          >
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="arrow-back-circle-sharp" style={[styles.prevBtn, { paddingTop: 2 }]} />
+              <Text style={{ fontSize: 15, paddingLeft: 5 }}>{"回上一頁"}</Text>
+            </View>
+          </TouchableOpacity>
+      </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.ScreenContainer}
@@ -162,7 +175,7 @@ export default function RegisterScreen() {
                 />
                 {show && (
                   <DateTimePicker
-                    display='spinner'
+                    display={Platform.OS === 'ios' ? 'default' : 'spinner'}
                     value={date || new Date()}
                     mode="date"
                     onChange={onChange}
@@ -184,6 +197,7 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+    </View>
   )
 }
 
@@ -213,8 +227,21 @@ const styles = StyleSheet.create({
       flexDirection: 'column', 
       justifyContent: 'center',
       backgroundColor: appTheme.background,   
+      paddingTop: 20,
+    },
+    container: {
+      backgroundColor: '#fff6e5',
+      height: '100%',
       paddingHorizontal: 20,
-      paddingTop: 100,
+    },
+    header: {
+      backgroundColor: '#fff6e5',
+      paddingTop: 45,
+    },
+    prevBtn: {
+      display: 'flex',
+      fontSize: 34,
+      color: '#303030',
     },
     button: {
       borderWidth: 1,

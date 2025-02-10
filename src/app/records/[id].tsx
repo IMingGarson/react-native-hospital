@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button } from "react-native";
+import { View, Text, StyleSheet, TextInput, Button, Platform, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { AsyncStorageGetItem, isJsonString } from '../utils';
 import { PatientProgressionData, SymptomRecord, Survey } from '../interfaces';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function SurveyRecordScreen() {
     const { id: PATH_ID } = useLocalSearchParams();
     const [selectedPatient, setSelectedPatient] = useState<PatientProgressionData>();
     const router = useRouter();
-    const [date, setDate] = useState<string>("");
+    const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [showDate, setShowDate] = useState<boolean>(false);
     const [name, setName] = useState<string>("");
     const onChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
@@ -109,46 +110,70 @@ export default function SurveyRecordScreen() {
     }
 
     return (
-        <View style={styles.item}>
-            <Text style={styles.name}>{`姓名: ${name}`}</Text>
-            { showDate && (
-                <DateTimePicker
-                    display='calendar'
-                    value={new Date(date)}
-                    mode="date"
-                    onChange={onChange}
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    style={{ zIndex: 1 }}
+                    onPress={() => router.back()}
+                >
+                    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="arrow-back-circle-sharp" style={[styles.prevBtn, { paddingTop: 2 }]} />
+                        <Text style={{ fontSize: 15, paddingLeft: 5 }}>{"回上一頁"}</Text>
+                    </View>
+                </TouchableOpacity>
+            </View>
+            <View style={styles.item}>
+                <Text style={styles.name}>{`姓名: ${name}`}</Text>
+                { showDate && (
+                    <DateTimePicker
+                        display={Platform.OS === 'ios' ? 'default' : 'calendar'}
+                        value={new Date(date)}
+                        mode="date"
+                        onChange={onChange}
+                    />
+                )}
+                <TextInput
+                    readOnly
+                    style={styles.input}
+                    value={date}
                 />
-            )}
-            <TextInput
-                readOnly
-                style={styles.input}
-                value={date}
-            />
-            <Button onPress={() => setShowDate(true)} color="#007BFF" title="選擇日期" />
-            <View style={{ height: "1%" }}></View>
-            <Button onPress={() => router.back()} color="#007BFF" title="回上一頁" />
-            {DisplayRecordByDate()}
+                <Button onPress={() => setShowDate(true)} color="#007BFF" title="選擇日期" />
+                <View style={{ height: "1%" }}></View>
+                {DisplayRecordByDate()}
+            </View>
         </View>
     )
 }
 
 const styles = StyleSheet.create({
+    container: {
+        backgroundColor: '#fff6e5',
+        height: '100%',
+        paddingHorizontal: 20,
+    },
+    header: {
+        backgroundColor: '#fff6e5',
+        paddingTop: 45,
+    },
+    prevBtn: {
+        display: 'flex',
+        fontSize: 34,
+        color: '#303030',
+    },
     item: {
+        height: '100%',
         backgroundColor: '#fff6e5',
         overflow: 'hidden',
-        paddingTop: 60,
-        paddingBottom: 20,
-        paddingHorizontal: 16
+        paddingTop: 10,
     },
     button: {
         width: '100%',
         fontSize: 18,
-        paddingVertical: 8,
         paddingHorizontal: 12,
         flex: 1,
     },
     name: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '500',
         color: '#005',
         fontFamily: 'System',
@@ -161,6 +186,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ddd',
         marginBottom: 15,
+        fontSize: 18,
     },
     progress: {
         fontSize: 18,

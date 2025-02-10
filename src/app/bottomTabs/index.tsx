@@ -68,7 +68,7 @@ export default function BottomTabs({ role, customedStyle }: Props) {
           </Link>
         </View>
         <View style={bottomsList.tabItem}>
-          <MaterialIcons name="logout" style={bottomsList.tabIcon}/>
+          <MaterialIcons onPress={handleSignOut} name="logout" style={bottomsList.tabIcon}/>
           <TouchableOpacity
             onPress={handleSignOut}
           >

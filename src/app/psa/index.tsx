@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Modal } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Modal, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
 import { PatientProgressionData, PSAData } from '../interfaces';
@@ -245,7 +245,7 @@ export default function PSAList() {
             )}
             { showStartDate && (
               <DateTimePicker
-                display='calendar'
+                display={Platform.OS === 'ios' ? 'default' : 'calendar'}
                 value={new Date(searchStartDate)}
                 mode="date"
                 onChange={searchStartDateonChange}
@@ -259,7 +259,7 @@ export default function PSAList() {
             <Button onPress={() => setShowStartDate(true)} title="開始日期" />
             { showEndDate && (
               <DateTimePicker
-                display='calendar'
+                display={Platform.OS === 'ios' ? 'default' : 'calendar'}
                 value={new Date(searchEndDate)}
                 mode="date"
                 onChange={searchEndDateonChange}
@@ -303,7 +303,7 @@ export default function PSAList() {
             )}
             { showAddDate && (
               <DateTimePicker
-                display='calendar'
+                display={Platform.OS === 'ios' ? 'default' : 'calendar'}
                 value={new Date()}
                 mode="date"
                 onChange={addDateonChange}
@@ -341,7 +341,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     height: '100%',
-    padding: 20,
+    paddingTop: 15,
+    paddingHorizontal: 20,
     backgroundColor: '#fff6e5',
   },
   title: {

@@ -129,7 +129,7 @@ export default function LoginScreen() {
                 <View style={radioStyle.container}>
                   <View style={radioStyle.radioGroup}>
                       <View style={radioStyle.radioButton}>
-                          <RadioButton
+                          <RadioButton.Android
                               value="0"
                               status={role === "0" ? 'checked' : 'unchecked'}
                               onPress={() => setRole("0")}
@@ -138,7 +138,7 @@ export default function LoginScreen() {
                           <Text style={radioStyle.radioLabel}>醫護人員</Text>
                       </View>
                       <View style={radioStyle.radioButton}>
-                          <RadioButton
+                          <RadioButton.Android
                               value="1"
                               status={role === "1" ? 'checked' : 'unchecked'}
                               onPress={() => setRole("1")}
