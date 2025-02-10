@@ -418,7 +418,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    // marginBottom: 20,
     color: '#663300',
   },
   modalButtonContainer: {
