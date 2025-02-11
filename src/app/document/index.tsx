@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Button, StyleSheet, Alert, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Picker } from '@react-native-picker/picker';
+// import { Picker } from '@react-native-picker/picker';
+import RNPickerSelect from 'react-native-picker-select';
 import { AsyncStorageGetItem } from '../utils';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
 
 interface PDFInterface {
   id: string;
-  title: string;
-  uri: string;
+  label: string;
+  value: string;
+  path?: string;
   duration: number;
 }
 
@@ -31,18 +33,23 @@ const isJsonString = (data: string | null) => {
 }
 
 export default function PDFScreen() {
-  const [currentPDF, setCurrentPDF] = useState<PDFInterface>({ id: '1', title: 'PDF 1', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 });
+  const [currentPDF, setCurrentPDF] = useState<PDFInterface>({ 
+    id: '1', 
+    label: '活動不漏尿', 
+    value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', 
+    duration: 0 
+  });
   const [pdfs] = useState<PDFInterface[]>([
-    { id: '1', title: '糖尿病的預防與管理指南', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '2', title: '認識高血壓：症狀與治療', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '3', title: '健康飲食的五大黃金法則', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '4', title: '心臟病的早期警訊與預防', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '5', title: '戒菸成功的10個實用技巧', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '6', title: '運動與健康：每天10分鐘就夠', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '7', title: '遠離壓力：正念練習入門', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '8', title: '失眠困擾？改善睡眠的好方法', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '9', title: '疫苗的重要性與接種須知', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '10', title: '認識骨質疏鬆與日常保養', uri: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '1', label: '活動不漏尿', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    { id: '2', label: '認識高血壓：症狀與治療', value: 'https://drive.google.com/file/d/1_E-Qx-6BeCHTRjQMeFk2g4LgzIrgt2EN/view?usp=sharing', duration: 0 },
+    // { id: '3', label: '健康飲食的五大黃金法則', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    // { id: '4', label: '心臟病的早期警訊與預防', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    // { id: '5', label: '戒菸成功的10個實用技巧', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    // { id: '6', label: '運動與健康：每天10分鐘就夠', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    // { id: '7', label: '遠離壓力：正念練習入門', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    // { id: '8', label: '失眠困擾？改善睡眠的好方法', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    // { id: '9', label: '疫苗的重要性與接種須知', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+    // { id: '10', label: '認識骨質疏鬆與日常保養', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
   ]);
   const [progress, setProgress] = useState<ProgressState>({});
   const [startTime, setStartTime] = useState<number>(Date.now());
@@ -124,7 +131,12 @@ export default function PDFScreen() {
     fetchProgress();
   }, []);
 
-  const selectPDF = (pdfId: string) => {
+  const selectPDF = (selectedValue: string) => {
+    const pdf = pdfs.find((p) => p.value === selectedValue);
+    if (!pdf || !pdf.id) {
+      Alert.alert('錯誤', '無法找到該 PDF');
+      return false;
+    }
     const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000);
     setProgress((prev) => ({
       ...prev,
@@ -133,23 +145,8 @@ export default function PDFScreen() {
         duration: accumulatedTime + progress[currentPDF.id].duration,
       }
     }));
-    setCurrentPDF(progress[pdfId]);
+    setCurrentPDF(progress[pdf.id]);
     setStartTime(Date.now());
-  };
-
-  const PdfViewer: React.FC<{ path: string }> = ({ path }) => {
-    return (
-      <View style={styles.webviewContainer}>
-        <WebView
-          source={{ uri: path }}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={false}
-          scalesPageToFit={true}
-          style={styles.webview}
-        />
-      </View>
-    );
   };
 
   const saveProgress = async () => {
@@ -164,15 +161,15 @@ export default function PDFScreen() {
           const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000);
           return {
             id: documentId,
-            title: progress[documentId].title,
-            uri: progress[documentId].uri,
+            label: progress[documentId].label,
+            value: progress[documentId].value,
             duration: accumulatedTime + progress[documentId].duration
           }
         }
         return {
           id: documentId,
-          title: progress[documentId].title,
-          uri: progress[documentId].uri,
+          label: progress[documentId].label,
+          value: progress[documentId].value,
           duration: progress[documentId].duration
         }
       });
@@ -206,7 +203,7 @@ export default function PDFScreen() {
   }
   return (
     <View style={styles.container}>
-      <Picker
+      {/* <Picker
         selectedValue={currentPDF.id}
         onValueChange={(itemValue) => selectPDF(itemValue)}
         style={styles.picker}
@@ -214,8 +211,31 @@ export default function PDFScreen() {
         {pdfs.map((pdf) => (
           <Picker.Item style={styles.pickerText} key={pdf.id} label={`${pdf.id}. ${pdf.title}`} value={pdf.id} />
         ))}
-      </Picker>
-      { currentPDF && <PdfViewer path={currentPDF.uri} />}
+      </Picker> */}
+      <RNPickerSelect
+        placeholder={{ label: "請選擇", value: "", color: "#000" }}
+        value={currentPDF.value}
+        onValueChange={(itemValue: string) => selectPDF(itemValue)}
+        items={pdfs}
+        style={StyleSheet.create({
+            inputIOSContainer: {
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+            },
+        })}
+      />
+      { currentPDF ? (
+        <View style={styles.webviewContainer}>
+          <WebView
+            source={{ uri: currentPDF.value }}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={false}
+            scalesPageToFit={true}
+            style={styles.webview}
+          />
+        </View>
+      ): null}
       { currentRole === 'P' ? <Button onPress={() => saveProgress()} title="儲存閱讀進度" /> : null }
       <BottomTabs role={currentRole} />
     </View>

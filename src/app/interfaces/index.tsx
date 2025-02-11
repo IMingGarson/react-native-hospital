@@ -1,5 +1,5 @@
 interface Document {
-  title: string;
+  label: string;
   content: string;
   duration: number;
 }

@@ -197,17 +197,22 @@ export default function PSAList() {
   
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.header}>
         <Text style={styles.title}>PSA 資料</Text>
         { currentRole === 'M' && patientName.length > 0 ? (
           <Text style={styles.title}>
             病人名稱: {`${patientName}`}
           </Text>
         ) : null}
+      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         { showPSAData()?.map((item, index) => (
           <View key={index} style={styles.listItem}>
-            <Text style={styles.listItemText}>日期: {item.date}</Text>
-            <Text style={[styles.listItemText, styles.listPSAText]}>PSA: {item.psa}</Text>
+            <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
+            <View style={styles.listTag}>
+              <Text style={[styles.listItemText, styles.listPSAText]}>PSA: </Text>
+              <Text style={[styles.listItemText, styles.listPSAText]}>{item.psa}</Text>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -336,20 +341,34 @@ export default function PSAList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffd59a',
+    backgroundColor: '#fff6e5',
+  },
+  header: {
     paddingTop: 45,
+    paddingHorizontal: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: '#d1a679',
   },
   scrollContent: {
-    height: '100%',
     paddingTop: 15,
     paddingHorizontal: 20,
-    backgroundColor: '#fff6e5',
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#663300',
     marginBottom: 20,
+  },
+  listTag: { 
+    display: 'flex', 
+    width: 100, 
+    flexDirection: 'row', 
+    backgroundColor: '#ff0', 
+    borderRadius: 5, 
+    borderColor: '#ffd', 
+    borderWidth: 1, 
+    paddingHorizontal: 10, 
+    paddingVertical: 5 
   },
   listItem: {
     padding: 16,
@@ -374,7 +393,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingBottom: 10,
-    borderRadius: 15,
   },
   modalBottons: {
     width: '50%',

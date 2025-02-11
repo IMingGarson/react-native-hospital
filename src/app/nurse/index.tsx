@@ -168,7 +168,7 @@ export default function NurseScreen() {
                 return (
                   <View key={idx} >
                     <Text style={styles.progress}>
-                      {`${idx + 1}. ${d.title}`}
+                      {`${idx + 1}. ${d.label}`}
                     </Text>
                     <Text style={styles.progress}>
                       {`累積閱讀時間 ${timeStamp(d.duration)}`}
