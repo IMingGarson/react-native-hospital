@@ -113,7 +113,7 @@ export default function SurveyScreen() {
         });
         await response.json();
         if (response.ok) {
-          Alert.alert('成功', '儲存進度成功');
+          Alert.alert('成功', '儲存症狀成功');
         }
         await fetch('https://allgood.peiren.info/api/patient/symptom_survey', {
           method: 'PATCH',
@@ -142,6 +142,20 @@ export default function SurveyScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        { showDate && (
+          <DateTimePicker
+            display='spinner'
+            value={new Date()}
+            mode="date"
+            onChange={onDateChange}
+          />
+        )}
+        <TextInput
+          readOnly
+          style={styles.input}
+          value={date}
+        />
+        <Button onPress={() => setShowDate(true)} title="選擇日期" />
         {answers.map((answer, index) => (
           <View key={index} style={styles.questionContainer}>
             <Text style={styles.questionText}>{answer.symptom}</Text>
@@ -201,20 +215,6 @@ export default function SurveyScreen() {
             )}
           </View>
         ))}
-        { showDate && (
-          <DateTimePicker
-            display='spinner'
-            value={new Date()}
-            mode="date"
-            onChange={onDateChange}
-          />
-        )}
-        <TextInput
-          readOnly
-          style={styles.input}
-          value={date}
-        />
-        <Button onPress={() => setShowDate(true)} title="選擇日期" />
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>儲存</Text>
         </TouchableOpacity>

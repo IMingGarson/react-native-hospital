@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Modal, Platform } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
 import { PatientProgressionData, PSAData } from '../interfaces';
@@ -7,16 +7,23 @@ import { AsyncStorageGetItem, isJsonString } from '../utils';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 
+const daysAgo = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - Math.abs(n));
+  return d;
+};
+
+
 export default function PSAList() {
   const [patients, setPatients] = useState<PatientProgressionData[]>([]);
   const [patientName, setPatientName] = useState<string>("");
   const [patientId, setPickPatientID] = useState<number>(1);
-  const [pickedIndex, setPickedIndex] = useState<number>(0);
+  const [pickedIndex] = useState<number>(0);
   const [psaData, setPsaData] = useState<PSAData[]>([]);
   const [psa, setPsa] = useState<string>('');
-  const [searchStartDate, setSearchStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [searchEndDate, setSearchEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [addDate, setAddDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [searchStartDate, setSearchStartDate] = useState<string>(daysAgo(7).toISOString().split('T')[0]);
+  const [searchEndDate, setSearchEndDate] = useState<string>(daysAgo(0).toISOString().split('T')[0]);
+  const [addDate, setAddDate] = useState<string>(daysAgo(0).toISOString().split('T')[0]);
   const [currentRole, setCurrentRole] = useState<string>('');
   const [isSearchModalVisible, setSearchModalVisible] = useState<boolean>(false);
   const [showStartDate, setShowStartDate] = useState<boolean>(false);
@@ -87,6 +94,7 @@ export default function PSAList() {
             });
             setPatients(pData);
             setPickPatientID(pData[0].id);
+            setPatientName(pData[0].name);
           }
         }
       } catch (error) {
@@ -149,18 +157,11 @@ export default function PSAList() {
   };
 
   const searchPSAData = async () => {
-    const startDate = searchStartDate;
-    const endDate = searchEndDate;
-    if (pickedIndex < patients.length) {
-      setPickPatientID(patients[pickedIndex].id);
-      setPatientName(patients[pickedIndex].name);
-    }
-
     try {
       const token = await AsyncStorageGetItem('jwt');
       const url = currentRole === 'M' 
-        ? `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${startDate}&end_date=${endDate}&pid=${patientId}&role=${currentRole}`
-        : `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${startDate}&end_date=${endDate}&role=${currentRole}`;
+        ? `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&pid=${patientId}&role=${currentRole}`
+        : `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&role=${currentRole}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -177,7 +178,6 @@ export default function PSAList() {
       Alert.alert('錯誤', '無法搜尋PSA記錄');
       console.error('無法搜尋PSA記錄:', error);
     }
-    setSearchModalVisible(false);
   };
 
   const showPSAData = () => {
@@ -189,7 +189,6 @@ export default function PSAList() {
 
   const onPicked = (pickedIndex: number) => {
     if (pickedIndex < patients.length) {
-      setPickedIndex(pickedIndex);
       setPickPatientID(patients[pickedIndex].id);
       setPatientName(patients[pickedIndex].name);
     }
@@ -198,35 +197,47 @@ export default function PSAList() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>PSA 資料</Text>
-        { currentRole === 'M' && patientName.length > 0 ? (
-          <Text style={styles.title}>
-            病人名稱: {`${patientName}`}
-          </Text>
-        ) : null}
-      </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        { showPSAData()?.map((item, index) => (
-          <View key={index} style={styles.listItem}>
-            <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
-            <View style={styles.listTag}>
-              <Text style={[styles.listItemText, styles.listPSAText]}>PSA: </Text>
-              <Text style={[styles.listItemText, styles.listPSAText]}>{item.psa}</Text>
-            </View>
+        { currentRole === 'M' ? (
+          <View style={{ display: 'flex' }}>
+            <Text style={styles.title}>
+              病人: {`${patientName}`}
+            </Text>
+            <Text style={styles.title}>日期: {searchStartDate} ~ {searchEndDate}</Text>
           </View>
-        ))}
-      </ScrollView>
-      <View style={styles.buttonContainer}>
-        <View style={styles.modalBottons}>
-          <Button title="搜尋" onPress={() => setSearchModalVisible(true)} />
-        </View>
-        <View style={styles.modalBottons}>
-          <Button title="新增" onPress={() => setCreateModalVisible(true)} />
-        </View>
+        ) : 
+          <View style={{ display: 'flex' }}>
+            <Text style={styles.title}>日期: {searchStartDate} ~ {searchEndDate}</Text>
+          </View>
+        }
       </View>
-      <BottomTabs role={currentRole} />
+      <View style={styles.contentContainer}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          { showPSAData() && showPSAData().length > 0 ? showPSAData().map((item, index) => (
+            <View key={index} style={styles.listItem}>
+              <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
+              <View style={styles.listTag}>
+                <Text style={[styles.listItemText, styles.listPSAText]}>PSA: </Text>
+                <Text style={[styles.listItemText, styles.listPSAText]}>{item.psa}</Text>
+              </View>
+            </View>
+          )) : 
+            <View>
+              <Text style={{ fontSize: 24, color: '#000', margin: 'auto' }}>無 PSA 資料</Text>
+            </View>
+          }
+        </ScrollView>
+        <View style={styles.buttonContainer}>
+          <View style={styles.modalBottons}>
+            <Button title="搜尋" onPress={() => setSearchModalVisible(true)} />
+          </View>
+          <View style={styles.modalBottons}>
+            <Button title="新增" onPress={() => setCreateModalVisible(true)} />
+          </View>
+        </View>
+        <BottomTabs role={currentRole} />
+      </View>
 
-      {/* 搜尋 PSA 的 Modal */}
+      {/* 搜尋病人 PSA 的 Modal */}
       <Modal
         visible={isSearchModalVisible}
         transparent={true}
@@ -237,16 +248,18 @@ export default function PSAList() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>搜尋資料</Text>
             { currentRole === 'M' && (
-              <Picker
-                style={styles.picker}
-                selectedValue={patientId - 1}
-                onValueChange={(v) => onPicked(v)}
-              > 
-              { patients.map((d, i) => {
-                  return <Picker.Item style={styles.pickerItem} key={i} label={d.name} value={i} />
-                })
-              }
-              </Picker>
+              <View>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={patientId - 1}
+                  onValueChange={(v) => onPicked(v)}
+                > 
+                { patients.map((d, i) => {
+                    return <Picker.Item style={styles.pickerItem} key={i} label={d.name} value={i} />
+                  })
+                }
+                </Picker>
+              </View>
             )}
             { showStartDate && (
               <DateTimePicker
@@ -255,13 +268,28 @@ export default function PSAList() {
                 mode="date"
                 onChange={searchStartDateonChange}
               />
-            )}   
-            <TextInput
-              readOnly
-              style={styles.input}
-              value={searchStartDate}
-            />
-            <Button onPress={() => setShowStartDate(true)} title="開始日期" />
+            )}
+            <View style={{ 
+                display: 'flex',
+                flexDirection: 'row', 
+                width: '100%', 
+                justifyContent: 'space-around',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ display: 'flex', fontSize: 18, color: '#000' }}>開始日期: </Text>
+              <TouchableOpacity 
+                onPress={(e) => {e.preventDefault(); setShowStartDate(true); }} 
+                style={{ zIndex: 1, width: '50%' }}
+              >
+                <TextInput
+                  readOnly
+                  style={styles.input}
+                  value={searchStartDate}
+                />
+              </TouchableOpacity>
+            </View>
+            
             { showEndDate && (
               <DateTimePicker
                 display={Platform.OS === 'ios' ? 'default' : 'calendar'}
@@ -269,15 +297,31 @@ export default function PSAList() {
                 mode="date"
                 onChange={searchEndDateonChange}
               />
-            )}   
-            <TextInput
-              readOnly
-              style={styles.input}
-              value={searchEndDate}
-            />
-            <Button onPress={() => setShowEndDate(true)} title="結束日期" />
+            )}
+            <View style={{ 
+              display: 'flex',
+              flexDirection: 'row', 
+              width: '100%', 
+              justifyContent: 'space-around', 
+              alignItems: 'center',
+            }}>
+              <Text style={{ display: 'flex', fontSize: 18, color: '#000' }}>結束日期: </Text>
+              <TouchableOpacity 
+                onPress={(e) => {e.preventDefault(); setShowEndDate(true); }} 
+                style={{ zIndex: 1, width: '50%' }}
+              >
+                <TextInput
+                  readOnly
+                  style={styles.input}
+                  value={searchEndDate}
+                />
+              </TouchableOpacity>
+            </View>
             <View style={styles.modalButtonContainer}>
-              <Button title="搜尋" onPress={searchPSAData} />
+              <Button title="搜尋" onPress={() => {
+                searchPSAData();
+                setSearchModalVisible(false);
+              }} />
               <Button title="取消" onPress={() => setSearchModalVisible(false)} />
             </View>
           </View>
@@ -297,7 +341,7 @@ export default function PSAList() {
             { currentRole === 'M' && (
               <Picker
                 style={styles.picker}
-                selectedValue={patientId - 1}
+                selectedValue={pickedIndex - 1}
                 onValueChange={(v) => onPicked(v)}
               > 
               { patients.map((d, i) => {
@@ -313,22 +357,45 @@ export default function PSAList() {
                 mode="date"
                 onChange={addDateonChange}
               />
-            )}   
-            <TextInput
-              readOnly
-              style={styles.input}
-              value={addDate}
-            />
-            <Button onPress={() => setShowAddDate(true)} title="選擇日期" />
-            <TextInput
-              style={styles.input}
-              placeholder="PSA 數值"
-              value={psa}
-              onChangeText={setPsa}
-              keyboardType="numeric"
-            />
+            )}
+            <View style={{ 
+              display: 'flex',
+              flexDirection: 'row', 
+              width: '100%', 
+              justifyContent: 'space-around', 
+              alignItems: 'center',
+            }}>
+              <Text style={{ display: 'flex', fontSize: 18, color: '#000' }}>選擇日期: </Text>
+              <TouchableOpacity 
+                onPress={(e) => {e.preventDefault(); setShowAddDate(true); }} 
+                style={{ zIndex: 1, width: '50%' }}
+              >
+                <TextInput
+                  readOnly
+                  style={styles.input}
+                  value={addDate}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ 
+              display: 'flex',
+              flexDirection: 'row', 
+              width: '100%', 
+              justifyContent: 'space-around', 
+              alignItems: 'center',
+            }}>
+              <Text style={{ display: 'flex', fontSize: 18, color: '#000' }}>輸入數值: </Text>
+              <TextInput
+                style={[styles.input, { width: '50%' }]}
+                placeholder="PSA 數值"
+                value={psa}
+                onChangeText={setPsa}
+                keyboardType="numeric"
+              />
+            </View>
             <View style={styles.modalButtonContainer}>
-              <Button title="新增" onPress={addPSAData} />
+              <Button title="新增" onPress={() => { addPSAData();  setCreateModalVisible(false) }} />
               <Button title="取消" onPress={() => setCreateModalVisible(false)} />
             </View>
           </View>
@@ -341,23 +408,34 @@ export default function PSAList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff6e5',
+    backgroundColor: '#fff',
   },
   header: {
+    width: '100%',
     paddingTop: 45,
-    paddingHorizontal: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#d1a679',
+    paddingHorizontal: 15,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingTop: 15,
+    borderTopWidth: 2,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    borderTopColor: '#d1a679',
+    borderRightWidth: 2,
+    borderRightColor: '#d1a679',
+    borderLeftWidth: 2,
+    borderLeftColor: '#d1a679',
+    backgroundColor: '#fff6e5',
   },
   scrollContent: {
-    paddingTop: 15,
+    paddingTop: 5,
     paddingHorizontal: 20,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 20,
     color: '#663300',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   listTag: { 
     display: 'flex', 
@@ -372,9 +450,9 @@ const styles = StyleSheet.create({
   },
   listItem: {
     padding: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: '#d1a679',
-    borderRadius: 5,
+    borderColor: '#d1a679',
+    borderWidth: 2,
+    borderRadius: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -405,10 +483,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 10,
+    borderColor: '#000',
+    borderRadius: 10,
+    paddingHorizontal: 5,
     marginVertical: 5,
+    display: 'flex',
   },
   submitButton: {
     padding: 15,
@@ -434,18 +513,20 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
+    paddingHorizontal: 20,
     fontWeight: 'bold',
     color: '#663300',
   },
   modalButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    paddingHorizontal: 15,
+    paddingTop: 10
   },
   picker: {
     backgroundColor: '#fff',
-    padding: 10,
+    borderWidth: 5,
   },
   pickerItem: {
     fontSize: 18,

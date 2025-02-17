@@ -16,7 +16,7 @@ export default function App() {
   return (
     <NavigationIndependentTree>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="login" screenOptions={{ headerShown: true, headerTitle: "登入帳號" }}>
+        <Stack.Navigator initialRouteName="login" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="login" component={LoginScreen} />
           <Stack.Screen name="register" component={RegisterScreen} />
           <Stack.Screen name="nurse" component={NurseScreen} />

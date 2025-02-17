@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons, Foundation, MaterialIcons, AntDesign } from "@expo/vector-icons";
 import { useRouter, Link } from "expo-router";
-import { Modal, Text, View, StyleSheet, TouchableOpacity, Alert, Button } from "react-native";
+import { Modal, Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { AsyncStorageRemoveItem } from "../utils";
 import { useState } from "react";
 interface Props {

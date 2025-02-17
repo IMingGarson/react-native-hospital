@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Button, StyleSheet, Alert, Text } from 'react-native';
+import { View, StyleSheet, Alert, Text, Modal, TouchableOpacity, AppState } from 'react-native';
 import { WebView } from 'react-native-webview';
-// import { Picker } from '@react-native-picker/picker';
 import RNPickerSelect from 'react-native-picker-select';
-import { AsyncStorageGetItem } from '../utils';
-import { useRouter } from 'expo-router';
-import BottomTabs from '../bottomTabs';
+import { AsyncStorageGetItem, AsyncStorageRemoveItem } from '../utils';
+import { Link, useRouter } from 'expo-router';
+import { MaterialCommunityIcons, MaterialIcons, Foundation, AntDesign } from '@expo/vector-icons';
 
 interface PDFInterface {
   id: string;
@@ -15,6 +14,9 @@ interface PDFInterface {
   duration: number;
 }
 
+interface Props {
+  role: string,
+}
 interface ProgressState {
   [key: string]: PDFInterface;
 }
@@ -129,10 +131,23 @@ export default function PDFScreen() {
 
   useEffect(() => {
     fetchProgress();
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState.match(/inactive|background/)) {
+        if (currentRole === 'P') {
+          saveProgress(true);
+        }
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const selectPDF = (selectedValue: string) => {
-    const pdf = pdfs.find((p) => p.value === selectedValue);
+    if (selectedValue === 'NONE') {
+      return false;
+    }
+    const pdf = pdfs.find((p) => p?.value === selectedValue);
     if (!pdf || !pdf.id) {
       Alert.alert('錯誤', '無法找到該 PDF');
       return false;
@@ -145,15 +160,18 @@ export default function PDFScreen() {
         duration: accumulatedTime + progress[currentPDF.id].duration,
       }
     }));
-    setCurrentPDF(progress[pdf.id]);
+    const key = parseInt(pdf.id) - 1;
+    setCurrentPDF(progress[key.toString()]);
     setStartTime(Date.now());
   };
 
-  const saveProgress = async () => {
+  const saveProgress = async (background: boolean = false) => {
     try {
       const token = await AsyncStorageGetItem('jwt');
       if (!token) {
-        Alert.alert('錯誤', '無法儲存進度');
+        if (!background) {
+          Alert.alert('錯誤', '無法儲存進度');
+        }
         return;
       }
       const data = Object.keys(progress).map(function(documentId: string) {
@@ -184,15 +202,108 @@ export default function PDFScreen() {
         }),
       });
       await response.json();
-      if (response.ok) {
+      if (response.ok && !background) {
         Alert.alert('成功', '儲存進度成功');
       }
     } catch (error) {
-      Alert.alert('失敗', '儲存進度時發生錯誤');
+      if (!background) {
+        Alert.alert('失敗', '儲存進度時發生錯誤');
+      }
       console.error('儲存進度時發生錯誤:', error);
     }
     router.reload();
   };
+
+  const BottomTabs = ({ role }: Props) => {
+    const router = useRouter();
+    const [showModal, setShowModal] = useState<boolean>(false);
+
+    const handleSignOut = async () => {
+      saveProgress(true);
+      await AsyncStorageRemoveItem('token');
+      await AsyncStorageRemoveItem('role');
+      setShowModal(false);
+      Alert.alert("登出成功");
+      router.replace('/login');
+      return;
+    }
+
+    return (
+      <View style={[bottomsList.container]}>
+        { role === 'M' ? (
+          <View style={bottomsList.tabItem}>
+            <Link href="/nurse">
+              <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon}/>
+            </Link>
+            <Link href="/nurse">
+              <Text style={bottomsList.tabText}>病人列表</Text>
+            </Link>
+          </View>
+          ) : (
+            <View style={bottomsList.tabItem}>
+              <Link href="/survey" onPress={() => { saveProgress(true); }}>
+                <MaterialIcons name="question-answer" size={24} color="black" style={bottomsList.tabIcon} />
+              </Link>
+              <Link href="/survey" onPress={() => { saveProgress(true); }}>
+                <Text style={bottomsList.tabText}>症狀</Text>
+              </Link>
+            </View>
+          )}
+          <View style={[bottomsList.tabItem]}>
+            <Link href="/video" onPress={() => { saveProgress(true); }}>
+              <Foundation name="play-video" style={bottomsList.tabIcon} />
+            </Link>
+            <Link href="/video" onPress={() => { saveProgress(true); }}>
+              <Text style={bottomsList.tabText}>影片</Text>
+            </Link>
+          </View>
+          <View style={bottomsList.tabItem}>
+            <Link href="/psa" onPress={() => { saveProgress(true); }}>
+              <AntDesign name="form" style={bottomsList.tabIcon} />
+            </Link>
+            <Link href="/psa" onPress={() => { saveProgress(true); }}>
+              <Text style={bottomsList.tabText}>PSA</Text>
+            </Link>
+          </View>
+          <View style={bottomsList.tabItem}>
+            <Link href="/document" onPress={() => { saveProgress(true); }}>
+              <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon}/>
+            </Link>
+            <Link href="/document" onPress={() => { saveProgress(true); }}>
+              <Text style={bottomsList.tabText}>手冊</Text>
+            </Link>
+          </View>
+          <View style={bottomsList.tabItem}>
+            <MaterialIcons onPress={() => { setShowModal(true); }} name="logout" style={bottomsList.tabIcon}/>
+            <TouchableOpacity
+              onPress={() => { setShowModal(true); }}
+            >
+              <Text style={bottomsList.tabText}>登出</Text>
+            </TouchableOpacity>
+          </View>
+          <Modal
+            visible={showModal}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowModal(false)}
+          >
+            <View style={modal.modalContainer}>
+              <View style={modal.modalContent}>
+                <Text style={modal.modalTitle}>確定登出？</Text>
+                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => handleSignOut()} style={modal.button}>
+                    <Text>確定</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowModal(false)} style={modal.button}>
+                    <Text>取消</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+      </View>
+    )
+  }
 
   if (loading) {
     return (
@@ -203,18 +314,9 @@ export default function PDFScreen() {
   }
   return (
     <View style={styles.container}>
-      {/* <Picker
-        selectedValue={currentPDF.id}
-        onValueChange={(itemValue) => selectPDF(itemValue)}
-        style={styles.picker}
-      >
-        {pdfs.map((pdf) => (
-          <Picker.Item style={styles.pickerText} key={pdf.id} label={`${pdf.id}. ${pdf.title}`} value={pdf.id} />
-        ))}
-      </Picker> */}
       <RNPickerSelect
-        placeholder={{ label: "請選擇", value: "", color: "#000" }}
-        value={currentPDF.value}
+        placeholder={{ label: "請選擇", value: "NONE", color: "#000" }}
+        value={"NONE"}
         onValueChange={(itemValue: string) => selectPDF(itemValue)}
         items={pdfs}
         style={StyleSheet.create({
@@ -222,6 +324,9 @@ export default function PDFScreen() {
               paddingVertical: 15,
               paddingHorizontal: 10,
             },
+            placeholder: {color: "#000" },
+            inputIOS: { color: "#000" },
+            inputAndroid: { color: "#000" },
         })}
       />
       { currentPDF ? (
@@ -236,11 +341,82 @@ export default function PDFScreen() {
           />
         </View>
       ): null}
-      { currentRole === 'P' ? <Button onPress={() => saveProgress()} title="儲存閱讀進度" /> : null }
       <BottomTabs role={currentRole} />
     </View>
   );
 }
+
+const modal = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    height: 150,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 20,
+  },
+  modalTitle: {
+    display: 'flex',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  button: {
+    zIndex: 1,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderColor: 'gray',
+    color: '#000',
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    marginHorizontal: 45,
+  },
+})
+
+const bottomsList = StyleSheet.create({
+  container: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    bottom: 0,
+    backgroundColor: '#F8F8F8',
+    borderTopWidth: 1,
+    borderTopColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  tabItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
+  },
+  tabText: {
+    display: 'flex',
+    fontSize: 14,
+    color: 'black',
+    // fontWeight: 'bold',
+  },
+  tabIcon: {
+    display: 'flex',
+    fontSize: 34,
+    color: '#303030',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
