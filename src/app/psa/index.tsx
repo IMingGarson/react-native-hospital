@@ -6,6 +6,7 @@ import { PatientProgressionData, PSAData } from '../interfaces';
 import { AsyncStorageGetItem, isJsonString } from '../utils';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -17,8 +18,8 @@ const daysAgo = (n: number) => {
 export default function PSAList() {
   const [patients, setPatients] = useState<PatientProgressionData[]>([]);
   const [patientName, setPatientName] = useState<string>("");
-  const [patientId, setPickPatientID] = useState<number>(1);
-  const [pickedIndex] = useState<number>(0);
+  const [patientId, setPickPatientID] = useState<number>(-1);
+  const [pickedIndex] = useState<number>(-1);
   const [psaData, setPsaData] = useState<PSAData[]>([]);
   const [psa, setPsa] = useState<string>('');
   const [searchStartDate, setSearchStartDate] = useState<string>(daysAgo(7).toISOString().split('T')[0]);
@@ -93,8 +94,8 @@ export default function PSAList() {
               }
             });
             setPatients(pData);
-            setPickPatientID(pData[0].id);
-            setPatientName(pData[0].name);
+            // setPickPatientID(pData[0].id);
+            // setPatientName(pData[0].name);
           }
         }
       } catch (error) {
@@ -188,14 +189,14 @@ export default function PSAList() {
   };
 
   const onPicked = (pickedIndex: number) => {
-    if (pickedIndex < patients.length) {
+    if (pickedIndex != -1 && pickedIndex < patients.length) {
       setPickPatientID(patients[pickedIndex].id);
       setPatientName(patients[pickedIndex].name);
     }
   }
   
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         { currentRole === 'M' ? (
           <View style={{ display: 'flex' }}>
@@ -212,7 +213,7 @@ export default function PSAList() {
       </View>
       <View style={styles.contentContainer}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          { showPSAData() && showPSAData().length > 0 ? showPSAData().map((item, index) => (
+          { showPSAData()?.map((item, index) => (
             <View key={index} style={styles.listItem}>
               <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
               <View style={styles.listTag}>
@@ -220,11 +221,7 @@ export default function PSAList() {
                 <Text style={[styles.listItemText, styles.listPSAText]}>{item.psa}</Text>
               </View>
             </View>
-          )) : 
-            <View>
-              <Text style={{ fontSize: 24, color: '#000', margin: 'auto' }}>無 PSA 資料</Text>
-            </View>
-          }
+          ))}
         </ScrollView>
         <View style={styles.buttonContainer}>
           <View style={styles.modalBottons}>
@@ -236,7 +233,6 @@ export default function PSAList() {
         </View>
         <BottomTabs role={currentRole} />
       </View>
-
       {/* 搜尋病人 PSA 的 Modal */}
       <Modal
         visible={isSearchModalVisible}
@@ -251,7 +247,7 @@ export default function PSAList() {
               <View>
                 <Picker
                   style={styles.picker}
-                  selectedValue={patientId - 1}
+                  selectedValue={-1}
                   onValueChange={(v) => onPicked(v)}
                 > 
                 { patients.map((d, i) => {
@@ -327,7 +323,6 @@ export default function PSAList() {
           </View>
         </View>
       </Modal>
-
       {/* 醫護人員新增 PSA 的 Modal */}
       <Modal
         visible={isCreateModalVisible}
@@ -401,7 +396,7 @@ export default function PSAList() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -412,12 +407,10 @@ const styles = StyleSheet.create({
   },
   header: {
     width: '100%',
-    paddingTop: 45,
     paddingHorizontal: 15,
   },
   contentContainer: {
     flex: 1,
-    paddingTop: 15,
     borderTopWidth: 2,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
@@ -429,8 +422,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff6e5',
   },
   scrollContent: {
-    paddingTop: 5,
-    paddingHorizontal: 20,
+    padding: 10,
   },
   title: {
     fontSize: 20,

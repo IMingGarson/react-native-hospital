@@ -16,7 +16,8 @@ import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../ut
 import { Link, useRouter } from 'expo-router';
 import { VideoInterface, ProgressState } from '../interfaces';
 import { MaterialCommunityIcons, MaterialIcons, Foundation, AntDesign } from '@expo/vector-icons';
-
+import { appTheme } from 'src/config/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 interface Props {
   role: string,
 }
@@ -335,7 +336,7 @@ export default function VideoScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.videoContainer}>
         <VideoView 
           style={styles.video} 
@@ -360,7 +361,7 @@ export default function VideoScreen() {
         }}
       />
       <BottomTabs role={currentRole} />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -408,9 +409,9 @@ const bottomsList = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     bottom: 0,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: appTheme.background,
     borderTopWidth: 1,
-    borderTopColor: '#ffffff',
+    borderTopColor: 'rgba(0, 0, 0, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -427,7 +428,6 @@ const bottomsList = StyleSheet.create({
     display: 'flex',
     fontSize: 14,
     color: 'black',
-    // fontWeight: 'bold',
   },
   tabIcon: {
     display: 'flex',
@@ -439,7 +439,7 @@ const bottomsList = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff6e5',
+    backgroundColor: appTheme.primary,
   },
   saveBotton: {
     paddingVertical: 5,

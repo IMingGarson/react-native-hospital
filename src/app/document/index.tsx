@@ -5,7 +5,8 @@ import RNPickerSelect from 'react-native-picker-select';
 import { AsyncStorageGetItem, AsyncStorageRemoveItem } from '../utils';
 import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Foundation, AntDesign } from '@expo/vector-icons';
-
+import { appTheme } from 'src/config/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 interface PDFInterface {
   id: string;
   label: string;
@@ -144,6 +145,7 @@ export default function PDFScreen() {
   }, []);
 
   const selectPDF = (selectedValue: string) => {
+    console.log("selectedValue", selectedValue);
     if (selectedValue === 'NONE') {
       return false;
     }
@@ -160,8 +162,7 @@ export default function PDFScreen() {
         duration: accumulatedTime + progress[currentPDF.id].duration,
       }
     }));
-    const key = parseInt(pdf.id) - 1;
-    setCurrentPDF(progress[key.toString()]);
+    setCurrentPDF(progress[pdf.id]);
     setStartTime(Date.now());
   };
 
@@ -313,7 +314,7 @@ export default function PDFScreen() {
     );
   }
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <RNPickerSelect
         placeholder={{ label: "請選擇", value: "NONE", color: "#000" }}
         value={"NONE"}
@@ -342,7 +343,7 @@ export default function PDFScreen() {
         </View>
       ): null}
       <BottomTabs role={currentRole} />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -421,8 +422,7 @@ const bottomsList = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffd59a',
-    paddingTop: 45,
+    backgroundColor: appTheme.primary,
   },
   loadingContainer: {
     flex: 1,

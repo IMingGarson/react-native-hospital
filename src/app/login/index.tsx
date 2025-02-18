@@ -209,15 +209,14 @@ export default function LoginScreen() {
 
   const styles = StyleSheet.create({
     ScreenContainer: {
-      flex: 1, 
-      height: '100%',
+      flex: 1,
       flexDirection: 'column', 
       justifyContent: 'center',
-      backgroundColor: appTheme.background,
+      backgroundColor: appTheme.primary,
       paddingTop: '75%',
     },
     container: {
-      backgroundColor: '#fff6e5',
+      backgroundColor: appTheme.primary,
       height: '100%',
       paddingHorizontal: 20,
     },
@@ -238,7 +237,7 @@ export default function LoginScreen() {
       paddingVertical: 8,
       paddingHorizontal: 12,
       fontSize: 24,
-      backgroundColor: '#f9f9f9',
+      backgroundColor: appTheme.background,
       borderWidth: 1,
       borderColor: '#d1d1d6',
       borderRadius: 8,
@@ -248,7 +247,7 @@ export default function LoginScreen() {
   const S = {
     View: styled.View`
       gap: 10px;
-      background-color: ${appTheme.background};
+      background-color: ${appTheme.primary};
     `,
     Content: styled.View`
       gap: 10px;
@@ -265,10 +264,10 @@ export default function LoginScreen() {
   
   const radioStyle = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: appTheme.background,
-        justifyContent: 'center',
-        alignItems: 'center',
+      flex: 1,
+      backgroundColor: appTheme.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     radioGroup: {
         flexDirection: 'row',

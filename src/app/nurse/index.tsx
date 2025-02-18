@@ -4,6 +4,8 @@ import { AsyncStorageGetItem, AsyncStorageSetItem, isJsonString } from '../utils
 import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
 import { Document, Video, PatientProgressionData } from '../interfaces';
+import { appTheme } from 'src/config/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type AccordionProps = {
   item: PatientProgressionData,
@@ -202,7 +204,7 @@ export default function NurseScreen() {
     );
   }
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView>
         { patientData.length && patientData.map((p: PatientProgressionData, idx: number) => {
           return (
@@ -215,15 +217,14 @@ export default function NurseScreen() {
         })}
       </ScrollView>
       <BottomTabs role={currentRole} />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#fff6e5',
-      paddingTop: 45,
+      backgroundColor: appTheme.primary,
     },
     floatingButton: {
       position: 'absolute',

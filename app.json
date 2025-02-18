@@ -36,6 +36,10 @@
       "output": "static",
       "bundler": "metro"
     },
+    "androidStatusBar": {
+      "backgroundColor": "#000",
+      "translucent": true
+    },
     "plugins": [
       "expo-router",
       "expo-font",

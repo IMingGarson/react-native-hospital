@@ -3,6 +3,8 @@ import { useRouter, Link } from "expo-router";
 import { Modal, Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { AsyncStorageRemoveItem } from "../utils";
 import { useState } from "react";
+import { appTheme } from 'src/config/theme';
+
 interface Props {
   role: string,
   customedStyle?: Styles
@@ -24,6 +26,7 @@ export default function BottomTabs({ role, customedStyle }: Props) {
     router.replace('/login');
     return;
   }
+
   return (
     <View style={[bottomsList.container, {...customedStyle}]}>
       { role === 'M' ? (
@@ -121,7 +124,6 @@ const modal = StyleSheet.create({
   modalTitle: {
     display: 'flex',
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#000',
   },
   button: {
@@ -145,9 +147,9 @@ const bottomsList = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     bottom: 0,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: appTheme.background,
     borderTopWidth: 1,
-    borderTopColor: '#ffffff',
+    borderTopColor: 'rgba(0, 0, 0, 0.3)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -164,7 +166,6 @@ const bottomsList = StyleSheet.create({
     display: 'flex',
     fontSize: 14,
     color: 'black',
-    // fontWeight: 'bold',
   },
   tabIcon: {
     display: 'flex',
