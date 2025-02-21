@@ -4,9 +4,8 @@ import { WebView } from 'react-native-webview';
 import RNPickerSelect from 'react-native-picker-select';
 import { AsyncStorageGetItem, AsyncStorageRemoveItem } from '../utils';
 import { Link, useRouter } from 'expo-router';
-import { MaterialCommunityIcons, MaterialIcons, Foundation, AntDesign } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons, Foundation, FontAwesome } from '@expo/vector-icons';
 import { appTheme } from 'src/config/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
 interface PDFInterface {
   id: string;
   label: string;
@@ -243,7 +242,7 @@ export default function PDFScreen() {
           ) : (
             <View style={bottomsList.tabItem}>
               <Link href="/survey" onPress={() => { saveProgress(true); }}>
-                <MaterialIcons name="question-answer" size={24} color="black" style={bottomsList.tabIcon} />
+                <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
               </Link>
               <Link href="/survey" onPress={() => { saveProgress(true); }}>
                 <Text style={bottomsList.tabText}>症狀</Text>
@@ -260,7 +259,7 @@ export default function PDFScreen() {
           </View>
           <View style={bottomsList.tabItem}>
             <Link href="/psa" onPress={() => { saveProgress(true); }}>
-              <AntDesign name="form" style={bottomsList.tabIcon} />
+              <MaterialCommunityIcons name="file-chart-outline" size={24} style={bottomsList.tabIcon} />
             </Link>
             <Link href="/psa" onPress={() => { saveProgress(true); }}>
               <Text style={bottomsList.tabText}>PSA</Text>
@@ -314,7 +313,7 @@ export default function PDFScreen() {
     );
   }
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <RNPickerSelect
         placeholder={{ label: "請選擇", value: "NONE", color: "#000" }}
         value={"NONE"}
@@ -343,7 +342,7 @@ export default function PDFScreen() {
         </View>
       ): null}
       <BottomTabs role={currentRole} />
-    </SafeAreaView>
+    </View>
   );
 }
 

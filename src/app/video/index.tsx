@@ -9,13 +9,15 @@ import {
   Alert,
   AppState,
   Modal,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEventListener  } from 'expo';
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils';
 import { Link, useRouter } from 'expo-router';
 import { VideoInterface, ProgressState } from '../interfaces';
-import { MaterialCommunityIcons, MaterialIcons, Foundation, AntDesign } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons, Foundation, FontAwesome } from '@expo/vector-icons';
 import { appTheme } from 'src/config/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 interface Props {
@@ -264,7 +266,7 @@ export default function VideoScreen() {
           ) : (
             <View style={bottomsList.tabItem}>
               <Link href="/survey" onPress={() => { saveProgress(true); }}>
-                <MaterialIcons name="question-answer" size={24} color="black" style={bottomsList.tabIcon} />
+                <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
               </Link>
               <Link href="/survey" onPress={() => { saveProgress(true); }}>
                 <Text style={bottomsList.tabText}>症狀</Text>
@@ -281,7 +283,7 @@ export default function VideoScreen() {
           </View>
           <View style={bottomsList.tabItem}>
             <Link href="/psa" onPress={() => { saveProgress(true); }}>
-              <AntDesign name="form" style={bottomsList.tabIcon} />
+              <MaterialCommunityIcons name="file-chart-outline" size={24} style={bottomsList.tabIcon} />
             </Link>
             <Link href="/psa" onPress={() => { saveProgress(true); }}>
               <Text style={bottomsList.tabText}>PSA</Text>
@@ -336,32 +338,36 @@ export default function VideoScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.videoContainer}>
-        <VideoView 
-          style={styles.video} 
-          player={player}
-          allowsFullscreen 
-          allowsPictureInPicture
-        />
+    <>
+      <View style={styles.container}>
+        <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}>
+          <View style={styles.videoContainer}>
+            <VideoView 
+              style={styles.video} 
+              player={player}
+              allowsFullscreen 
+              allowsPictureInPicture
+            />
+          </View>
+          <FlatList
+            data={Object.values(progress)}
+            keyExtractor={(_, index) => index.toString()}
+            renderItem={({ item }) => {
+              const isCurrentVideo = item.id === currentVideo.id;
+              return (
+                <TouchableOpacity
+                  style={[styles.listItem, isCurrentVideo && styles.activeListItem]}
+                  onPress={() => selectVideo(item)}
+                >
+                  <Text style={styles.listItemTitle}>{item.title}</Text>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </SafeAreaView>
       </View>
-      <FlatList
-        data={Object.values(progress)}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item }) => {
-          const isCurrentVideo = item.id === currentVideo.id;
-          return (
-            <TouchableOpacity
-              style={[styles.listItem, isCurrentVideo && styles.activeListItem]}
-              onPress={() => selectVideo(item)}
-            >
-              <Text style={styles.listItemTitle}>{item.title}</Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
       <BottomTabs role={currentRole} />
-    </SafeAreaView>
+    </>
   );
 };
 
@@ -437,6 +443,11 @@ const bottomsList = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  topSafeview: { 
+    flex: 0, 
+    backgroundColor: appTheme.primary,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
     backgroundColor: appTheme.primary,
@@ -480,6 +491,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: appTheme.primary,
   },
   loadingText: {
     fontSize: 18,

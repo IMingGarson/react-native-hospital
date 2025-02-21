@@ -1,4 +1,5 @@
-import { MaterialCommunityIcons, Foundation, MaterialIcons, AntDesign } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Foundation, MaterialIcons } from "@expo/vector-icons";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter, Link } from "expo-router";
 import { Modal, Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { AsyncStorageRemoveItem } from "../utils";
@@ -41,7 +42,7 @@ export default function BottomTabs({ role, customedStyle }: Props) {
         ) : (
           <View style={bottomsList.tabItem}>
             <Link href="/survey">
-              <MaterialIcons name="question-answer" size={24} color="black" style={bottomsList.tabIcon} />
+              <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
             </Link>
             <Link href="/survey">
               <Text style={bottomsList.tabText}>症狀</Text>
@@ -58,7 +59,7 @@ export default function BottomTabs({ role, customedStyle }: Props) {
         </View>
         <View style={bottomsList.tabItem}>
           <Link href="/psa">
-            <AntDesign name="form" style={bottomsList.tabIcon} />
+            <MaterialCommunityIcons name="file-chart-outline" size={24} style={bottomsList.tabIcon} />
           </Link>
           <Link href="/psa">
             <Text style={bottomsList.tabText}>PSA</Text>

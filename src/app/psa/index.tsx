@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity, StatusBar, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
 import { PatientProgressionData, PSAData } from '../interfaces';
 import { AsyncStorageGetItem, isJsonString } from '../utils';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { appTheme } from 'src/config/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - Math.abs(n));
   return d;
 };
-
 
 export default function PSAList() {
   const [patients, setPatients] = useState<PatientProgressionData[]>([]);
@@ -196,42 +198,55 @@ export default function PSAList() {
   }
   
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        { currentRole === 'M' ? (
-          <View style={{ display: 'flex' }}>
-            <Text style={styles.title}>
-              病人: {`${patientName}`}
-            </Text>
-            <Text style={styles.title}>日期: {searchStartDate} ~ {searchEndDate}</Text>
-          </View>
-        ) : 
-          <View style={{ display: 'flex' }}>
-            <Text style={styles.title}>日期: {searchStartDate} ~ {searchEndDate}</Text>
-          </View>
-        }
-      </View>
-      <View style={styles.contentContainer}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          { showPSAData()?.map((item, index) => (
-            <View key={index} style={styles.listItem}>
-              <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
-              <View style={styles.listTag}>
-                <Text style={[styles.listItemText, styles.listPSAText]}>PSA: </Text>
-                <Text style={[styles.listItemText, styles.listPSAText]}>{item.psa}</Text>
+    <>
+      <View style={styles.container}>
+        <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}>
+          <View style={styles.header}>
+            { currentRole === 'M' ? (
+              <View style={{ display: 'flex' }}>
+                <Text style={styles.title}>
+                  病人: {`${patientName}`}
+                </Text>
+                <Text style={styles.title}>日期: {searchStartDate} ~ {searchEndDate}</Text>
               </View>
-            </View>
-          ))}
-        </ScrollView>
-        <View style={styles.buttonContainer}>
-          <View style={styles.modalBottons}>
-            <Button title="搜尋" onPress={() => setSearchModalVisible(true)} />
+            ) : 
+              <View style={{ display: 'flex' }}>
+                <Text style={styles.title}>日期: {searchStartDate} ~ {searchEndDate}</Text>
+              </View>
+            }
           </View>
-          <View style={styles.modalBottons}>
-            <Button title="新增" onPress={() => setCreateModalVisible(true)} />
-          </View>
+        </SafeAreaView>
+        <View style={styles.scrollWrapper}>
+          <ScrollView contentContainerStyle={{ padding: 10 }}>
+            { showPSAData()?.map((item, index) => (
+              <View key={index} style={styles.listItem}>
+                <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
+                <View style={styles.listTag}>
+                  <Text style={[styles.listItemText, styles.listPSAText]}>PSA: </Text>
+                  <Text style={[styles.listItemText, styles.listPSAText]}>{item.psa}</Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
         </View>
-        <BottomTabs role={currentRole} />
+      </View>
+      <View style={styles.fixedButtonContainer}>
+        <TouchableOpacity 
+          onPress={() => {
+            setSearchModalVisible(true);
+          }}
+          style={styles.button}
+        >
+          <FontAwesome name="search" style={styles.textStyle} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            setCreateModalVisible(true)
+          }}
+          style={styles.button}
+        >
+          <FontAwesome6 name="add" style={styles.textStyle} />
+        </TouchableOpacity>
       </View>
       {/* 搜尋病人 PSA 的 Modal */}
       <Modal
@@ -390,26 +405,42 @@ export default function PSAList() {
               />
             </View>
             <View style={styles.modalButtonContainer}>
-              <Button title="新增" onPress={() => { addPSAData();  setCreateModalVisible(false) }} />
-              <Button title="取消" onPress={() => setCreateModalVisible(false)} />
+              <TouchableOpacity
+                onPress={() => { addPSAData();  setCreateModalVisible(false) }}
+              >
+                <Text>新增</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { setCreateModalVisible(false) }}
+              >
+                <Text>取消</Text>
+              </TouchableOpacity>
+              {/* <Button title="新增" onPress={() => { addPSAData();  setCreateModalVisible(false) }} />
+              <Button title="取消" onPress={() => setCreateModalVisible(false)} /> */}
             </View>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      <BottomTabs role={currentRole} />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  topSafeview: { 
+    flex: 0, 
+    backgroundColor: appTheme.primary,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: appTheme.primary,
   },
   header: {
     width: '100%',
     paddingHorizontal: 15,
   },
-  contentContainer: {
+  scrollWrapper: {
     flex: 1,
     borderTopWidth: 2,
     borderTopLeftRadius: 25,
@@ -419,10 +450,28 @@ const styles = StyleSheet.create({
     borderRightColor: '#d1a679',
     borderLeftWidth: 2,
     borderLeftColor: '#d1a679',
-    backgroundColor: '#fff6e5',
+    backgroundColor: appTheme.background,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 60,
   },
-  scrollContent: {
-    padding: 10,
+  fixedButtonContainer: {
+    zIndex: 999,
+    position: 'absolute', // 絕對定位
+    bottom: 70, // 距離底部 20px
+    left: 0,
+    right: 0,
+    flexDirection: 'row', // 讓按鈕水平排列
+    justifyContent: 'space-evenly', // 平均分配按鈕空間
+    alignItems: 'center',
+  },
+  button: {
+    backgroundColor: '#E6B37F', // 你的按鈕底色
+    width: 50,
+    height: 50,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 20,
@@ -459,10 +508,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonContainer: {
-    backgroundColor: '#fff6e5',
+    width: Dimensions.get('window').width,
+    backgroundColor: appTheme.background,
+    display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 10,
   },
   modalBottons: {
     width: '50%',
@@ -523,5 +573,58 @@ const styles = StyleSheet.create({
   pickerItem: {
     fontSize: 18,
     color: '#000'
-  }
+  },
+  touchableButton: {
+    backgroundColor: appTheme.highlight,
+    width: 55,
+    height: 55,
+    borderRadius: 50,
+    // position: 'absolute',
+    // right: 25,
+  },
+  searchOffsetY: {
+    // top: Dimensions.get("window").height * 2 / 3 + 10,
+  },
+  createOffsetY: {
+    // top: Dimensions.get("window").height * 2 / 3 + 100,
+  },
+  textStyle: {
+    color: '#5A3E2B',
+    fontSize: 25,
+  },
+});
+
+const bottomsList = StyleSheet.create({
+  container: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    bottom: 0,
+    backgroundColor: appTheme.background,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  tabItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
+  },
+  tabText: {
+    display: 'flex',
+    fontSize: 14,
+    color: 'black',
+  },
+  tabIcon: {
+    display: 'flex',
+    fontSize: 34,
+    color: '#303030',
+  },
 });

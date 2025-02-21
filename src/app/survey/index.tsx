@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
   Button,
+  Platform,
 } from 'react-native';
 import { appTheme } from 'src/config/theme'
 import { Survey } from '../interfaces';
@@ -144,17 +145,19 @@ export default function SurveyScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         { showDate && (
           <DateTimePicker
-            display='spinner'
+            display={Platform.OS === 'ios' ? 'default' : 'spinner'}
             value={new Date()}
             mode="date"
             onChange={onDateChange}
           />
         )}
-        <TextInput
-          readOnly
-          style={styles.input}
-          value={date}
-        />
+        <TouchableOpacity onPress={() => setShowDate(true)}>
+          <TextInput
+            readOnly
+            style={styles.input}
+            value={date}
+          />
+        </TouchableOpacity> 
         <Button onPress={() => setShowDate(true)} title="選擇日期" />
         {answers.map((answer, index) => (
           <View key={index} style={styles.questionContainer}>
@@ -226,7 +229,7 @@ export default function SurveyScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: appTheme.background,
+    backgroundColor: appTheme.primary,
     paddingTop: 45,
   },
   scrollContent: {
