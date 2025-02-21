@@ -139,26 +139,48 @@ export default function SurveyScreen() {
     }
     setShowDate(false);
   };
-
+  console.log(answers);
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        { showDate && (
+        { Platform.OS === 'android' && (
+          <>
+            { showDate && (
+              <DateTimePicker
+                display='spinner'
+                value={new Date()}
+                mode="date"
+                onChange={onDateChange}
+              />
+            )}
+            <TouchableOpacity onPress={() => setShowDate(true)}>
+              <TextInput
+                readOnly
+                style={styles.input}
+                value={date}
+              />
+            </TouchableOpacity>
+            <Button onPress={() => setShowDate(true)} title="選擇日期" />
+          </>
+        )}
+        { Platform.OS === 'ios' && (
+          <View style={{ 
+            display: 'flex',
+            flexDirection: 'row', 
+            width: '100%', 
+            justifyContent: 'space-around',
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ display: 'flex', fontSize: 25, color: '#000' }}>選擇日期 </Text>
           <DateTimePicker
-            display={Platform.OS === 'ios' ? 'default' : 'spinner'}
+            display='default'
             value={new Date()}
             mode="date"
             onChange={onDateChange}
           />
+        </View>
         )}
-        <TouchableOpacity onPress={() => setShowDate(true)}>
-          <TextInput
-            readOnly
-            style={styles.input}
-            value={date}
-          />
-        </TouchableOpacity> 
-        <Button onPress={() => setShowDate(true)} title="選擇日期" />
         {answers.map((answer, index) => (
           <View key={index} style={styles.questionContainer}>
             <Text style={styles.questionText}>{answer.symptom}</Text>
