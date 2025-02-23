@@ -13,6 +13,7 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  Dimensions,
 } from 'react-native';
 import { appTheme } from 'src/config/theme';
 import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils';
@@ -101,16 +102,11 @@ export default function LoginScreen() {
 
     return (
       <View style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.ScreenContainer}
-          enabled
-        >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScrollView 
-            showsVerticalScrollIndicator={false} 
-            showsHorizontalScrollIndicator={false} 
-            overScrollMode='never'
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : -1 * Dimensions.get('window').height}
+            style={styles.ScreenContainer}
           >
             <S.Content testID="home-screen-content">
               <S.View>
@@ -180,9 +176,8 @@ export default function LoginScreen() {
                   </View>
               </S.View>
             </S.Content>
-            </ScrollView>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </View>
     )
   }
@@ -208,17 +203,17 @@ export default function LoginScreen() {
   });
 
   const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: appTheme.primary,
+    },
     ScreenContainer: {
       flex: 1,
+      display: 'flex',
       flexDirection: 'column', 
       justifyContent: 'center',
-      backgroundColor: appTheme.primary,
-      paddingTop: '75%',
-    },
-    container: {
-      backgroundColor: appTheme.primary,
-      height: '100%',
-      paddingHorizontal: 20,
+      alignItems: 'center',
+      paddingHorizontal: 10
     },
     radio: {
       flexDirection: 'row',
@@ -270,22 +265,22 @@ export default function LoginScreen() {
       alignItems: 'center',
     },
     radioGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: 20,
-        borderRadius: 8,
-        backgroundColor: 'white',
-        padding: 16,
-        elevation: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      borderRadius: 8,
+      backgroundColor: 'white',
+      padding: 16,
+      elevation: 4,
     },
     radioButton: {
-        flexDirection: 'row',
+      flexDirection: 'row',
     },
     radioLabel: {
-        marginRight: 8,
-        fontSize: 16,
-        color: '#333',
-        alignSelf: 'center',
+      marginRight: 8,
+      fontSize: 16,
+      color: '#333',
+      alignSelf: 'center',
     },
 });

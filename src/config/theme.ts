@@ -10,8 +10,8 @@ export const appTheme = {
   background: '#fff',
   primary: '#fff6e5',
   secondary: '#FFD09B',
-  highlight: '#FFB0B0',
-  text: '#000000',
+  highlight: '#E6B37F',
+  text: '#663300',
   size: dimensions,
   windowHeight: `${height}px`,
   windowWidth: `${width}px`
@@ -22,7 +22,7 @@ export const appTheme = {
  * -
  */
 export const navTheme = {
-  dark: false,
+  dark: true,
   colors: {
     background: appTheme.background,
     border: appTheme.secondary,

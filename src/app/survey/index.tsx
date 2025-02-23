@@ -139,7 +139,6 @@ export default function SurveyScreen() {
     }
     setShowDate(false);
   };
-  console.log(answers);
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>

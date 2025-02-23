@@ -253,79 +253,81 @@ export default function VideoScreen() {
     }
 
     return (
-      <View style={[bottomsList.container]}>
-        { role === 'M' ? (
-          <View style={bottomsList.tabItem}>
-            <Link href="/nurse">
-              <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon}/>
-            </Link>
-            <Link href="/nurse">
-              <Text style={bottomsList.tabText}>病人列表</Text>
-            </Link>
-          </View>
-          ) : (
+      <SafeAreaView edges={['bottom']} style={bottomsList.bottomSafeview}>
+        <View style={[bottomsList.container]}>
+          { role === 'M' ? (
             <View style={bottomsList.tabItem}>
-              <Link href="/survey" onPress={() => { saveProgress(true); }}>
-                <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
+              <Link href="/nurse">
+                <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon}/>
               </Link>
-              <Link href="/survey" onPress={() => { saveProgress(true); }}>
-                <Text style={bottomsList.tabText}>症狀</Text>
+              <Link href="/nurse">
+                <Text style={bottomsList.tabText}>病人列表</Text>
               </Link>
             </View>
-          )}
-          <View style={[bottomsList.tabItem]}>
-            <Link href="/video" onPress={() => { saveProgress(true); }}>
-              <Foundation name="play-video" style={bottomsList.tabIcon} />
-            </Link>
-            <Link href="/video" onPress={() => { saveProgress(true); }}>
-              <Text style={bottomsList.tabText}>影片</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <Link href="/psa" onPress={() => { saveProgress(true); }}>
-              <MaterialCommunityIcons name="file-chart-outline" size={24} style={bottomsList.tabIcon} />
-            </Link>
-            <Link href="/psa" onPress={() => { saveProgress(true); }}>
-              <Text style={bottomsList.tabText}>PSA</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <Link href="/document" onPress={() => { saveProgress(true); }}>
-              <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon}/>
-            </Link>
-            <Link href="/document" onPress={() => { saveProgress(true); }}>
-              <Text style={bottomsList.tabText}>手冊</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <MaterialIcons onPress={() => { setShowModal(true); }} name="logout" style={bottomsList.tabIcon}/>
-            <TouchableOpacity
-              onPress={() => { setShowModal(true); }}
+            ) : (
+              <View style={bottomsList.tabItem}>
+                <Link href="/survey" onPress={() => { saveProgress(true); }}>
+                  <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
+                </Link>
+                <Link href="/survey" onPress={() => { saveProgress(true); }}>
+                  <Text style={bottomsList.tabText}>症狀</Text>
+                </Link>
+              </View>
+            )}
+            <View style={[bottomsList.tabItem]}>
+              <Link href="/video" onPress={() => { saveProgress(true); }}>
+                <Foundation name="play-video" style={bottomsList.tabIcon} />
+              </Link>
+              <Link href="/video" onPress={() => { saveProgress(true); }}>
+                <Text style={bottomsList.tabText}>影片</Text>
+              </Link>
+            </View>
+            <View style={bottomsList.tabItem}>
+              <Link href="/psa" onPress={() => { saveProgress(true); }}>
+                <MaterialCommunityIcons name="file-chart-outline" size={24} style={bottomsList.tabIcon} />
+              </Link>
+              <Link href="/psa" onPress={() => { saveProgress(true); }}>
+                <Text style={bottomsList.tabText}>PSA</Text>
+              </Link>
+            </View>
+            <View style={bottomsList.tabItem}>
+              <Link href="/document" onPress={() => { saveProgress(true); }}>
+                <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon}/>
+              </Link>
+              <Link href="/document" onPress={() => { saveProgress(true); }}>
+                <Text style={bottomsList.tabText}>手冊</Text>
+              </Link>
+            </View>
+            <View style={bottomsList.tabItem}>
+              <MaterialIcons onPress={() => { setShowModal(true); }} name="logout" style={bottomsList.tabIcon}/>
+              <TouchableOpacity
+                onPress={() => { setShowModal(true); }}
+              >
+                <Text style={bottomsList.tabText}>登出</Text>
+              </TouchableOpacity>
+            </View>
+            <Modal
+              visible={showModal}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowModal(false)}
             >
-              <Text style={bottomsList.tabText}>登出</Text>
-            </TouchableOpacity>
-          </View>
-          <Modal
-            visible={showModal}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setShowModal(false)}
-          >
-            <View style={modal.modalContainer}>
-              <View style={modal.modalContent}>
-                <Text style={modal.modalTitle}>確定登出？</Text>
-                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                  <TouchableOpacity onPress={() => handleSignOut()} style={modal.button}>
-                    <Text>確定</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setShowModal(false)} style={modal.button}>
-                    <Text>取消</Text>
-                  </TouchableOpacity>
+              <View style={modal.modalContainer}>
+                <View style={modal.modalContent}>
+                  <Text style={modal.modalTitle}>確定登出？</Text>
+                  <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => handleSignOut()} style={modal.button}>
+                      <Text>確定</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setShowModal(false)} style={modal.button}>
+                      <Text>取消</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
-          </Modal>
-      </View>
+            </Modal>
+        </View>
+      </SafeAreaView>
     )
   }
 
@@ -408,6 +410,11 @@ const modal = StyleSheet.create({
 })
 
 const bottomsList = StyleSheet.create({
+  bottomSafeview: { 
+    flex: 0, 
+    backgroundColor: appTheme.background,
+    paddingBottom: Platform.OS === "android" ? 0 : 15,
+  },
   container: {
     width: '100%',
     display: 'flex',

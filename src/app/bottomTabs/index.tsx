@@ -1,11 +1,11 @@
 import { MaterialCommunityIcons, Foundation, MaterialIcons } from "@expo/vector-icons";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter, Link } from "expo-router";
-import { Modal, Text, View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { Modal, Text, View, StyleSheet, TouchableOpacity, Alert, Platform } from "react-native";
 import { AsyncStorageRemoveItem } from "../utils";
 import { useState } from "react";
 import { appTheme } from 'src/config/theme';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 interface Props {
   role: string,
   customedStyle?: Styles
@@ -29,8 +29,9 @@ export default function BottomTabs({ role, customedStyle }: Props) {
   }
 
   return (
-    <View style={[bottomsList.container, {...customedStyle}]}>
-      { role === 'M' ? (
+    <SafeAreaView edges={['bottom']} style={bottomsList.bottomSafeview}>
+      <View style={[bottomsList.container, {...customedStyle}]}>
+        { role === 'M' ? (
         <View style={bottomsList.tabItem}>
           <Link href="/nurse">
             <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon}/>
@@ -39,16 +40,16 @@ export default function BottomTabs({ role, customedStyle }: Props) {
             <Text style={bottomsList.tabText}>病人列表</Text>
           </Link>
         </View>
-        ) : (
-          <View style={bottomsList.tabItem}>
-            <Link href="/survey">
-              <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
-            </Link>
-            <Link href="/survey">
-              <Text style={bottomsList.tabText}>症狀</Text>
-            </Link>
-          </View>
-        )}
+          ) : (
+            <View style={bottomsList.tabItem}>
+              <Link href="/survey">
+                <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
+              </Link>
+              <Link href="/survey">
+                <Text style={bottomsList.tabText}>症狀</Text>
+              </Link>
+            </View>
+          )}
         <View style={[bottomsList.tabItem]}>
           <Link href="/video">
             <Foundation name="play-video" style={bottomsList.tabIcon} />
@@ -101,7 +102,8 @@ export default function BottomTabs({ role, customedStyle }: Props) {
             </View>
           </View>
         </Modal>
-    </View>
+      </View>
+    </SafeAreaView>
   )
 }
 
@@ -141,6 +143,11 @@ const modal = StyleSheet.create({
 })
 
 const bottomsList = StyleSheet.create({
+  bottomSafeview: { 
+    flex: 0, 
+    backgroundColor: appTheme.background,
+    paddingBottom: Platform.OS === "android" ? 0 : 15,
+  },
   container: {
     width: '100%',
     display: 'flex',
@@ -151,10 +158,6 @@ const bottomsList = StyleSheet.create({
     backgroundColor: appTheme.background,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0, 0, 0, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   tabItem: {
     display: 'flex',

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, Text, Modal, TouchableOpacity, AppState } from 'react-native';
+import { View, StyleSheet, Alert, Text, Modal, TouchableOpacity, AppState, Platform, StatusBar } from 'react-native';
 import { WebView } from 'react-native-webview';
 import RNPickerSelect from 'react-native-picker-select';
-import { AsyncStorageGetItem, AsyncStorageRemoveItem } from '../utils';
+import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils';
 import { Link, useRouter } from 'expo-router';
 import { MaterialCommunityIcons, MaterialIcons, Foundation, FontAwesome } from '@expo/vector-icons';
 import { appTheme } from 'src/config/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 interface PDFInterface {
   id: string;
   label: string;
@@ -21,44 +22,27 @@ interface ProgressState {
   [key: string]: PDFInterface;
 }
 
-const isJsonString = (data: string | null) => {
-  if (!data) {
-    return false;
-  }
-  try {
-      JSON.parse(data);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (e: unknown) {
-    return false;
-  }
-  return true;
-}
+const pdfs: PDFInterface[] = [
+  { id: '1', label: '活動不漏尿', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  { id: '2', label: '認識高血壓：症狀與治療', value: 'https://drive.google.com/file/d/1_E-Qx-6BeCHTRjQMeFk2g4LgzIrgt2EN/view?usp=sharing', duration: 0 },
+  // { id: '3', label: '健康飲食的五大黃金法則', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  // { id: '4', label: '心臟病的早期警訊與預防', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  // { id: '5', label: '戒菸成功的10個實用技巧', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  // { id: '6', label: '運動與健康：每天10分鐘就夠', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  // { id: '7', label: '遠離壓力：正念練習入門', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  // { id: '8', label: '失眠困擾？改善睡眠的好方法', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  // { id: '9', label: '疫苗的重要性與接種須知', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  // { id: '10', label: '認識骨質疏鬆與日常保養', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+];
 
 export default function PDFScreen() {
-  const [currentPDF, setCurrentPDF] = useState<PDFInterface>({ 
-    id: '1', 
-    label: '活動不漏尿', 
-    value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', 
-    duration: 0 
-  });
-  const [pdfs] = useState<PDFInterface[]>([
-    { id: '1', label: '活動不漏尿', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    { id: '2', label: '認識高血壓：症狀與治療', value: 'https://drive.google.com/file/d/1_E-Qx-6BeCHTRjQMeFk2g4LgzIrgt2EN/view?usp=sharing', duration: 0 },
-    // { id: '3', label: '健康飲食的五大黃金法則', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    // { id: '4', label: '心臟病的早期警訊與預防', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    // { id: '5', label: '戒菸成功的10個實用技巧', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    // { id: '6', label: '運動與健康：每天10分鐘就夠', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    // { id: '7', label: '遠離壓力：正念練習入門', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    // { id: '8', label: '失眠困擾？改善睡眠的好方法', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    // { id: '9', label: '疫苗的重要性與接種須知', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-    // { id: '10', label: '認識骨質疏鬆與日常保養', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-  ]);
+  const [currentPDF, setCurrentPDF] = useState<PDFInterface>(pdfs[0]);
   const [progress, setProgress] = useState<ProgressState>({});
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
-
+  
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt');
     const role = await AsyncStorageGetItem('role');
@@ -144,12 +128,11 @@ export default function PDFScreen() {
   }, []);
 
   const selectPDF = (selectedValue: string) => {
-    console.log("selectedValue", selectedValue);
     if (selectedValue === 'NONE') {
       return false;
     }
-    const pdf = pdfs.find((p) => p?.value === selectedValue);
-    if (!pdf || !pdf.id) {
+    const target = pdfs.find((p: PDFInterface) => p.value == selectedValue);
+    if (!target || !target.id) {
       Alert.alert('錯誤', '無法找到該 PDF');
       return false;
     }
@@ -161,7 +144,7 @@ export default function PDFScreen() {
         duration: accumulatedTime + progress[currentPDF.id].duration,
       }
     }));
-    setCurrentPDF(progress[pdf.id]);
+    setCurrentPDF(progress[target.id]);
     setStartTime(Date.now());
   };
 
@@ -229,8 +212,9 @@ export default function PDFScreen() {
     }
 
     return (
-      <View style={[bottomsList.container]}>
-        { role === 'M' ? (
+      <SafeAreaView edges={['bottom']} style={bottomsList.bottomSafeview}>
+        <View style={[bottomsList.container]}>
+          { role === 'M' ? (
           <View style={bottomsList.tabItem}>
             <Link href="/nurse">
               <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon}/>
@@ -301,7 +285,8 @@ export default function PDFScreen() {
               </View>
             </View>
           </Modal>
-      </View>
+        </View>
+      </SafeAreaView>
     )
   }
 
@@ -313,13 +298,20 @@ export default function PDFScreen() {
     );
   }
   return (
-    <View style={styles.container}>
-      <RNPickerSelect
-        placeholder={{ label: "請選擇", value: "NONE", color: "#000" }}
-        value={"NONE"}
-        onValueChange={(itemValue: string) => selectPDF(itemValue)}
-        items={pdfs}
-        style={StyleSheet.create({
+    <>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}>
+      </SafeAreaView>
+      <View style={styles.container}>
+        <RNPickerSelect
+          placeholder={{ label: "請選擇", value: "NONE", color: "#000" }}
+          value={currentPDF.value}
+          onValueChange={(itemValue: string) => {
+            if (itemValue !== currentPDF.value) {
+              selectPDF(itemValue);
+            }
+          }}
+          items={pdfs}
+          style={StyleSheet.create({
             inputIOSContainer: {
               paddingVertical: 15,
               paddingHorizontal: 10,
@@ -327,22 +319,23 @@ export default function PDFScreen() {
             placeholder: {color: "#000" },
             inputIOS: { color: "#000" },
             inputAndroid: { color: "#000" },
-        })}
-      />
-      { currentPDF ? (
-        <View style={styles.webviewContainer}>
-          <WebView
-            source={{ uri: currentPDF.value }}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            startInLoadingState={false}
-            scalesPageToFit={true}
-            style={styles.webview}
-          />
-        </View>
-      ): null}
-      <BottomTabs role={currentRole} />
-    </View>
+          })}
+        />
+        { currentPDF ? (
+          <View style={styles.webviewContainer}>
+            <WebView
+              source={{ uri: currentPDF.value }}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              startInLoadingState={false}
+              scalesPageToFit={true}
+              style={styles.webview}
+            />
+          </View>
+        ): null}
+        <BottomTabs role={currentRole} />
+      </View>
+    </>
   );
 }
 
@@ -383,6 +376,11 @@ const modal = StyleSheet.create({
 })
 
 const bottomsList = StyleSheet.create({
+  bottomSafeview: { 
+    flex: 0, 
+    backgroundColor: appTheme.background,
+    paddingBottom: Platform.OS === "android" ? 0 : 15,
+  },
   container: {
     width: '100%',
     display: 'flex',
@@ -409,7 +407,6 @@ const bottomsList = StyleSheet.create({
     display: 'flex',
     fontSize: 14,
     color: 'black',
-    // fontWeight: 'bold',
   },
   tabIcon: {
     display: 'flex',
@@ -419,6 +416,11 @@ const bottomsList = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  topSafeview: { 
+    flex: 0, 
+    backgroundColor: appTheme.primary,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
     backgroundColor: appTheme.primary,
