@@ -1,11 +1,10 @@
-import styled from 'styled-components/native'
+import styled from 'styled-components/native';
 import { Text, StyleSheet, TextInput, View, Alert, TouchableOpacity, Button, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView } from "react-native";
 import React, { useState } from "react";
 import { appTheme } from 'src/config/theme'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from "expo-router";
-import { AsyncStorageGetItem } from '../utils';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function RegisterScreen() {
@@ -52,11 +51,6 @@ export default function RegisterScreen() {
       Alert.alert('錯誤', '無效的邀請碼');
       return;
     }
-    const expoPushToken = await AsyncStorageGetItem('ExpoPushToken');
-    if (!expoPushToken) {
-      Alert.alert('錯誤', '無法取得Push Token');
-      return;
-    }
     setLoading(true);
     try {
       const response = await fetch('https://allgood.peiren.info/api/patient', {
@@ -70,12 +64,12 @@ export default function RegisterScreen() {
           name,
           birthday: date.toISOString().split('T')[0],
           inviteCode,
-          pushToken: expoPushToken ? expoPushToken : 'Invalid',
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
+        registerIndieID(email, 27312, 'IeM5V70UDPhAZoDzPq6gEX');
         Alert.alert('註冊成功', '請回到首頁登入');
         router.replace('/login');
       } else {

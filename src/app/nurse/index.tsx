@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView, Platform, StatusBar } from "react-native";
-import { AsyncStorageGetItem, AsyncStorageSetItem, isJsonString } from '../utils';
+import { AsyncStorageGetItem, isJsonString } from '../utils';
 import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
 import { Document, Video, PatientProgressionData } from '../interfaces';
 import { appTheme } from 'src/config/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePushNotifications, sendPushNotification } from '../utils/usePushNotification';
 
 type AccordionProps = {
   item: PatientProgressionData,
 }
 
 export default function NurseScreen() {
+  const { expoPushToken } = usePushNotifications();
+  if (expoPushToken) {
+    Alert.alert("Token: ", expoPushToken.data);
+  }
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -56,7 +61,6 @@ export default function NurseScreen() {
             })
           }
         });
-        await AsyncStorageSetItem('patientData', JSON.stringify(patients));
         setPatientData(patients);
       } else {
         Alert.alert('失敗', data.message);
@@ -75,31 +79,35 @@ export default function NurseScreen() {
   }, []);
 
   const notifyPatient = async (pid: string, type: string, targetID: number = 0) => {
-    try {
-      const token = await AsyncStorageGetItem('jwt');
-      if (typeof token === 'string' && token.length) {
-        const response = await fetch('https://allgood.peiren.info/api/user/notify_patient', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ pid: pid, target_id: targetID, type: type }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-          Alert.alert('通知成功', data.message);
-        } else {
-          Alert.alert('通知失敗', data.message);
-        }
-      } else {
-        Alert.alert('通知錯誤', '無法取得資料');
-        router.replace('/login');
-      }
-    } catch (error) {
-      Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
-      console.error(error);
+    if (expoPushToken && typeof expoPushToken.data !== 'undefined') {
+      Alert.alert("推播測試", "看到這個Alert表示有call API");
+      await sendPushNotification(expoPushToken.data);
     }
+    // try {
+    //   const token = await AsyncStorageGetItem('jwt');
+    //   if (typeof token === 'string' && token.length) {
+    //     const response = await fetch('https://allgood.peiren.info/api/user/notify_patient', {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${token}`,
+    //       },
+    //       body: JSON.stringify({ pid: pid, target_id: targetID, type: type }),
+    //     });
+    //     const data = await response.json();
+    //     if (response.ok) {
+    //       Alert.alert('通知成功', data.message);
+    //     } else {
+    //       Alert.alert('通知失敗', data.message);
+    //     }
+    //   } else {
+    //     Alert.alert('通知錯誤', '無法取得資料');
+    //     router.replace('/login');
+    //   }
+    // } catch (error) {
+    //   Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
+    //   console.error(error);
+    // }
   };
 
   const ListItemAccordion = ({ item }: AccordionProps) => {

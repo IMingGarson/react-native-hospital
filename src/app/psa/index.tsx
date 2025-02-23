@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity, StatusBar, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
-import { PatientProgressionData, PSAData } from '../interfaces';
-import { AsyncStorageGetItem, isJsonString } from '../utils';
+import { PSAData } from '../interfaces';
+import { AsyncStorageGetItem } from '../utils';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
+import RNPickerSelect from 'react-native-picker-select';
 import { appTheme } from 'src/config/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,15 +15,7 @@ const daysAgo = (n: number) => {
   return d;
 };
 
-interface PickedPatient {
-  id: number,
-  name: string
-}
-
 export default function PSAList() {
-  const [patients, setPatients] = useState<PatientProgressionData[]>([]);
-  const [pickedIndex, setPickedIndex] = useState<number>(0);
-  const [pickedPatient, setPickedPatient] = useState<PickedPatient>({id: -1, name: ''});
   const [psaData, setPsaData] = useState<PSAData[]>([]);
   const [psa, setPsa] = useState<string>('');
   const [searchStartDate, setSearchStartDate] = useState<string>(daysAgo(7).toISOString().split('T')[0]);
@@ -36,6 +28,13 @@ export default function PSAList() {
   const [showAddDate, setShowAddDate] = useState<boolean>(false);
   const [isCreateModalVisible, setCreateModalVisible] = useState<boolean>(false);
   const router = useRouter();
+  const [patientOptions, setPatientOptions] = useState<{ id: number, name: string, value: string, label: string }[]>([]);
+  const [currentPatient, setCurrentPatient] = useState<{ id: number, name: string, value: string, label: string }>({
+    id: -1,
+    name: '',
+    value: '',
+    label: ''
+  });
   const searchStartDateonChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
     if (typeof selectedDate !== 'undefined') {
       setSearchStartDate(selectedDate.toISOString().split('T')[0]);
@@ -89,15 +88,9 @@ export default function PSAList() {
             setPsaData(data.psa.sort((a: PSAData, b: PSAData) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0)));
           }
         } else {
-          const patientData = await AsyncStorageGetItem('patientData') as string;
-          if (typeof patientData === 'string' && isJsonString(patientData)) {
-            const pData = JSON.parse(patientData).map((d: PatientProgressionData) => {
-              return {
-                id: d.id,
-                name: d.name,
-              }
-            });
-            setPatients([{ id: -1, name: "選擇病患"}, ...pData]);
+          const r = await fetchPatientData();
+          if (!r) {
+            console.error('獲取全病患資料時發生錯誤');
           }
         }
       } catch (error) {
@@ -107,6 +100,32 @@ export default function PSAList() {
 
     fetchData();
   }, []);
+
+  const fetchPatientData = async () => {
+    const token = await AsyncStorageGetItem('jwt');
+    const response = await fetch('https://allgood.peiren.info/api/patient', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+    if (response.ok) {
+      const pData = data.patients.map((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string, survey_data: string }[] }) => {
+        return {
+          id: d.id,
+          name: d.name,
+          value: `${d.id}. ${d.name}`,
+          label: d.name
+        }
+      });
+      setPatientOptions(pData);
+    } else {
+      return false;
+    }
+    return true;
+  }
 
   const addPSAData = async () => {
     const date = addDate;
@@ -118,13 +137,12 @@ export default function PSAList() {
       Alert.alert('錯誤', 'PSA 資料有誤'); 
       return;
     }
-    if (currentRole === 'M' && pickedIndex >= patients.length) {
+    if (currentRole === 'M' && (!currentPatient || currentPatient.id < 0)) {
       Alert.alert('錯誤', '病患資料有誤'); 
       return;
     }
     try {
-      const patientId = patients && currentRole === 'M' ? pickedPatient.id : 0;
-      const body = currentRole === 'M' ? { date, psa: parseFloat(psa), pid: patientId } : { date, psa: parseFloat(psa) }
+      const body = currentRole === 'M' ? { date, psa: parseFloat(psa), pid: currentPatient.id } : { date, psa: parseFloat(psa) }
       const token = await AsyncStorageGetItem('jwt');
       const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
         method: 'PATCH',
@@ -139,20 +157,21 @@ export default function PSAList() {
       if (response.ok) {
         Alert.alert('成功', '新增成功');
       }
+      await fetchPatientData();
     } catch (error) {
       Alert.alert('錯誤', '無法新增PSA記錄');
       console.error('無法新增PSA記錄:', error);
     }
     const updatedData = [...psaData, { date, psa: parseFloat(psa) } as PSAData];
     const mergedData: PSAData[] = Object.values(
-        updatedData.reduce((acc: { [key: string]: PSAData }, entry: PSAData) => {
-            if (!acc[entry.date]) {
-                acc[entry.date] = { date: entry.date, psa: entry.psa };
-            } else {
-                acc[entry.date].psa = entry.psa;
-            }
-            return acc;
-        }, {} as { [key: string]: PSAData })
+      updatedData.reduce((acc: { [key: string]: PSAData }, entry: PSAData) => {
+        if (!acc[entry.date]) {
+            acc[entry.date] = { date: entry.date, psa: entry.psa };
+        } else {
+            acc[entry.date].psa = entry.psa;
+        }
+        return acc;
+      }, {} as { [key: string]: PSAData })
     ).sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
     setPsaData(mergedData);
     setPsa('');
@@ -160,14 +179,14 @@ export default function PSAList() {
   };
 
   const searchPSAData = async () => {
-    if (currentRole === 'M' && pickedPatient.id < 0) {
+    if (currentRole === 'M' && (!currentPatient || currentPatient.id < 0)) {
       Alert.alert('錯誤', '無法搜尋PSA記錄');
       return;
     }
     try {
       const token = await AsyncStorageGetItem('jwt');
       const url = currentRole === 'M'
-        ? `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&pid=${pickedPatient.id}&role=${currentRole}`
+        ? `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&pid=${currentPatient.id}&role=${currentRole}`
         : `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&role=${currentRole}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -179,7 +198,6 @@ export default function PSAList() {
 
       const data = await response.json();
       if (response.ok) {
-        setPickedPatient(patients[pickedIndex]);
         setPsaData(data?.psa?.sort((a: PSAData, b: PSAData) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0)));
       }
     } catch (error) {
@@ -195,13 +213,6 @@ export default function PSAList() {
     });
   };
 
-  const onPicked = (pickedIndex: number) => {
-    if (pickedIndex != -1 && pickedIndex < patients.length) {
-      setPickedIndex(pickedIndex);
-      setPickedPatient(patients[pickedIndex]);
-    }
-  }
-  
   const AndroidDateTimePicker = () => {
     return (
       <>
@@ -303,6 +314,14 @@ export default function PSAList() {
     )
   }
 
+  const selectPatient = (selectedValue: string) => {
+    const patient = patientOptions.find((p) => p.value === selectedValue);
+    if (!patient) {
+      return false;
+    }
+    setCurrentPatient(patient);
+  }
+
   return (
     <>
       <View style={styles.container}>
@@ -311,7 +330,7 @@ export default function PSAList() {
             { currentRole === 'M' ? (
               <View style={{ display: 'flex' }}>
                 <Text style={styles.title}>
-                  病人: {`${pickedPatient.name}`}
+                  病人: {`${currentPatient.name}`}
                 </Text>
                 <Text style={styles.title}>日期: {searchStartDate} ~ {searchEndDate}</Text>
               </View>
@@ -389,16 +408,25 @@ export default function PSAList() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>搜尋資料</Text>
             { currentRole === 'M' && (
-              <Picker
-                style={styles.picker}
-                selectedValue={pickedIndex}
-                onValueChange={(v) => onPicked(v)}
-              >
-              { patients.map((d, i) => {
-                  return <Picker.Item style={styles.pickerItem} key={i} label={d.name} value={i} />
-                })
-              }
-              </Picker>
+              <RNPickerSelect
+                placeholder={{ label: "選擇病人", value: "NONE", color: "#000" }}
+                value={currentPatient.value}
+                onValueChange={(itemValue: string) => {
+                  if (itemValue !== currentPatient.value) {
+                    selectPatient(itemValue);
+                  }
+                }}
+                items={patientOptions}
+                style={StyleSheet.create({
+                  inputIOSContainer: {
+                    paddingVertical: 15,
+                    paddingHorizontal: 10,
+                  },
+                  placeholder: {color: "#000" },
+                  inputIOS: { color: "#000" },
+                  inputAndroid: { color: "#000" },
+                })}
+              />
             )}
             { Platform.OS === 'ios' ? <IOSDateTimePicker /> : <AndroidDateTimePicker /> }
             <View style={{
@@ -458,16 +486,25 @@ export default function PSAList() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>新增資料</Text>
             { currentRole === 'M' && (
-              <Picker
-                style={styles.picker}
-                selectedValue={pickedIndex}
-                onValueChange={(v) => onPicked(v)}
-              > 
-              { patients.map((d, i) => {
-                  return <Picker.Item style={styles.pickerItem} key={i} label={d.name} value={i} />
-                })
-              }
-              </Picker>
+              <RNPickerSelect
+                placeholder={{ label: "選擇病人", value: "NONE", color: "#000" }}
+                value={currentPatient.value}
+                onValueChange={(itemValue: string) => {
+                  if (itemValue !== currentPatient.value) {
+                    selectPatient(itemValue);
+                  }
+                }}
+                items={patientOptions}
+                style={StyleSheet.create({
+                  inputIOSContainer: {
+                    paddingVertical: 15,
+                    paddingHorizontal: 10,
+                  },
+                  placeholder: {color: "#000" },
+                  inputIOS: { color: "#000" },
+                  inputAndroid: { color: "#000" },
+                })}
+              />
             )}
             { Platform.OS === 'ios' && (
               <View style={{ 

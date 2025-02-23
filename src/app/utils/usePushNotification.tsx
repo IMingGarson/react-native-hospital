@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import Constants from "expo-constants";
+// import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 export interface PushNotificationState {
@@ -45,7 +45,7 @@ export const usePushNotifications = (): PushNotificationState => {
         return;
       }
       token = await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig?.extra?.eas.projectId,
+        projectId: "861dff78-8223-47e5-b92c-45d4f6ef4bdf", //Constants.expoConfig?.extra?.eas.projectId,
       });
     } else {
       alert("Must be using a physical device for Push notifications");
@@ -89,6 +89,26 @@ export const usePushNotifications = (): PushNotificationState => {
 
   return {
     expoPushToken,
-    notification,
+    notification
   };
 };
+
+export const sendPushNotification = async (expoPushToken: string) => {
+  const message = {
+    to: expoPushToken,
+    sound: 'default',
+    title: '測試推播標題',
+    body: '測試推播內容',
+  };
+
+  await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Accept-encoding': 'gzip, deflate',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(message),
+  });
+  return true;
+}
