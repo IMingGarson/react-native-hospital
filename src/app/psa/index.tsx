@@ -426,15 +426,8 @@ export default function PSAList() {
                   }
                 }}
                 items={patientOptions}
-                style={StyleSheet.create({
-                  inputIOSContainer: {
-                    paddingVertical: 15,
-                    paddingHorizontal: 10,
-                  },
-                  placeholder: {color: "#000" },
-                  inputIOS: { color: "#000" },
-                  inputAndroid: { color: "#000" },
-                })}
+                useNativeAndroidPickerStyle={false}
+                style={pickerSelectStyles}
               />
             )}
             { Platform.OS === 'ios' ? <IOSDateTimePicker /> : <AndroidDateTimePicker /> }
@@ -504,15 +497,8 @@ export default function PSAList() {
                   }
                 }}
                 items={patientOptions}
-                style={StyleSheet.create({
-                  inputIOSContainer: {
-                    paddingVertical: 15,
-                    paddingHorizontal: 10,
-                  },
-                  placeholder: {color: "#000" },
-                  inputIOS: { color: "#000" },
-                  inputAndroid: { color: "#000" },
-                })}
+                useNativeAndroidPickerStyle={false}
+                style={pickerSelectStyles}
               />
             )}
             { Platform.OS === 'ios' && (
@@ -716,7 +702,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#000',
     borderRadius: 10,
-    paddingHorizontal: 5,
+    paddingHorizontal: 8,
     marginVertical: 5,
     display: 'flex',
   },
@@ -769,5 +755,38 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 28,
     fontWeight: 500
+  },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+  placeHolder: {
+    fontSize: 20,
+    marginHorizontal: 12,
+    marginVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: 'black',
+  },
+  inputIOS: {
+    fontSize: 20,
+    marginHorizontal: 12,
+    marginVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: 'black',
+  },
+  inputAndroid: {
+    fontSize: 20,
+    marginHorizontal: 12,
+    marginVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: 'black',
   },
 });
