@@ -101,6 +101,10 @@ export default function PSAList() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    searchPSAData();
+  }, [currentPatient])
+
   const fetchPatientData = async () => {
     const token = await AsyncStorageGetItem('jwt');
     const response = await fetch('https://allgood.peiren.info/api/patient', {
@@ -121,6 +125,11 @@ export default function PSAList() {
         }
       });
       setPatientOptions(pData);
+      if (currentPatient.id < 0) {
+        setCurrentPatient(pData[0]);
+      } else {
+        setCurrentPatient(currentPatient);
+      }
     } else {
       return false;
     }
@@ -155,9 +164,9 @@ export default function PSAList() {
 
       await response.json();
       if (response.ok) {
+        await fetchPatientData();
         Alert.alert('成功', '新增成功');
       }
-      await fetchPatientData();
     } catch (error) {
       Alert.alert('錯誤', '無法新增PSA記錄');
       console.error('無法新增PSA記錄:', error);

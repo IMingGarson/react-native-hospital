@@ -69,7 +69,6 @@ export default function RegisterScreen() {
 
       const data = await response.json();
       if (response.ok) {
-        registerIndieID(email, 27312, 'IeM5V70UDPhAZoDzPq6gEX');
         Alert.alert('註冊成功', '請回到首頁登入');
         router.replace('/login');
       } else {
@@ -220,7 +219,7 @@ const styles = StyleSheet.create({
       height: '100%',
       flexDirection: 'column', 
       justifyContent: 'center',
-      backgroundColor: appTheme.background,   
+      backgroundColor: appTheme.primary,   
       paddingTop: 20,
     },
     container: {

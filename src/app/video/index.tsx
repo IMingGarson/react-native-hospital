@@ -338,7 +338,6 @@ export default function VideoScreen() {
       </View>
     );
   }
-
   return (
     <>
       <View style={styles.container}>

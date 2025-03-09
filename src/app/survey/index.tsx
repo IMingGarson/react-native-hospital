@@ -18,6 +18,9 @@ import BottomTabs from '../bottomTabs';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const symptoms = ["尿失禁", "頻尿", "腹瀉", "便祕", "疲憊", "情緒低落", "緊張", "缺乏活力", "熱潮紅", "其他"];
+interface PastSurvey {
+  [key: string]: Survey[];
+}
 
 export default function SurveyScreen() {
   const [answers, setAnswers] = useState<Survey[]>(
@@ -31,6 +34,7 @@ export default function SurveyScreen() {
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [showDate, setShowDate] = useState<boolean>(false);
   const [currentRole, setCurrentRole] = useState<string>("");
+  const [pastSurvey, setPastSurvey] = useState<PastSurvey>({});
   const router = useRouter();
 
   const fetchData = async () => {
@@ -59,7 +63,28 @@ export default function SurveyScreen() {
         const data = await response.json();
         if (response.ok) {
           if (isJsonString(data.patient.survey_data)) {
-            setAnswers(JSON.parse(data.patient.survey_data));
+            setAnswers(JSON.parse(data.patient.survey_data)); // latest survey data
+          }
+          if (data.symptom_data) {
+            const pastSurvey: PastSurvey = {};
+            for (const d of data.symptom_data) {
+              if (isJsonString(d.survey_data)) {
+                pastSurvey[d.date] = JSON.parse(d.survey_data);
+              }
+            }
+            setPastSurvey(pastSurvey); // all survey data
+            if (date in pastSurvey) {
+              setAnswers(pastSurvey[date]);
+            } else {
+              setAnswers(
+                symptoms.map((symptom) => ({
+                  symptom,
+                  hasSymptom: false,
+                  severity: 0,
+                  customSymptom: symptom === "其他" ? "" : null,
+                }))
+              );
+            }
           }
         }
     } catch (error) {
@@ -102,21 +127,21 @@ export default function SurveyScreen() {
           return;
         }
         // https://allgood.peiren.info
-        const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            survey_data: JSON.stringify(answers)
-          }),
-        });
-        await response.json();
-        if (response.ok) {
-          Alert.alert('成功', '儲存症狀成功');
-        }
-        await fetch('https://allgood.peiren.info/api/patient/symptom_survey', {
+        // const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
+        //   method: 'PATCH',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     'Authorization': `Bearer ${token}`,
+        //   },
+        //   body: JSON.stringify({
+        //     survey_data: JSON.stringify(answers)
+        //   }),
+        // });
+        // await response.json();
+        // if (response.ok) {
+        //   Alert.alert('成功', '儲存症狀成功');
+        // }
+        const response =  await fetch('https://allgood.peiren.info/api/patient/symptom_survey', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -127,15 +152,33 @@ export default function SurveyScreen() {
             date: date,
           }),
         });
+        if (response.ok) {
+          await fetchData();
+          Alert.alert('成功', '儲存症狀成功');
+        }
     } catch (error) {
         Alert.alert('失敗', '儲存進度時發生錯誤');
         console.error('儲存進度時發生錯誤:', error);
     }
+    router.reload();
   };
 
   const onDateChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
     if (typeof selectedDate !== 'undefined') {
-      setDate(selectedDate.toISOString().split('T')[0]);
+      const d = selectedDate.toISOString().split('T')[0];
+      if (d in pastSurvey) {
+        setAnswers(pastSurvey[d]);
+      } else {
+        setAnswers(
+          symptoms.map((symptom) => ({
+            symptom,
+            hasSymptom: false,
+            severity: 0,
+            customSymptom: symptom === "其他" ? "" : null,
+          }))
+        );
+      }
+      setDate(d);
     }
     setShowDate(false);
   };
@@ -147,7 +190,7 @@ export default function SurveyScreen() {
             { showDate && (
               <DateTimePicker
                 display='spinner'
-                value={new Date()}
+                value={new Date(date)}
                 mode="date"
                 onChange={onDateChange}
               />
@@ -174,7 +217,7 @@ export default function SurveyScreen() {
           <Text style={{ display: 'flex', fontSize: 25, color: '#000' }}>選擇日期 </Text>
           <DateTimePicker
             display='default'
-            value={new Date()}
+            value={new Date(date)}
             mode="date"
             onChange={onDateChange}
           />

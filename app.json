@@ -20,14 +20,15 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.peiren.allgood"
+      "bundleIdentifier": "com.hospital.allgood"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/app-icon.png",
         "backgroundColor": "#222"
       },
-      "package": "com.haytherecharlie.exporoutertypescript",
+      "package": "com.hospital.allgood",
+      "googleServiceFile": "./google-service.json",
       "orientation": "default",
       "softwareKeyboardLayoutMode": "pan"
     },
@@ -50,7 +51,6 @@
           "supportsPictureInPicture": true
         }
       ],
-      "react-native-bottom-tabs",
       [
         "expo-build-properties",
         {

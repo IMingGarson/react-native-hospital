@@ -14,9 +14,6 @@ type AccordionProps = {
 
 export default function NurseScreen() {
   const { expoPushToken } = usePushNotifications();
-  if (expoPushToken) {
-    Alert.alert("Token: ", expoPushToken.data);
-  }
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,7 +77,7 @@ export default function NurseScreen() {
 
   const notifyPatient = async (pid: string, type: string, targetID: number = 0) => {
     if (expoPushToken && typeof expoPushToken.data !== 'undefined') {
-      Alert.alert("推播測試", "看到這個Alert表示有call API");
+      Alert.alert("推播測試", `看到這個Alert表示有call API, TOKEN: ${expoPushToken.data}`);
       await sendPushNotification(expoPushToken.data);
     }
     // try {
