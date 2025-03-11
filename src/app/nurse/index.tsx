@@ -7,7 +7,6 @@ import { Document, Video, PatientProgressionData } from '../interfaces';
 import { appTheme } from 'src/config/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePushNotifications, sendPushNotification } from '../utils/usePushNotification';
-import { push } from 'expo-router/build/global-state/routing';
 
 type AccordionProps = {
   item: PatientProgressionData,
