@@ -7,6 +7,7 @@ import { Document, Video, PatientProgressionData } from '../interfaces';
 import { appTheme } from 'src/config/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePushNotifications, sendPushNotification } from '../utils/usePushNotification';
+import { push } from 'expo-router/build/global-state/routing';
 
 type AccordionProps = {
   item: PatientProgressionData,
@@ -43,7 +44,7 @@ export default function NurseScreen() {
       });
       const data = await response.json();
       if (response.ok) {
-        const patients = data.patients.map((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string, survey_data: string }[] }) => {
+        const patients = data.patients.map((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string, survey_data: string }[], push_token: string | null }) => {
           return {
             id: d.id,
             name: d.name,
@@ -55,7 +56,8 @@ export default function NurseScreen() {
                 date: s.date, 
                 data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []
               }
-            })
+            }),
+            pushToken: d.push_token,
           }
         });
         setPatientData(patients);
@@ -138,6 +140,7 @@ export default function NurseScreen() {
           >
             <Text style={styles.name}>{`ID: ${item.id}`}</Text>
             <Text style={styles.name}>{`姓名: ${item.name}`}</Text>
+            <Text style={styles.name}>{`Token: ${item?.pushToken || "None"} (測試用, 未來會移除)`}</Text>
           </TouchableOpacity>
           <Animated.View
             onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); }} 

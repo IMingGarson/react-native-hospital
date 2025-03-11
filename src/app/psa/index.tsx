@@ -8,6 +8,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import RNPickerSelect from 'react-native-picker-select';
 import { appTheme } from 'src/config/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -294,10 +295,12 @@ export default function PSAList() {
             width: '100%', 
             justifyContent: 'space-around',
             alignItems: 'center',
+            marginBottom: 10,
           }}
         >
           <Text style={{ display: 'flex', fontSize: 18, color: '#000' }}>開始日期: </Text>
           <DateTimePicker
+            style={{ width: '100%' }}
             display={'default'}
             value={new Date(searchStartDate)}
             mode="date"
@@ -313,6 +316,7 @@ export default function PSAList() {
         }}>
           <Text style={{ display: 'flex', fontSize: 18, color: '#000' }}>結束日期: </Text>
           <DateTimePicker
+            style={{ width: '100%' }}
             display={'default'}
             value={new Date(searchEndDate)}
             mode="date"
@@ -427,6 +431,18 @@ export default function PSAList() {
                 }}
                 items={patientOptions}
                 useNativeAndroidPickerStyle={false}
+                fixAndroidTouchableBug={true}
+                Icon={() => {
+                  return <AntDesign 
+                    name="downcircleo" 
+                    style={{ 
+                      fontSize: 20, 
+                      color: '#303030', 
+                      marginRight: Platform.OS === 'ios' ? 20 : 22, 
+                      marginTop: Platform.OS === 'ios' ? 10 : 15, 
+                    }} 
+                  />
+                }}
                 style={pickerSelectStyles}
               />
             )}
@@ -498,7 +514,19 @@ export default function PSAList() {
                 }}
                 items={patientOptions}
                 useNativeAndroidPickerStyle={false}
+                fixAndroidTouchableBug={true}
                 style={pickerSelectStyles}
+                Icon={() => {
+                  return <AntDesign 
+                    name="downcircleo" 
+                    style={{ 
+                      fontSize: 20, 
+                      color: '#303030', 
+                      marginRight: Platform.OS === 'ios' ? 20 : 22, 
+                      marginTop: Platform.OS === 'ios' ? 10 : 15, 
+                    }} 
+                  />
+                }}
               />
             )}
             { Platform.OS === 'ios' && (
@@ -697,12 +725,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   input: {
-    fontSize: 18,
+    fontSize: 16,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#000',
     borderRadius: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     marginVertical: 5,
     display: 'flex',
   },
@@ -731,7 +760,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    paddingHorizontal: 20,
+    marginLeft: 15,
+    marginBottom: 5,
     fontWeight: 'bold',
     color: appTheme.text,
   },

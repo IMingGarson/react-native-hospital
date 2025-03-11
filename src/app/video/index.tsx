@@ -412,7 +412,7 @@ const bottomsList = StyleSheet.create({
   bottomSafeview: { 
     flex: 0, 
     backgroundColor: appTheme.background,
-    paddingBottom: Platform.OS === "android" ? 0 : 15,
+    paddingBottom: 0
   },
   container: {
     width: '100%',

@@ -26,7 +26,8 @@ interface PatientProgressionData {
   video: Video[],
   survey: Survey[],
   document: Document[],
-  records: SymptomRecord[]
+  records: SymptomRecord[],
+  pushToken?: string,
 }
 
 interface SymptomRecord {

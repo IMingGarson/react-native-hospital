@@ -9,7 +9,6 @@ import {
   Text,
   TouchableOpacity,
   KeyboardAvoidingView,
-  ScrollView,
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
@@ -103,80 +102,72 @@ export default function LoginScreen() {
     return (
       <View style={styles.container}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : -1 * Dimensions.get('window').height}
-            style={styles.ScreenContainer}
-          >
+          <View style={styles.ScreenContainer}>
             <S.Content testID="home-screen-content">
               <S.View>
                 <S.Text>帳號</S.Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  autoFocus={true}
+                  onChangeText={setEmail}
+                />
+                <S.Text>密碼</S.Text>
+                <View style={styles.inputContainer}>
                   <TextInput
-                    style={[
-                      styles.input
-                    ]}
-                    value={email}
-                    autoFocus={true}
-                    onChangeText={setEmail}
+                    style={styles.input}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
                   />
-                  <S.Text>密碼</S.Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      style={[
-                        styles.input
-                      ]}
-                      secureTextEntry={!showPassword}
-                      value={password}
-                      onChangeText={setPassword}
-                    />
-                    <MaterialCommunityIcons
-                        name={showPassword ? 'eye-off' : 'eye'}
-                        size={20}
-                        color="#000"
-                        onPress={toggleShowPassword}
-                        style={{ 'marginLeft': -30 }}
-                    />
-                  </View>
-                  <View style={styles.inputContainer}>
-                    <View style={radioStyle.container}>
-                      <View style={radioStyle.radioGroup}>
-                          <View style={radioStyle.radioButton}>
-                              <RadioButton.Android
-                                  value="0"
-                                  status={role === "0" ? 'checked' : 'unchecked'}
-                                  onPress={() => setRole("0")}
-                                  color="#007BFF"
-                              />
-                              <Text style={radioStyle.radioLabel}>醫護人員</Text>
-                          </View>
-                          <View style={radioStyle.radioButton}>
-                              <RadioButton.Android
-                                  value="1"
-                                  status={role === "1" ? 'checked' : 'unchecked'}
-                                  onPress={() => setRole("1")}
-                                  color="#007BFF"
-                              />
-                              <Text style={radioStyle.radioLabel}>一般民眾</Text>
-                          </View>
+                  <MaterialCommunityIcons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#000"
+                    onPress={toggleShowPassword}
+                    style={{ marginLeft: -30 }}
+                  />
+                </View>
+                <View style={styles.inputContainer}>
+                  <View style={radioStyle.container}>
+                    <View style={radioStyle.radioGroup}>
+                      <View style={radioStyle.radioButton}>
+                        <RadioButton.Android
+                          value="0"
+                          status={role === "0" ? 'checked' : 'unchecked'}
+                          onPress={() => setRole("0")}
+                          color="#007BFF"
+                        />
+                        <Text style={radioStyle.radioLabel}>醫護人員</Text>
+                      </View>
+                      <View style={radioStyle.radioButton}>
+                        <RadioButton.Android
+                          value="1"
+                          status={role === "1" ? 'checked' : 'unchecked'}
+                          onPress={() => setRole("1")}
+                          color="#007BFF"
+                        />
+                        <Text style={radioStyle.radioLabel}>一般民眾</Text>
                       </View>
                     </View>
                   </View>
-                  <View style={bottomsList.container}>
-                    <TouchableOpacity
-                      onPress={handleSignIn}
-                      style={{ zIndex: 1 }}
-                    >
-                      <View style={bottomsList.button}>
-                        <Text style={{ fontSize: 20 }} >登入</Text>
-                      </View>
-                    </TouchableOpacity>
-                    <Link href="/register" style={bottomsList.button}>
-                      <Text style={{ fontSize: 20 }} >註冊</Text>
-                    </Link>
-                  </View>
+                </View>
+                <View style={bottomsList.container}>
+                  <TouchableOpacity
+                    onPress={handleSignIn}
+                    style={{ zIndex: 1 }}
+                  >
+                    <View style={bottomsList.button}>
+                      <Text style={{ fontSize: 20 }}>登入</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <Link href="/register" style={bottomsList.button}>
+                    <Text style={{ fontSize: 20 }}>註冊</Text>
+                  </Link>
+                </View>
               </S.View>
             </S.Content>
-          </KeyboardAvoidingView>
+          </View>
         </TouchableWithoutFeedback>
       </View>
     )
