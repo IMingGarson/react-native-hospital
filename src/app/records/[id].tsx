@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Platform, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TextInput, Button, Platform, TouchableOpacity, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { AsyncStorageGetItem, isJsonString } from '../utils';
@@ -22,12 +22,41 @@ export default function SurveyRecordScreen() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const pData = await AsyncStorageGetItem('patientData') as string;
-            const id = Array.isArray(PATH_ID) ? +PATH_ID[0] : +PATH_ID;
-            if (isJsonString(pData)) {
-                const patientData = JSON.parse(pData)?.find((d: PatientProgressionData) => d.id === id);
-                setName(patientData.name);
-                setSelectedPatient(patientData);
+            try {
+                const id = Array.isArray(PATH_ID) ? PATH_ID[0] : PATH_ID;
+                const token = await AsyncStorageGetItem('jwt');
+                const response = await fetch('https://allgood.peiren.info/api/patient', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    const foundPatient = data.patients.find((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string, survey_data: string }[], push_token: string | null }) => d.id == id);
+                    const patientData = foundPatient ? {
+                        id: foundPatient.id,
+                        name: foundPatient.name,
+                        document: isJsonString(foundPatient.document_progression_data) ? JSON.parse(foundPatient.document_progression_data) : [],
+                        video: isJsonString(foundPatient.video_progression_data) ? JSON.parse(foundPatient.video_progression_data) : [],
+                        survey: isJsonString(foundPatient.survey_data) ? JSON.parse(foundPatient.survey_data) : [],
+                        records: foundPatient.symptom_records?.map((s: { date: string, survey_data: string }) => ({
+                            date: s.date,
+                            data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []
+                        })),
+                        pushToken: foundPatient.push_token,
+                    } : null;
+                    if (patientData) {
+                        setName(patientData.name);
+                        setSelectedPatient(patientData);
+                    } else {
+                        Alert.alert('錯誤', '找不到病患資料');
+                    }
+                }
+            } catch (error) {
+                Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
+                console.error(error);
             }
         }
         fetchData();
@@ -109,21 +138,35 @@ export default function SurveyRecordScreen() {
       }
     }
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity 
-                    style={{ zIndex: 1 }}
-                    onPress={() => router.back()}
+    const IOSDateTimePicker = () => {
+        return (
+            <>
+                <View style={{ 
+                    display: 'flex',
+                    flexDirection: 'row', 
+                    width: '100%', 
+                    justifyContent: 'space-around',
+                    alignItems: 'center',
+                    marginBottom: 10,
+                }}
                 >
-                    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                        <Ionicons name="arrow-back-circle-sharp" style={[styles.prevBtn, { paddingTop: 2 }]} />
-                        <Text style={{ fontSize: 15, paddingLeft: 5 }}>{"回上一頁"}</Text>
-                    </View>
-                </TouchableOpacity>
-            </View>
-            <View style={styles.item}>
-                <Text style={styles.name}>{`姓名: ${name}`}</Text>
+                <Text style={{ display: 'flex', fontSize: 18, color: '#000' }}>選擇日期 </Text>
+                    <DateTimePicker
+                        style={{ width: '100%' }}
+                        display={'default'}
+                        value={new Date(date)}
+                        mode="date"
+                        onChange={onChange}
+                    />
+                </View>
+                <View style={{ height: "1%" }}></View>
+            </>
+        )
+    }
+
+    const AndroidDateTimePicker = () => {
+        return (
+            <>
                 { showDate && (
                     <DateTimePicker
                         display={Platform.OS === 'ios' ? 'default' : 'calendar'}
@@ -139,6 +182,26 @@ export default function SurveyRecordScreen() {
                 />
                 <Button onPress={() => setShowDate(true)} color="#007BFF" title="選擇日期" />
                 <View style={{ height: "1%" }}></View>
+            </>
+        )
+    }
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    style={{ zIndex: 1 }}
+                    onPress={() => router.back()}
+                >
+                    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="arrow-back-circle-sharp" style={[styles.prevBtn, { paddingTop: 2 }]} />
+                        <Text style={{ fontSize: 15, paddingLeft: 5 }}>{"回上一頁"}</Text>
+                    </View>
+                </TouchableOpacity>
+            </View>
+            <View style={styles.item}>
+                <Text style={styles.name}>{`姓名: ${name}`}</Text>
+                { Platform.OS === 'ios' ? <IOSDateTimePicker /> : <AndroidDateTimePicker /> }
                 {DisplayRecordByDate()}
             </View>
         </View>
