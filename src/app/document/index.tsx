@@ -23,8 +23,8 @@ interface ProgressState {
 }
 
 const pdfs: PDFInterface[] = [
-  { id: '1', label: '活動不漏尿', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
-  { id: '2', label: '認識高血壓：症狀與治療', value: 'https://drive.google.com/file/d/1_E-Qx-6BeCHTRjQMeFk2g4LgzIrgt2EN/view?usp=sharing', duration: 0 },
+  { id: '0', label: '活動不漏尿', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
+  { id: '1', label: '認識高血壓：症狀與治療', value: 'https://drive.google.com/file/d/1_E-Qx-6BeCHTRjQMeFk2g4LgzIrgt2EN/view?usp=sharing', duration: 0 },
   // { id: '3', label: '健康飲食的五大黃金法則', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
   // { id: '4', label: '心臟病的早期警訊與預防', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
   // { id: '5', label: '戒菸成功的10個實用技巧', value: 'https://drive.google.com/file/d/1uc_dBdoZC250EeVFyHRFSx-mAIVaaEVJ/view?usp=sharing', duration: 0 },
@@ -42,7 +42,7 @@ export default function PDFScreen() {
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
-  
+
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt');
     const role = await AsyncStorageGetItem('role');
@@ -76,13 +76,13 @@ export default function PDFScreen() {
             if (Object.keys(progressionData).length === 0) {
               // default data
               pdfs.forEach((document: PDFInterface) => {
-                currentProgress[document.id] = { ...document };
+                currentProgress[parseInt(document.id)] = { ...document };
               });
               setProgress(currentProgress);
               setCurrentPDF(pdfs[0]);
             } else {
               progressionData.forEach((document: PDFInterface) => {
-                currentProgress[document.id] = { ...document };
+                currentProgress[parseInt(document.id)] = { ...document };
               });
               setProgress(progressionData);
               setCurrentPDF(progressionData[0]);
@@ -90,7 +90,7 @@ export default function PDFScreen() {
           } else {
             // default data
             pdfs.forEach((document: PDFInterface) => {
-              currentProgress[document.id] = { ...document };
+              currentProgress[parseInt(document.id)] = { ...document };
             });
             setProgress(currentProgress);
             setCurrentPDF(pdfs[0]);
@@ -105,7 +105,7 @@ export default function PDFScreen() {
       // default data
       const currentProgress: ProgressState = {};
       pdfs.forEach((document: PDFInterface) => {
-        currentProgress[document.id] = { ...document };
+        currentProgress[parseInt(document.id)] = { ...document };
       });
       setProgress(currentProgress);
       setCurrentPDF(pdfs[0]);
@@ -144,7 +144,7 @@ export default function PDFScreen() {
         duration: accumulatedTime + progress[currentPDF.id].duration,
       }
     }));
-    setCurrentPDF(progress[target.id]);
+    setCurrentPDF(progress[parseInt(target.id)]);
     setStartTime(Date.now());
   };
 
@@ -388,13 +388,9 @@ const bottomsList = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     bottom: 0,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: appTheme.background,
     borderTopWidth: 1,
     borderTopColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   tabItem: {
     display: 'flex',
