@@ -30,9 +30,23 @@ interface PatientProgressionData {
   pushToken?: string,
 }
 
+interface APIPatientProgressionData { 
+  id: string; name: string,
+  document_progression_data: string, 
+  video_progression_data: string,
+  survey_data: string,
+  symptom_records: APISymptomRecord[], 
+  push_token: string | null 
+}
+
 interface SymptomRecord {
   date: string;
   data: Survey[];
+}
+
+interface APISymptomRecord { 
+  date: string, 
+  survey_data: string
 }
 
 interface VideoInterface {
@@ -55,6 +69,8 @@ interface PSAData {
 
 export type { 
     PatientProgressionData as PatientProgressionData,
+    APIPatientProgressionData as APIPatientProgressionData,
+    APISymptomRecord as APISymptomRecord,
     SymptomRecord as SymptomRecord,
     Document as Document,
     Survey as Survey,

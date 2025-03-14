@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
-import { Platform } from "react-native";
 
 export interface PushNotificationState {
   expoPushToken?: Notifications.ExpoPushToken;
@@ -12,9 +11,9 @@ export interface PushNotificationState {
 export const usePushNotifications = (): PushNotificationState => {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldPlaySound: false,
+      shouldPlaySound: true,
       shouldShowAlert: true,
-      shouldSetBadge: false,
+      shouldSetBadge: true,
     }),
   });
 
@@ -44,21 +43,20 @@ export const usePushNotifications = (): PushNotificationState => {
         alert("Failed to get push token for push notification");
         return;
       }
-      token = await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig?.extra?.eas.projectId,
-      });
+      const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || "861dff78-8223-47e5-b92c-45d4f6ef4bdf";
+      token = await Notifications.getExpoPushTokenAsync({ projectId });
     } else {
       alert("Must be using a physical device for Push notifications");
     }
 
-    if (Platform.OS === "android") {
-      Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
-      });
-    }
+    // if (Platform.OS === "android") {
+    //   Notifications.setNotificationChannelAsync("default", {
+    //     name: "default",
+    //     importance: Notifications.AndroidImportance.MAX,
+    //     vibrationPattern: [0, 250, 250, 250],
+    //     lightColor: "#FF231F7C",
+    //   });
+    // }
 
     return token;
   }
@@ -110,5 +108,4 @@ export const sendPushNotification = async (expoPushToken: string) => {
     },
     body: JSON.stringify(message),
   });
-  return true;
 }
