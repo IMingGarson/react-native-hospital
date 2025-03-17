@@ -28,7 +28,7 @@
         "backgroundColor": "#222"
       },
       "package": "com.hospital.allgood",
-      "googleServiceFile": "./google-service.json",
+      "googleServiceFile": "./android/app/google-service.json",
       "orientation": "default",
       "softwareKeyboardLayoutMode": "pan"
     },
