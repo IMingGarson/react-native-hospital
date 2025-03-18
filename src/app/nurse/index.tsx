@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, StatusBar } from "react-native";
+import { Alert, View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Pressable } from "react-native";
 import { AsyncStorageGetItem, isJsonString } from '../utils';
 import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
 import { Document, Video, PatientProgressionData, APIPatientProgressionData, APISymptomRecord } from '../interfaces';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePushNotifications, sendPushNotification } from '../utils/usePushNotification';
 import { appTheme } from 'src/config/theme';
 
 export default function NurseScreen() {
-  const { expoPushToken } = usePushNotifications();
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
   const [currentRole, setCurrentRole] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
+
+  const toMinguoDate = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const minguoYear = year - 1911;
+    return `民國 ${minguoYear} 年 ${month} 月 ${day} 日`;
+  }
 
   const fetchPatientData = async () => {
     try {
@@ -39,6 +46,7 @@ export default function NurseScreen() {
           survey: isJsonString(d.survey_data) ? JSON.parse(d.survey_data) : [],
           records: d.symptom_records?.map((s: APISymptomRecord) => ({ date: s.date, data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : [] })),
           pushToken: d.push_token,
+          birthday: toMinguoDate(d.birthday)
         }));
         setPatientData(patients);
       } else {
@@ -56,9 +64,23 @@ export default function NurseScreen() {
   useEffect(() => { fetchPatientData(); }, []);
 
   const notifyPatient = async (pid: number, type: string, targetID: number = 0) => {
-    if (expoPushToken?.data) {
-      Alert.alert("推播測試", `TOKEN: ${expoPushToken.data}`);
-      await sendPushNotification(expoPushToken.data);
+    try {
+      const body = JSON.stringify({ patient_id: pid, type: type, target_id: targetID });
+      const token = await AsyncStorageGetItem('jwt');
+      const response = await fetch('https://allgood.peiren.info/api/user/notify_patient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: body
+      });
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('通知寄送成功');
+      } else {
+        Alert.alert('通知寄送失敗', data.message);
+      }
+    } catch (error) {
+      Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
+      console.error(error);
     }
   };
 
@@ -75,16 +97,15 @@ export default function NurseScreen() {
       <View style={styles.loadingContainer}><Text style={styles.loadingText}>取得資料中</Text></View>
     );
   }
-
   return (
     <>
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
-        <ScrollView>
+        <ScrollView showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>病人列表</Text>
           {patientData.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.patientCard} onPress={() => toggleExpand(item.id.toString())}>
+            <Pressable key={item.id} style={styles.patientCard} onPress={() => toggleExpand(item.id.toString())}>
               <Text style={styles.patientName}>{item.name}</Text>
-              <View style={styles.tag}><Text style={styles.patientInfo}>ID: {item.id}</Text></View>
+              <View style={styles.tag}><Text style={styles.patientInfo}>{item.birthday}</Text></View>
               {expandedId && expandedId === item.id.toString() && (
                 <View>
                   <Text style={styles.sectionTitle}>文件閱讀進度</Text>
@@ -109,7 +130,7 @@ export default function NurseScreen() {
                   ))}
                 </View>
               )}
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </ScrollView>
       </SafeAreaView>
@@ -119,7 +140,7 @@ export default function NurseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: appTheme.primary, paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 10 },
+  container: { flex: 1, backgroundColor: appTheme.primary, paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 0 : 10 },
   title: { fontSize: 28, color: appTheme.text, fontWeight: 'bold', marginVertical: 20 },
   patientCard: { backgroundColor: appTheme.background, borderRadius: 12, padding: 16, marginBottom: 16, shadowOpacity: 0.1, elevation: 3 },
   patientName: { fontSize: 22, color: appTheme.text, fontWeight: 'bold' },

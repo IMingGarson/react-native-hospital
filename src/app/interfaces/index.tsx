@@ -28,6 +28,7 @@ interface PatientProgressionData {
   document: Document[],
   records: SymptomRecord[],
   pushToken?: string,
+  birthday: string
 }
 
 interface APIPatientProgressionData { 
@@ -36,7 +37,8 @@ interface APIPatientProgressionData {
   video_progression_data: string,
   survey_data: string,
   symptom_records: APISymptomRecord[], 
-  push_token: string | null 
+  push_token: string | null,
+  birthday: string,
 }
 
 interface SymptomRecord {

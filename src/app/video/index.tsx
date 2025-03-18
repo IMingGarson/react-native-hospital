@@ -10,7 +10,6 @@ import {
   AppState,
   Modal,
   Platform,
-  StatusBar,
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEventListener  } from 'expo';
@@ -340,33 +339,31 @@ export default function VideoScreen() {
   }
   return (
     <>
-      <View style={styles.container}>
-        <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}>
-          <View style={styles.videoContainer}>
-            <VideoView 
-              style={styles.video} 
-              player={player}
-              allowsFullscreen 
-              allowsPictureInPicture
-            />
-          </View>
-          <FlatList
-            data={Object.values(progress)}
-            keyExtractor={(_, index) => index.toString()}
-            renderItem={({ item }) => {
-              const isCurrentVideo = item.id === currentVideo.id;
-              return (
-                <TouchableOpacity
-                  style={[styles.listItem, isCurrentVideo && styles.activeListItem]}
-                  onPress={() => selectVideo(item)}
-                >
-                  <Text style={styles.listItemTitle}>{item.title}</Text>
-                </TouchableOpacity>
-              );
-            }}
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}>
+        <View style={styles.videoContainer}>
+          <VideoView 
+            style={styles.video} 
+            player={player}
+            allowsFullscreen 
+            allowsPictureInPicture
           />
-        </SafeAreaView>
-      </View>
+        </View>
+        <FlatList
+          data={Object.values(progress)}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={({ item }) => {
+            const isCurrentVideo = item.id === currentVideo.id;
+            return (
+              <TouchableOpacity
+                style={[styles.listItem, isCurrentVideo && styles.activeListItem]}
+                onPress={() => selectVideo(item)}
+              >
+                <Text style={styles.listItemTitle}>{item.title}</Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </SafeAreaView>
       <BottomTabs role={currentRole} />
     </>
   );
@@ -446,13 +443,9 @@ const bottomsList = StyleSheet.create({
 
 const styles = StyleSheet.create({
   topSafeview: { 
-    flex: 0, 
-    backgroundColor: appTheme.primary,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: appTheme.primary,
+    flex: 1, 
+    backgroundColor: appTheme.primary, 
+    paddingTop: Platform.OS === 'android' ? 0 : 10
   },
   saveBotton: {
     paddingVertical: 5,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, Text, Modal, TouchableOpacity, AppState, Platform, StatusBar } from 'react-native';
+import { View, StyleSheet, Alert, Text, Modal, TouchableOpacity, AppState } from 'react-native';
 import { WebView } from 'react-native-webview';
 import RNPickerSelect from 'react-native-picker-select';
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils';
@@ -310,16 +310,37 @@ export default function PDFScreen() {
               selectPDF(itemValue);
             }
           }}
+          useNativeAndroidPickerStyle={false}
           items={pdfs}
+          fixAndroidTouchableBug={true}
           style={StyleSheet.create({
             inputIOSContainer: {
               paddingVertical: 15,
               paddingHorizontal: 10,
             },
-            placeholder: {color: "#000" },
-            inputIOS: { color: "#000" },
-            inputAndroid: { color: "#000" },
+            placeholder: { color: "#000" },
+            inputIOS: { 
+              fontSize: 16,
+              paddingVertical: 12,
+              paddingHorizontal: 10,
+              color: 'black',
+              paddingRight: 30,
+             },
+            inputAndroid: { 
+              fontSize: 18,
+              paddingVertical: 15,
+              paddingHorizontal: 15,
+              color: 'black',
+              paddingRight: 30,
+            },
+            iconContainer: {
+              paddingVertical: 15,
+              paddingHorizontal: 15
+            }
           })}
+          Icon={() => {
+            return <MaterialCommunityIcons name="chevron-down" size={24} color="black" />;
+          }}
         />
         { currentPDF ? (
           <View style={styles.webviewContainer}>
@@ -415,7 +436,7 @@ const styles = StyleSheet.create({
   topSafeview: { 
     flex: 0, 
     backgroundColor: appTheme.primary,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    paddingTop: 0,
   },
   container: {
     flex: 1,

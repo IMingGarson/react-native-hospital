@@ -8,11 +8,8 @@ import {
   TextInput,
   Text,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   Keyboard,
   TouchableWithoutFeedback,
-  Dimensions,
 } from 'react-native';
 import { appTheme } from 'src/config/theme';
 import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils';

@@ -30,7 +30,9 @@
       "package": "com.hospital.allgood",
       "googleServiceFile": "./android/app/google-service.json",
       "orientation": "default",
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "useNextNotificationsApi": true,
+      "permissions": ["RECEIVE_BOOT_COMPLETED"]
     },
     "web": {
       "favicon": "./src/assets/images/app-icon.png",

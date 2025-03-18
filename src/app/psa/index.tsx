@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
   topSafeview: { 
     flex: 0, 
     backgroundColor: appTheme.primary,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    paddingTop: 10
   },
   container: {
     flex: 1,
@@ -683,14 +683,16 @@ const styles = StyleSheet.create({
   },
   listTag: { 
     display: 'flex', 
-    width: 100, 
+    width: 120,
     flexDirection: 'row', 
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#ff0', 
     borderRadius: 5, 
-    borderColor: '#ffd', 
-    borderWidth: 1, 
+    borderColor: '#ff4', 
+    borderWidth: 2, 
     paddingHorizontal: 10, 
-    paddingVertical: 5 
+    paddingVertical: 5
   },
   listItem: {
     padding: 16,

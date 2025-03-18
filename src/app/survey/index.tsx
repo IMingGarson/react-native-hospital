@@ -76,7 +76,7 @@ export default function SurveyScreen() {
     
         const data = await response.json();
         if (response.ok) {
-          if (expoPushToken && typeof expoPushToken.data !== 'undefined' && !data.patient.push_token) {
+          if (expoPushToken && typeof expoPushToken.data !== 'undefined') {
             // update push token
             await fetch('https://allgood.peiren.info/api/patient/token', {
                 method: 'PATCH',
