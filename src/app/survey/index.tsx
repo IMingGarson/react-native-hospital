@@ -20,7 +20,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { AsyncStorageRemoveItem } from "../utils";
 import { MaterialCommunityIcons, FontAwesome, Foundation, MaterialIcons } from '@expo/vector-icons';
-import { usePushNotifications } from '../utils/usePushNotification';
+// import { usePushNotifications } from '../utils/usePushNotification';
 
 const symptoms = ["尿失禁", "頻尿", "腹瀉", "便祕", "疲憊", "情緒低落", "緊張", "缺乏活力", "熱潮紅", "其他"];
 interface PastSurvey {
@@ -47,7 +47,7 @@ export default function SurveyScreen() {
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [showDate, setShowDate] = useState<boolean>(false);
   const [pastSurvey, setPastSurvey] = useState<PastSurvey>({});
-  const { expoPushToken } = usePushNotifications();
+  // const { expoPushToken } = usePushNotifications();
   const router = useRouter();
 
   const fetchData = async () => {
@@ -76,17 +76,17 @@ export default function SurveyScreen() {
     
         const data = await response.json();
         if (response.ok) {
-          if (expoPushToken && typeof expoPushToken.data !== 'undefined') {
-            // update push token
-            await fetch('https://allgood.peiren.info/api/patient/token', {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ token: expoPushToken.data }),
-            });
-          }
+          // if (expoPushToken && typeof expoPushToken.data !== 'undefined') {
+          //   // update push token
+          //   await fetch('https://allgood.peiren.info/api/patient/token', {
+          //       method: 'PATCH',
+          //       headers: {
+          //         'Content-Type': 'application/json',
+          //         'Authorization': `Bearer ${token}`,
+          //       },
+          //       body: JSON.stringify({ token: expoPushToken.data }),
+          //   });
+          // }
           if (isJsonString(data.patient.survey_data)) {
             setAnswers(JSON.parse(data.patient.survey_data)); // latest survey data
           }

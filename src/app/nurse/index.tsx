@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Document, Video, PatientProgressionData, APIPatientProgressionData, APISymptomRecord } from '../interfaces';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { appTheme } from 'src/config/theme';
+import axios from 'axios';
 
 export default function NurseScreen() {
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
@@ -64,24 +65,50 @@ export default function NurseScreen() {
   useEffect(() => { fetchPatientData(); }, []);
 
   const notifyPatient = async (pid: number, type: string, targetID: number = 0) => {
-    try {
-      const body = JSON.stringify({ patient_id: pid, type: type, target_id: targetID });
-      const token = await AsyncStorageGetItem('jwt');
-      const response = await fetch('https://allgood.peiren.info/api/user/notify_patient', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: body
-      });
-      const data = await response.json();
-      if (response.ok) {
-        Alert.alert('通知寄送成功');
-      } else {
-        Alert.alert('通知寄送失敗', data.message);
-      }
-    } catch (error) {
-      Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
-      console.error(error);
+    const pushToken = `PUSH_TOKEN_${pid.toString()}`;
+    let body: string = '';
+    if (type == 'all') {
+      body = '提醒您記得觀看影片與文件喔 😊';
+    } else if (type == 'video') {
+      body = `提醒您記得觀看第 ${targetID} 部影片喔 😊`
+    } else if (type == 'document') {
+      body = `提醒您記得閱讀第 ${targetID} 篇文件喔 😊`;
     }
+    axios.post(`https://app.nativenotify.com/api/indie/notification`, {
+      subID: pushToken,
+      appId: 28399,
+      appToken: 'UWdYG1804clZ7YhxKB1yMd',
+      title: '📢 叮咚～您有一則通知',
+      message: body,
+    });
+    Alert.alert('通知寄送成功');
+    return true;
+    // const token = await AsyncStorageGetItem('jwt');
+    // const response = await fetch('https://allgood.peiren.info/api/user/notify_patient', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    //   body: body
+    // });
+    // const expoPushToken: string = 'ExponentPushToken[quwRIwJVusvbF6joNDyjPj]';
+    // await sendPushNotification({ expoPushToken, title, body });
+    // try {
+    //   const body = JSON.stringify({ patient_id: pid, type: type, target_id: targetID });
+    //   const token = await AsyncStorageGetItem('jwt');
+    //   const response = await fetch('https://allgood.peiren.info/api/user/notify_patient', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    //     body: body
+    //   });
+    //   const data = await response.json();
+    //   if (response.ok) {
+    //     Alert.alert('通知寄送成功');
+    //   } else {
+    //     Alert.alert('通知寄送失敗', data.message);
+    //   }
+    // } catch (error) {
+    //   Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
+    //   console.error(error);
+    // }
   };
 
   const [expandedId, setExpandedId] = useState<string | null>(null);

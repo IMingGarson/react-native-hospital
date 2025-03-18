@@ -1,22 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import Constants from "expo-constants";
 
 export interface PushNotificationState {
   expoPushToken?: Notifications.ExpoPushToken;
   notification?: Notifications.Notification;
 }
 
-export const usePushNotifications = (): PushNotificationState => {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
-      shouldShowAlert: true,
-      shouldSetBadge: true,
-    }),
-  });
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
+
+export const usePushNotifications = (): PushNotificationState => {
   const [expoPushToken, setExpoPushToken] = useState<
     Notifications.ExpoPushToken | undefined
   >();
@@ -43,20 +43,12 @@ export const usePushNotifications = (): PushNotificationState => {
         alert("Failed to get push token for push notification");
         return;
       }
-      const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || "861dff78-8223-47e5-b92c-45d4f6ef4bdf";
-      token = await Notifications.getExpoPushTokenAsync({ projectId });
+      // const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || "861dff78-8223-47e5-b92c-45d4f6ef4bdf";
+      // token = await Notifications.getExpoPushTokenAsync({ projectId });
+      token = await Notifications.getExpoPushTokenAsync();
     } else {
       alert("Must be using a physical device for Push notifications");
     }
-
-    // if (Platform.OS === "android") {
-    //   Notifications.setNotificationChannelAsync("default", {
-    //     name: "default",
-    //     importance: Notifications.AndroidImportance.MAX,
-    //     vibrationPattern: [0, 250, 250, 250],
-    //     lightColor: "#FF231F7C",
-    //   });
-    // }
 
     return token;
   }
@@ -77,10 +69,7 @@ export const usePushNotifications = (): PushNotificationState => {
       });
 
     return () => {
-      Notifications.removeNotificationSubscription(
-        notificationListener.current!
-      );
-
+      Notifications.removeNotificationSubscription(notificationListener.current!);
       Notifications.removeNotificationSubscription(responseListener.current!);
     };
   }, []);
@@ -91,15 +80,28 @@ export const usePushNotifications = (): PushNotificationState => {
   };
 };
 
-export const sendPushNotification = async (expoPushToken: string) => {
+interface PushNotificationContent {
+  expoPushToken: string;
+  title: string;
+  body: string;
+}
+
+export const sendPushNotification = async ({ expoPushToken, title, body }: PushNotificationContent) => {
+  // await Notifications.scheduleNotificationAsync({
+  //   content: {
+  //     title: title,
+  //     body: body,
+  //   },
+  //   trigger: null,
+  // });
   const message = {
     to: expoPushToken,
     sound: 'default',
-    title: '測試推播標題',
-    body: '測試推播內容',
+    title: title,
+    body: body,
   };
 
-  await fetch('https://exp.host/--/api/v2/push/send', {
+  const a = await fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
     headers: {
       Accept: 'application/json',
@@ -108,4 +110,5 @@ export const sendPushNotification = async (expoPushToken: string) => {
     },
     body: JSON.stringify(message),
   });
+  console.log(a);
 }

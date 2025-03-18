@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { registerIndieID } from 'native-notify';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -69,6 +70,8 @@ export default function RegisterScreen() {
 
       const data = await response.json();
       if (response.ok) {
+        const pushToken = `PUSH_TOKEN_${data.patient.id.toString()}`;
+        await registerIndieID(pushToken, 28399, 'UWdYG1804clZ7YhxKB1yMd');
         Alert.alert('註冊成功', '請回到首頁登入');
         router.replace('/login');
       } else {
