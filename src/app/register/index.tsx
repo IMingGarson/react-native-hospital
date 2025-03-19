@@ -70,8 +70,13 @@ export default function RegisterScreen() {
 
       const data = await response.json();
       if (response.ok) {
-        const pushToken = `PUSH_TOKEN_${data.patient.id.toString()}`;
-        await registerIndieID(pushToken, 28399, 'UWdYG1804clZ7YhxKB1yMd');
+        try {
+          const pushToken = `PUSH_TOKEN_${data.patient.id.toString()}`;
+          registerIndieID(pushToken, 28399, 'UWdYG1804clZ7YhxKB1yMd');
+        } catch (error) {
+          console.error(error);
+          Alert.alert('錯誤', '無法註冊推播通知');
+        }
         Alert.alert('註冊成功', '請回到首頁登入');
         router.replace('/login');
       } else {
