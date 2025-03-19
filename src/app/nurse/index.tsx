@@ -7,6 +7,7 @@ import { Document, Video, PatientProgressionData, APIPatientProgressionData, API
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { appTheme } from 'src/config/theme';
 import axios from 'axios';
+import { registerIndieID } from 'native-notify';
 
 export default function NurseScreen() {
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
@@ -62,7 +63,9 @@ export default function NurseScreen() {
     }
   };
 
-  useEffect(() => { fetchPatientData(); }, []);
+  useEffect(() => { 
+    fetchPatientData();
+  }, []);
 
   const notifyPatient = async (pid: number, type: string, targetID: number = 0) => {
     const pushToken = `PUSH_TOKEN_${pid.toString()}`;
@@ -76,8 +79,8 @@ export default function NurseScreen() {
     }
     axios.post(`https://app.nativenotify.com/api/indie/notification`, {
       subID: pushToken,
-      appId: 28399,
-      appToken: 'UWdYG1804clZ7YhxKB1yMd',
+      appId: 'A',
+      appToken: 'B',
       title: '📢 叮咚～您有一則通知',
       message: body,
     });
