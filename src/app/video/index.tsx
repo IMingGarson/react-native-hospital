@@ -308,7 +308,6 @@ export default function VideoScreen() {
             <Modal
               visible={showModal}
               transparent={true}
-              animationType="slide"
               onRequestClose={() => setShowModal(false)}
             >
               <View style={modal.modalContainer}>

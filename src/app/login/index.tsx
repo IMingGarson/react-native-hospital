@@ -1,5 +1,5 @@
-import styled from 'styled-components/native'
-import React, { useEffect, useState } from "react";
+import styled from 'styled-components/native';
+import React, { useEffect, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   Keyboard,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from 'react-native';
 import { appTheme } from 'src/config/theme';
 import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils';
@@ -17,258 +18,248 @@ import { Link } from 'expo-router';
 import { RadioButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
-export default function LoginScreen() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole] = useState("2");
-    const router = useRouter();
-    
-    const fetchLoginData = async () => {
-      const token = await AsyncStorageGetItem('jwt');
-      const role = await AsyncStorageGetItem('role');
-      if (!token || !role) {
-        return true;
-      }
-      // 自動登入
-      if (role === 'M') {
-        router.replace('/nurse');
-      } else {
-        router.replace('/survey');
-      }
-    }
+const LoginScreen: React.FC = (): JSX.Element => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [role, setRole] = useState<string>('2');
+  const [loading, setLoading] = useState<boolean>(false);
+  const router = useRouter();
 
-    useEffect(() => {
-      fetchLoginData();
-    }, []);
+  const fetchLoginData = async (): Promise<void> => {
+    const token = await AsyncStorageGetItem('jwt');
+    const storedRole = await AsyncStorageGetItem('role');
+    if (!token || !storedRole) return;
+    // 自動登入
+    router.replace(storedRole === 'M' ? '/nurse' : '/survey');
+  };
 
-    const toggleShowPassword = () => {
-      setShowPassword(!showPassword);
-    };
+  useEffect(() => {
+    fetchLoginData();
+  }, []);
 
-    const handleSignIn = async () => {
-      if (!email || !password || !["0", "1"].includes(role)) {
+  const toggleShowPassword = (): void => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const handleSignIn = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      if (!email || !password || !['0', '1'].includes(role)) {
         Alert.alert('錯誤', '所有欄位皆為必填');
         return;
       }
-      try {
-        // https://stackoverflow.com/questions/70972106/how-to-configure-proxy-in-emulators-in-new-versions-of-android-studio
-        const apiUrl = `https://allgood.peiren.info/api/${ role === "0" ? "user" : "patient"}/signin`
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        });
-  
-        const data = await response.json();
-        if (response.ok) {
-          const token = data.access_token;
-          const resRole = data.role;
-          if (!token || !['M', 'P'].includes(resRole)) {
-            Alert.alert('登入錯誤', '請通知負責人員');
-          } else {
-            const setToken = await AsyncStorageSetItem('jwt', token);
-            const setRole = await AsyncStorageSetItem('role', resRole);
-            if (!setToken || !setRole) {
-              Alert.alert('登入錯誤', '請先再試一次');
-            } else {
-              Alert.alert('登入成功');
-              // 醫護人員登入後會前往病人列表
-              if (resRole === 'M') {
-                router.replace('/nurse');
-              } else {
-                // 病人登入後會前往評量頁面
-                router.replace('/survey');
-              }
-            }
-          }
+      const apiUrl = `https://allgood.peiren.info/api/${role === '0' ? 'user' : 'patient'}/signin`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const token = data.access_token;
+        const resRole = data.role;
+        if (!token || !['M', 'P'].includes(resRole)) {
+          Alert.alert('登入錯誤', '請通知負責人員');
         } else {
-          Alert.alert('登入錯誤', '帳號密碼有誤');
+          const setTokenResult = await AsyncStorageSetItem('jwt', token);
+          const setRoleResult = await AsyncStorageSetItem('role', resRole);
+          if (!setTokenResult || !setRoleResult) {
+            Alert.alert('登入錯誤', '請先再試一次');
+          } else {
+            Alert.alert('登入成功');
+            router.replace(resRole === 'M' ? '/nurse' : '/survey');
+          }
         }
-      } catch (error) {
-        Alert.alert('登入錯誤', '無法連接伺服器，請稍後再試');
-        console.error(error);
+      } else {
+        Alert.alert('登入錯誤', '帳號密碼有誤');
       }
-    };
+    } catch (error) {
+      Alert.alert('登入錯誤', '無法連接伺服器，請稍後再試');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-      <View style={styles.container}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.ScreenContainer}>
-            <S.Content testID="home-screen-content">
-              <S.View>
-                <S.Text>帳號</S.Text>
+  return (
+    <View style={styles.container}>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <LoadingText>登入中</LoadingText>
+        </View>
+      )}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.screenContainer}>
+          <Content testID="home-screen-content">
+            <Wrapper>
+              <Label>帳號</Label>
+              <TextInput
+                style={styles.input}
+                value={email}
+                autoFocus
+                onChangeText={setEmail}
+              />
+              <Label>密碼</Label>
+              <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.input}
-                  value={email}
-                  autoFocus={true}
-                  onChangeText={setEmail}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
                 />
-                <S.Text>密碼</S.Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    style={styles.input}
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={setPassword}
-                  />
-                  <MaterialCommunityIcons
-                    name={showPassword ? 'eye-off' : 'eye'}
-                    size={20}
-                    color="#000"
-                    onPress={toggleShowPassword}
-                    style={{ marginLeft: -30 }}
-                  />
-                </View>
-                <View style={styles.inputContainer}>
-                  <View style={radioStyle.container}>
-                    <View style={radioStyle.radioGroup}>
-                      <View style={radioStyle.radioButton}>
-                        <RadioButton.Android
-                          value="0"
-                          status={role === "0" ? 'checked' : 'unchecked'}
-                          onPress={() => setRole("0")}
-                          color="#007BFF"
-                        />
-                        <Text style={radioStyle.radioLabel}>醫護人員</Text>
-                      </View>
-                      <View style={radioStyle.radioButton}>
-                        <RadioButton.Android
-                          value="1"
-                          status={role === "1" ? 'checked' : 'unchecked'}
-                          onPress={() => setRole("1")}
-                          color="#007BFF"
-                        />
-                        <Text style={radioStyle.radioLabel}>一般民眾</Text>
-                      </View>
+                <MaterialCommunityIcons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#000"
+                  onPress={toggleShowPassword}
+                  style={{ marginLeft: -30 }}
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <View style={radioStyle.container}>
+                  <View style={radioStyle.radioGroup}>
+                    <View style={radioStyle.radioButton}>
+                      <RadioButton.Android
+                        value="0"
+                        status={role === '0' ? 'checked' : 'unchecked'}
+                        onPress={() => setRole('0')}
+                        color="#007BFF"
+                      />
+                      <Text style={radioStyle.radioLabel}>醫護人員</Text>
+                    </View>
+                    <View style={radioStyle.radioButton}>
+                      <RadioButton.Android
+                        value="1"
+                        status={role === '1' ? 'checked' : 'unchecked'}
+                        onPress={() => setRole('1')}
+                        color="#007BFF"
+                      />
+                      <Text style={radioStyle.radioLabel}>一般民眾</Text>
                     </View>
                   </View>
                 </View>
-                <View style={bottomsList.container}>
-                  <TouchableOpacity
-                    onPress={handleSignIn}
-                    style={{ zIndex: 1 }}
-                  >
-                    <View style={bottomsList.button}>
-                      <Text style={{ fontSize: 20 }}>登入</Text>
-                    </View>
-                  </TouchableOpacity>
-                  <Link href="/register" style={bottomsList.button}>
-                    <Text style={{ fontSize: 20 }}>註冊</Text>
-                  </Link>
-                </View>
-              </S.View>
-            </S.Content>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    )
-  }
-  
-  const bottomsList = StyleSheet.create({
-    container: {
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      flexDirection: 'row',
-      paddingTop: 20,
-    },
-    button: {
-      borderWidth: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderColor: 'gray',
-      color: '#000',
-      borderRadius: 5,
-      backgroundColor: '#fff',
-      marginHorizontal: 45,
-    },
-  });
+              </View>
+              <View style={bottomsList.container}>
+                <TouchableOpacity onPress={handleSignIn} style={{ zIndex: 1 }}>
+                  <View style={bottomsList.button}>
+                    <Text style={{ fontSize: 20 }}>登入</Text>
+                  </View>
+                </TouchableOpacity>
+                <Link href="/register" style={bottomsList.button}>
+                  <Text style={{ fontSize: 20 }}>註冊</Text>
+                </Link>
+              </View>
+            </Wrapper>
+          </Content>
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
+  );
+};
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: appTheme.primary,
-    },
-    ScreenContainer: {
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column', 
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 10
-    },
-    radio: {
-      flexDirection: 'row',
-    },
-    btn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderColor: '#000',
-    },
-    input: {
-      width: '100%',
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      fontSize: 24,
-      backgroundColor: appTheme.background,
-      borderWidth: 1,
-      borderColor: '#d1d1d6',
-      borderRadius: 8,
-    },
-  });
-  
-  const S = {
-    View: styled.View`
-      gap: 10px;
-      background-color: ${appTheme.primary};
-    `,
-    Content: styled.View`
-      gap: 10px;
-    `,
-    Title: styled.Text`
-      font-size: ${(p) => p.theme.size(150, 'px')};
-    `,
-    Text: styled.Text`
-      color: ${(p) => p.theme.text};
-      font-family: madeRegular;
-      font-size: ${(p) => p.theme.size(18, 'px')};
-    `
-  }
-  
-  const radioStyle = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: appTheme.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    radioGroup: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 20,
-      borderRadius: 8,
-      backgroundColor: 'white',
-      padding: 16,
-      elevation: 4,
-    },
-    radioButton: {
-      flexDirection: 'row',
-    },
-    radioLabel: {
-      marginRight: 8,
-      fontSize: 16,
-      color: '#333',
-      alignSelf: 'center',
-    },
+export default LoginScreen;
+
+const bottomsList = StyleSheet.create({
+  container: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingTop: 20,
+  },
+  button: {
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderColor: 'gray',
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    marginHorizontal: 45,
+  },
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: appTheme.primary,
+  },
+  screenContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#000',
+  },
+  input: {
+    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    fontSize: 24,
+    backgroundColor: appTheme.background,
+    borderWidth: 1,
+    borderColor: '#d1d1d6',
+    borderRadius: 8,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+});
+
+const Content = styled.View`
+  gap: 10px;
+`;
+
+const Wrapper = styled.View`
+  gap: 10px;
+  background-color: ${appTheme.primary};
+`;
+
+const Label = styled.Text`
+  color: ${(p) => p.theme.text};
+  font-family: madeRegular;
+  font-size: ${(p) => p.theme.size(18, 'px')};
+`;
+
+const LoadingText = styled.Text`
+  color: #fff;
+  margin-top: 10px;
+  font-size: 18px;
+`;
+
+const radioStyle = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: appTheme.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    borderRadius: 8,
+    backgroundColor: 'white',
+    padding: 16,
+    elevation: 4,
+  },
+  radioButton: {
+    flexDirection: 'row',
+  },
+  radioLabel: {
+    marginRight: 8,
+    fontSize: 16,
+    color: '#333',
+    alignSelf: 'center',
+  },
 });

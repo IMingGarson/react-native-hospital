@@ -268,7 +268,6 @@ export default function PDFScreen() {
           <Modal
             visible={showModal}
             transparent={true}
-            animationType="slide"
             onRequestClose={() => setShowModal(false)}
           >
             <View style={modal.modalContainer}>

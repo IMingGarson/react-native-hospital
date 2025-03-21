@@ -85,7 +85,6 @@ export default function BottomTabs({ role, customedStyle }: Props) {
         <Modal
           visible={showModal}
           transparent={true}
-          animationType="slide"
           onRequestClose={() => setShowModal(false)}
         >
           <View style={modal.modalContainer}>

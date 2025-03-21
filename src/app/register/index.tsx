@@ -1,45 +1,45 @@
 import styled from 'styled-components/native';
-import { Text, StyleSheet, TextInput, View, Alert, TouchableOpacity, Button, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView } from "react-native";
+import { Text, StyleSheet, TextInput, View, Alert, TouchableOpacity, Button, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView, Pressable } from "react-native";
 import React, { useState } from "react";
 import { appTheme } from 'src/config/theme'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { registerIndieID } from 'native-notify';
 
 export default function RegisterScreen() {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showAgainPassword, setShowAgainPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showAgainPassword, setShowAgainPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [show, setShow] = useState(false);
-  const [inviteCode, setInviteCode] = useState("");
+  const [show, setShow] = useState<boolean>(false);
+  const [inviteCode, setInviteCode] = useState<string>('');
   const router = useRouter();
 
-  const onChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
-    const currentDate = selectedDate;
-    setDate(currentDate);
+  const onChange = (_: DateTimePickerEvent, selectedDate: Date | undefined): void => {
+    setDate(selectedDate);
     setShow(false);
   };
 
-  const showMode = () => {
+  const showMode = (): void => {
     setShow(true);
   };
 
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
+  const toggleShowPassword = (): void => {
+    setShowPassword((prev) => !prev);
   };
 
-  const toggleShowAgainPassword = () => {
-    setShowAgainPassword(!showAgainPassword);
-  }
+  const toggleShowAgainPassword = (): void => {
+    setShowAgainPassword((prev) => !prev);
+  };
 
-  const handleSignup = async () => {
+  const handleSignup = async (): Promise<void> => {
     if (!email || !password || !confirmPassword || !name || !date || !inviteCode) {
       Alert.alert('錯誤', '所有欄位皆為必填');
       return;
@@ -72,7 +72,7 @@ export default function RegisterScreen() {
       if (response.ok) {
         try {
           const pushToken = `PUSH_TOKEN_${data.patient.id.toString()}`;
-          registerIndieID(pushToken, 28399, 'UWdYG1804clZ7YhxKB1yMd');
+          registerIndieID(pushToken, 1, 'Bdvdvdee');
         } catch (error) {
           console.error(error);
           Alert.alert('錯誤', '無法註冊推播通知');
@@ -94,7 +94,7 @@ export default function RegisterScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
           <TouchableOpacity 
-            style={{ zIndex: 1 }}
+            style={{ zIndex: 1, width: '30%' }}
             onPress={() => router.back()}
           >
             <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
@@ -168,22 +168,31 @@ export default function RegisterScreen() {
                 />
               </View>
               <S.Text>生日</S.Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={[styles.input]}
-                  value={date?.toISOString().split('T')[0]}
-                  readOnly
-                />
-                {show && (
-                  <DateTimePicker
-                    display={Platform.OS === 'ios' ? 'default' : 'spinner'}
-                    value={date || new Date()}
-                    mode="date"
-                    onChange={onChange}
+              <Pressable onPress={showMode}>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={[styles.input]}
+                    value={date?.toISOString().split('T')[0]}
+                    readOnly
                   />
-                )}
-              </View>
-              <Button onPress={showMode} title="選擇日期" />
+                  <MaterialIcons
+                    name={'touch-app'}
+                    size={20}
+                    color="#000"
+                    style={{ 'marginLeft': -30 }}
+                  />
+                  {show && (
+                    <DateTimePicker
+                      display={Platform.OS === 'ios' ? 'default' : 'spinner'}
+                      value={date || new Date()}
+                      mode="date"
+                      onChange={onChange}
+                    />
+                  )}
+                </View>
+              </Pressable>
+              
+              {/* <Button onPress={showMode} title="選擇日期" /> */}
           
             </View>
           </TouchableWithoutFeedback>
