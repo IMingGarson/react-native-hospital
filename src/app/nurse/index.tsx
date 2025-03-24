@@ -76,14 +76,6 @@ export default function NurseScreen() {
     } else if (type == 'document') {
       body = `提醒您記得閱讀第 ${targetID} 篇文件喔 😊`;
     }
-    // axios.post(`https://app.nativenotify.com/api/indie/notification`, {
-    //   subID: `PUSH_TOKEN_${pid}`,
-    //   appId: 28399,
-    //   appToken: 'UWdYG1804clZ7YhxKB1yMd',
-    //   title: '📢 叮咚～您有一則通知',
-    //   message: body,
-    // });
-    // Alert.alert('通知寄送成功');
 
     const message = {
       to: pid,
@@ -91,7 +83,7 @@ export default function NurseScreen() {
       title: '📢 叮咚～您有一則通知',
       body: body,
       data: {
-        url: 'video'
+        url: type
       }
     };
 
