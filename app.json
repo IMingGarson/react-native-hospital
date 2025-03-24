@@ -44,6 +44,14 @@
       "translucent": true
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "allgood-info",
+          "color": "#ffffff",
+          "enableBackgroundRemoteNotifications": true
+        }
+      ],
       "expo-router",
       "expo-font",
       [

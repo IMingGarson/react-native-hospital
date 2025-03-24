@@ -111,10 +111,10 @@ const LoginScreen: React.FC = (): JSX.Element => {
                 />
                 <MaterialCommunityIcons
                   name={showPassword ? 'eye-off' : 'eye'}
-                  size={20}
+                  size={30}
                   color="#000"
                   onPress={toggleShowPassword}
-                  style={{ marginLeft: -30 }}
+                  style={{ marginLeft: -40 }}
                 />
               </View>
               <View style={styles.inputContainer}>

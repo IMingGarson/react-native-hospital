@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity, StatusBar, Dimensions } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import BottomTabs from '../bottomTabs';
 import { PSAData } from '../interfaces';
@@ -98,7 +98,6 @@ export default function PSAList() {
         console.error('獲取PSA記錄時發生錯誤:', error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -117,7 +116,7 @@ export default function PSAList() {
     });
     const data = await response.json();
     if (response.ok) {
-      const pData = data.patients.map((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string, survey_data: string }[] }) => {
+      const pData = data?.patients.map((d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string, survey_data: string }[] }) => {
         return {
           id: d.id,
           name: d.name,
@@ -125,11 +124,9 @@ export default function PSAList() {
           label: d.name
         }
       });
-      setPatientOptions(pData);
-      if (currentPatient.id < 0) {
+      if (pData.length > 0) {
+        setPatientOptions(pData);
         setCurrentPatient(pData[0]);
-      } else {
-        setCurrentPatient(currentPatient);
       }
     } else {
       return false;

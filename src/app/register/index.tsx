@@ -1,5 +1,5 @@
 import styled from 'styled-components/native';
-import { Text, StyleSheet, TextInput, View, Alert, TouchableOpacity, Button, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView, Pressable } from "react-native";
+import { Text, StyleSheet, TextInput, View, Alert, TouchableOpacity, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView, Pressable } from "react-native";
 import React, { useState } from "react";
 import { appTheme } from 'src/config/theme'
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,7 +7,6 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { registerIndieID } from 'native-notify';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState<string>('');
@@ -70,13 +69,6 @@ export default function RegisterScreen() {
 
       const data = await response.json();
       if (response.ok) {
-        try {
-          const pushToken = `PUSH_TOKEN_${data.patient.id.toString()}`;
-          registerIndieID(pushToken, 1, 'Bdvdvdee');
-        } catch (error) {
-          console.error(error);
-          Alert.alert('錯誤', '無法註冊推播通知');
-        }
         Alert.alert('註冊成功', '請回到首頁登入');
         router.replace('/login');
       } else {
@@ -291,22 +283,22 @@ const styles = StyleSheet.create({
       backgroundColor: '#1c1c1e',
       borderColor: '#3a3a3c',
     },
-  });
+});
 
- const S = {
-    View: styled.View`
-      gap: 10px;
-      background-color: ${appTheme.background};
-    `,
-    Content: styled.View`
-      gap: 10px;
-    `,
-    Title: styled.Text`
-      font-size: ${(p) => p.theme.size(150, 'px')};
-    `,
-    Text: styled.Text`
-      color: ${(p) => p.theme.text};
-      font-family: madeRegular;
-      font-size: ${(p) => p.theme.size(18, 'px')};
-    `
-  }
+const S = {
+  View: styled.View`
+    gap: 10px;
+    background-color: ${appTheme.background};
+  `,
+  Content: styled.View`
+    gap: 10px;
+  `,
+  Title: styled.Text`
+    font-size: ${(p) => p.theme.size(150, 'px')};
+  `,
+  Text: styled.Text`
+    color: ${(p) => p.theme.text};
+    font-family: madeRegular;
+    font-size: ${(p) => p.theme.size(18, 'px')};
+  `
+}

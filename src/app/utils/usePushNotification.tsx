@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 
 export interface PushNotificationState {
   expoPushToken?: Notifications.ExpoPushToken;
@@ -43,9 +44,8 @@ export const usePushNotifications = (): PushNotificationState => {
         alert("Failed to get push token for push notification");
         return;
       }
-      // const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || "861dff78-8223-47e5-b92c-45d4f6ef4bdf";
-      // token = await Notifications.getExpoPushTokenAsync({ projectId });
-      token = await Notifications.getExpoPushTokenAsync();
+      const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || "861dff78-8223-47e5-b92c-45d4f6ef4bdf";
+      token = await Notifications.getExpoPushTokenAsync({ projectId });
     } else {
       alert("Must be using a physical device for Push notifications");
     }
@@ -65,6 +65,7 @@ export const usePushNotifications = (): PushNotificationState => {
 
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
+        Notifications.dismissAllNotificationsAsync();
         console.log(response);
       });
 
