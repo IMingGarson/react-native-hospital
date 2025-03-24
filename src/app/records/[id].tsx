@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Platform, TouchableOpacity, Alert, Pressable } from "react-native";
+import { View, Text, StyleSheet, TextInput, Platform, TouchableOpacity, Alert, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { AsyncStorageGetItem, isJsonString } from '../utils';
