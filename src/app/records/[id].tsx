@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Platform, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TextInput, Button, Platform, TouchableOpacity, Alert, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { AsyncStorageGetItem, isJsonString } from '../utils';
 import { PatientProgressionData, SymptomRecord, Survey } from '../interfaces';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function SurveyRecordScreen() {
     const { id: PATH_ID } = useLocalSearchParams();
@@ -167,20 +168,29 @@ export default function SurveyRecordScreen() {
     const AndroidDateTimePicker = () => {
         return (
             <>
-                { showDate && (
-                    <DateTimePicker
-                        display={Platform.OS === 'ios' ? 'default' : 'calendar'}
-                        value={new Date(date)}
-                        mode="date"
-                        onChange={onChange}
+                <Pressable onPress={() => setShowDate(true)}>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                        readOnly
+                        style={styles.input}
+                        value={date}
                     />
-                )}
-                <TextInput
-                    readOnly
-                    style={styles.input}
-                    value={date}
-                />
-                <Button onPress={() => setShowDate(true)} color="#007BFF" title="選擇日期" />
+                    <MaterialIcons
+                      name={'touch-app'}
+                      size={30}
+                      color="#000"
+                      style={{ 'marginLeft': -40 }}
+                    />
+                    { showDate && (
+                        <DateTimePicker
+                            display='calendar'
+                            value={new Date(date)}
+                            mode="date"
+                            onChange={onChange}
+                        />
+                    )}
+                  </View>
+                </Pressable>
                 <View style={{ height: "1%" }}></View>
             </>
         )
@@ -242,14 +252,21 @@ const styles = StyleSheet.create({
         fontFamily: 'System',
         marginBottom: 15,
     },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderColor: '#000',
+        paddingVertical: 10,
+    },
     input: {
-        backgroundColor: '#f1f1f1',
-        padding: 15,
-        borderRadius: 8,
+        width: '100%',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        fontSize: 24,
+        backgroundColor: '#f9f9f9',
         borderWidth: 1,
-        borderColor: '#ddd',
-        marginBottom: 15,
-        fontSize: 18,
+        borderColor: '#d1d1d6',
+        borderRadius: 8,
     },
     progress: {
         fontSize: 18,

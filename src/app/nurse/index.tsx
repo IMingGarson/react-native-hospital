@@ -8,18 +8,7 @@ import { useRouter } from 'expo-router';
 import { Document, Video, PatientProgressionData, APIPatientProgressionData, APISymptomRecord } from '../interfaces';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { appTheme } from 'src/config/theme';
-// import axios from 'axios';
-// import * as Device from 'expo-device';
-// import * as Notifications from 'expo-notifications';
-// import Constants from 'expo-constants';
-
-// Notifications.setNotificationHandler({
-//   handleNotification: async () => ({
-//     shouldShowAlert: true,
-//     shouldPlaySound: true,
-//     shouldSetBadge: false,
-//   }),
-// });
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 export default function NurseScreen() {
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
@@ -127,92 +116,6 @@ export default function NurseScreen() {
 
   const timeStamp = (time: number) => `${Math.floor(time / 60)}分${(time % 60).toString().padStart(2, '0')}秒`;
 
-  /* EXPO NOTIFICATION SETUP */
-  // const [deepLink, setDeepLink] = useState<string>("");
-  // const [expoPushToken, setExpoPushToken] = useState('');
-  // const [channels, setChannels] = useState<Notifications.NotificationChannel[]>([]);
-  // const [notification, setNotification] = useState<Notifications.Notification | undefined>(
-  //   undefined
-  // );
-  // const notificationListener = useRef<Notifications.EventSubscription>();
-  // const responseListener = useRef<Notifications.EventSubscription>();
-  // const registerForPushNotificationsAsync = async() => {
-  //   let token;
-  //   if (Platform.OS === 'android') {
-  //     await Notifications.setNotificationChannelAsync('allgood-project', {
-  //       name: 'allgood-project',
-  //       importance: Notifications.AndroidImportance.MAX,
-  //       vibrationPattern: [0, 250, 250, 250],
-  //       lightColor: '#FF231F7C',
-  //     });
-  //   }
-
-  //   if (Device.isDevice) {
-  //     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  //     let finalStatus = existingStatus;
-  //     if (existingStatus !== 'granted') {
-  //       const { status } = await Notifications.requestPermissionsAsync();
-  //       finalStatus = status;
-  //     }
-  //     if (finalStatus !== 'granted') {
-  //       alert('Failed to get push token for push notification!');
-  //       return;
-  //     }
-  //     try {
-  //       const projectId =
-  //         Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-  //       if (!projectId) {
-  //         throw new Error('Project ID not found');
-  //       }
-  //       token = (
-  //         await Notifications.getExpoPushTokenAsync({
-  //           projectId,
-  //         })
-  //       ).data;
-  //     } catch (e) {
-  //       token = `${e}`;
-  //     }
-  //   } else {
-  //     alert('Must use physical device for Push Notifications');
-  //     return "";
-  //   }
-  //   return token;
-  // }
-  // useEffect(() => {
-  //   if (deepLink === 'video' || deepLink === 'document') {
-  //     router.replace("/" + deepLink);
-  //   }
-  // }, [deepLink])
-
-  // useEffect(() => {
-  //   registerForPushNotificationsAsync().then(token => token && setExpoPushToken(token));
-
-  //   if (Platform.OS === 'android') {
-  //     Notifications.getNotificationChannelsAsync().then(value => setChannels(value ?? []));
-  //   }
-  //   notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-  //     console.log("received", notification.request.content);
-  //     setNotification(notification);
-  //   });
-
-  //   responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-  //     console.log("response", response.notification.request.content);
-  //     Notifications.dismissAllNotificationsAsync();
-  //     const url = response.notification.request.content.data?.url;
-  //     if (url) {
-  //       setDeepLink(url);
-  //     }
-  //   });
-
-  //   return () => {
-  //     notificationListener.current &&
-  //       Notifications.removeNotificationSubscription(notificationListener.current);
-  //     responseListener.current &&
-  //       Notifications.removeNotificationSubscription(responseListener.current);
-  //   };
-  // }, []);
-  /* END OF EXPO NOTIFICATION SETUP */
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}><Text style={styles.loadingText}>取得資料中</Text></View>
@@ -226,7 +129,9 @@ export default function NurseScreen() {
           {patientData.map((item: PatientProgressionData) => (
             <Pressable key={item.id} style={styles.patientCard} onPress={() => toggleExpand(item.id.toString())}>
               <Text style={styles.patientName}>{item.name}</Text>
-              <View style={styles.tag}><Text style={styles.patientInfo}>{item.birthday}</Text></View>
+              <View style={styles.tag}>
+                <Text style={styles.patientInfo}>{item.birthday}</Text>
+              </View>
               {expandedId && expandedId === item.id.toString() && (
                 <View>
                   <Text style={styles.sectionTitle}>文件閱讀進度</Text>
@@ -249,6 +154,16 @@ export default function NurseScreen() {
                       </TouchableOpacity>
                     </View>
                   ))}
+                  <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <Text style={styles.sectionTitle}>查看病人症狀</Text>
+                    <Pressable onPress={() => {router.push(`/records/${item.id}`)}}>
+                      <AntDesign name="rightcircle" size={24} color="black" style={{
+                        marginLeft: 15,
+                        marginTop: 15
+                      }} />
+                    </Pressable>
+                  </View>
+                  
                 </View>
               )}
             </Pressable>
