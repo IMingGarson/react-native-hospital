@@ -76,7 +76,6 @@ export default function NurseScreen() {
     } else if (type == 'document') {
       body = `提醒您記得閱讀第 ${targetID} 篇文件喔 😊`;
     }
-
     const message = {
       to: pid,
       sound: 'default',
