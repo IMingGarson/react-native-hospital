@@ -317,6 +317,7 @@ const SurveyScreen: React.FC = () => {
       <View style={{ flex: 1 }}>
         <SafeAreaView edges={['top']} style={styles.topSafeview}>
           <View style={styles.container}>
+            <Text style={styles.questionText}>{expoPushToken}</Text>
             <ScrollView contentContainerStyle={styles.scrollContent}>
               { Platform.OS === 'android' && (
                 <Pressable onPress={() => setShowDate(true)}>
@@ -343,28 +344,6 @@ const SurveyScreen: React.FC = () => {
                   </View>
                 </Pressable>
               )}
-              {/* {Platform.OS === 'android' && (
-                <>
-                  {showDate && (
-                    <DateTimePicker
-                      display="spinner"
-                      value={new Date(date)}
-                      mode="date"
-                      onChange={onDateChange}
-                    />
-                  )}
-                  <TouchableOpacity onPress={() => setShowDate(true)}>
-                    <TextInput readOnly style={styles.input} value={date} />
-                  </TouchableOpacity>
-                  <Button onPress={() => setShowDate(true)} title="選擇日期" />
-                  <MaterialIcons
-                    name={'touch-app'}
-                    size={20}
-                    color="#000"
-                    style={{ 'marginLeft': -30 }}
-                  />
-                </>
-              )} */}
               {Platform.OS === 'ios' && (
                 <View style={styles.datePickerContainer}>
                   <Text style={styles.datePickerLabel}>選擇日期</Text>
