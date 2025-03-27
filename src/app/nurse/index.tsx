@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
  
-import React, { useEffect, useRef, useState } from 'react';
+ 
+import React, { useEffect, useState } from 'react';
 import { Alert, View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Pressable } from "react-native";
+import axios from 'axios';
 import { AsyncStorageGetItem, isJsonString } from '../utils';
 import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
@@ -76,25 +77,35 @@ export default function NurseScreen() {
     } else if (type == 'document') {
       body = `提醒您記得閱讀第 ${targetID} 篇文件喔 😊`;
     }
-    const message = {
-      to: pid,
-      sound: 'default',
+    // const message = {
+    //   to: pid,
+    //   sound: 'default',
+    //   title: '📢 叮咚～您有一則通知',
+    //   body: body,
+    //   data: {
+    //     url: type
+    //   }
+    // };
+    await axios.post(`https://app.nativenotify.com/api/indie/notification`, {
+      subID: `PUSH_ID_${pid}`,
+      appId: 28399,
+      appToken: 'UWdYG1804clZ7YhxKB1yMd',
       title: '📢 叮咚～您有一則通知',
-      body: body,
-      data: {
-        url: type
+      message: body,
+      pushData: {
+        "_page": type
       }
-    };
-
-    await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message),
     });
+  
+    // await fetch('https://exp.host/--/api/v2/push/send', {
+    //   method: 'POST',
+    //   headers: {
+    //     Accept: 'application/json',
+    //     'Accept-encoding': 'gzip, deflate',
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(message),
+    // });
     Alert.alert('通知寄送成功');
     return true;
   };
@@ -130,7 +141,7 @@ export default function NurseScreen() {
                     <View key={idx} style={styles.detailContainer}>
                       <Text style={styles.detailText}>{doc.label}</Text>
                       <Text style={styles.timeText}>{timeStamp(doc.duration)}</Text>
-                      <TouchableOpacity style={styles.notifyButton} onPress={() => notifyPatient(item.pushToken ?? "", 'document', idx + 1)}>
+                      <TouchableOpacity style={styles.notifyButton} onPress={(e) => {e.stopPropagation(); notifyPatient(item.id.toString(), 'document', idx + 1)}}>
                         <Text style={styles.notifyText}>通知</Text>
                       </TouchableOpacity>
                     </View>
@@ -140,7 +151,7 @@ export default function NurseScreen() {
                     <View key={idx} style={styles.detailContainer}>
                       <Text style={styles.detailText}>{video.title}</Text>
                       <Text style={styles.timeText}>{timeStamp(video.duration)}</Text>
-                      <TouchableOpacity style={styles.notifyButton} onPress={() => notifyPatient(item.pushToken ?? "", 'video', idx + 1)}>
+                      <TouchableOpacity style={styles.notifyButton} onPress={(e) => {e.stopPropagation(); notifyPatient(item.id.toString(), 'video', idx + 1)}}>
                         <Text style={styles.notifyText}>通知</Text>
                       </TouchableOpacity>
                     </View>

@@ -68,7 +68,12 @@ const LoginScreen: React.FC = (): JSX.Element => {
             Alert.alert('登入錯誤', '請先再試一次');
           } else {
             Alert.alert('登入成功');
-            router.replace(resRole === 'M' ? '/nurse' : '/survey');
+            // 註冊 Push Notification Token
+            if (resRole === 'P') {
+              router.replace('/survey');
+            } else {
+              router.replace('/nurse');
+            }
           }
         }
       } else {

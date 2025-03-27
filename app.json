@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Expo Router Typescript",
+    "name": "病人管理系统",
     "slug": "hospital-allgood",
     "scheme": "app",
     "version": "1.0.0",
@@ -8,6 +8,13 @@
     "icon": "./src/assets/images/app-icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "env": {
+      "nativeNotify": {
+        "appID": 28399,
+        "appToken": "UWdYG1804clZ7YhxKB1yMd"
+      },
+      "BASE_URL": "https://allgood.peiren.info"
+    },
     "splash": {
       "image": "./src/assets/images/splash.png",
       "backgroundColor": "#222"
@@ -28,7 +35,7 @@
         "backgroundColor": "#222"
       },
       "package": "com.hospital.allgood",
-      "googleServiceFile": "./android/app/google-services.json",
+      "googleServicesFile": "./google-services.json",
       "orientation": "default",
       "softwareKeyboardLayoutMode": "pan",
       "useNextNotificationsApi": true,

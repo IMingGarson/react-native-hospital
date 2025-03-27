@@ -1,3 +1,4 @@
+ 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -28,6 +29,7 @@ import {
 import { appTheme } from 'src/config/theme';
 import { Survey } from '../interfaces';
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils';
+import registerNNPushToken ,{ registerIndieID } from 'native-notify';
 
 const symptoms = [
   '尿失禁',
@@ -59,8 +61,8 @@ interface BottomTabsProps {
 const usePushNotifications = (): { expoPushToken: string; deepLink: string } => {
   const [expoPushToken, setExpoPushToken] = useState<string>('');
   const [deepLink, setDeepLink] = useState<string>('');
-  const notificationListener = useRef<Notifications.Subscription | null>(null);
-  const responseListener = useRef<Notifications.Subscription | null>(null);
+  const notificationListener = useRef<Notifications.EventSubscription | null>(null);
+  const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   const registerForPushNotificationsAsync = useCallback(async (): Promise<string> => {
     if (Platform.OS === 'android') {
@@ -89,7 +91,8 @@ const usePushNotifications = (): { expoPushToken: string; deepLink: string } => 
         if (!projectId) {
           throw new Error('Project ID not found');
         }
-        const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+        // const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+        const tokenResponse = await Notifications.getDevicePushTokenAsync();
         return tokenResponse.data;
       } catch (error) {
         return String(error);
@@ -112,9 +115,16 @@ const usePushNotifications = (): { expoPushToken: string; deepLink: string } => 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log('Notification Response:', response.notification.request.content);
       Notifications.dismissAllNotificationsAsync();
-      const url = response.notification.request.content.data?.url;
+      const url = response.notification.request.content.data?._page;
       if (url) {
-        setDeepLink(url);
+        switch (url) {
+          case "video":
+          case "document":
+            setDeepLink(url);
+            break;
+          default:
+            break;
+        }
       }
     });
 
@@ -132,6 +142,11 @@ const usePushNotifications = (): { expoPushToken: string; deepLink: string } => 
 };
 
 const SurveyScreen: React.FC = () => {
+  registerNNPushToken(
+    Constants.expoConfig.env.nativeNotify.appID, 
+    Constants.expoConfig.env.nativeNotify.appToken
+  );
+  const BASE_URL = Constants.expoConfig.env.BASE_URL;
   const router = useRouter();
   const { expoPushToken, deepLink } = usePushNotifications();
   const [answers, setAnswers] = useState<Survey[]>(() =>
@@ -191,7 +206,7 @@ const SurveyScreen: React.FC = () => {
         router.replace('/login');
         return;
       }
-      const response = await fetch('https://allgood.peiren.info/api/patient/get', {
+      const response = await fetch(`${BASE_URL}/api/patient/get`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -225,6 +240,11 @@ const SurveyScreen: React.FC = () => {
             );
           }
         }
+        registerIndieID(
+          `PUSH_ID_${data.patient.id}`, 
+          Constants.expoConfig.env.nativeNotify.appID, 
+          Constants.expoConfig.env.nativeNotify.appToken
+        );
       }
     } catch (error) {
       console.error('Error fetching survey data:', error);
@@ -233,7 +253,7 @@ const SurveyScreen: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, []);
 
   const toggleSymptom = useCallback((index: number, hasSymptom: boolean) => {
     setAnswers((prev) =>
@@ -262,7 +282,7 @@ const SurveyScreen: React.FC = () => {
     });
   }, []);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     try {
       const token = await AsyncStorageGetItem('jwt');
       if (!token) {
@@ -277,7 +297,7 @@ const SurveyScreen: React.FC = () => {
         },
         body: JSON.stringify({
           survey_data: JSON.stringify(answers),
-          date,
+          date: date.toISOString().split('T')[0],
         }),
       });
       if (response.ok) {
@@ -288,8 +308,7 @@ const SurveyScreen: React.FC = () => {
       Alert.alert('失敗', '儲存進度時發生錯誤');
       console.error('Error submitting survey:', error);
     }
-    router.reload();
-  }, [answers, date, fetchData, router]);
+  };
 
   const onDateChange = useCallback(
     (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
@@ -317,7 +336,7 @@ const SurveyScreen: React.FC = () => {
       <View style={{ flex: 1 }}>
         <SafeAreaView edges={['top']} style={styles.topSafeview}>
           <View style={styles.container}>
-            <Text style={styles.questionText}>{expoPushToken}</Text>
+            {/* <Text style={styles.questionText}>{expoPushToken}</Text> */}
             <ScrollView contentContainerStyle={styles.scrollContent}>
               { Platform.OS === 'android' && (
                 <Pressable onPress={() => setShowDate(true)}>
@@ -546,7 +565,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#663300',
-    paddingBottom: 0,
+    paddingVertical: 10,
   },
   optionsContainer: {
     flex: 1,

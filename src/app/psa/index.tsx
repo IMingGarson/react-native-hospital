@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { PSAData } from '../interfaces';
 import { AsyncStorageGetItem } from '../utils';
 import { appTheme } from 'src/config/theme';
 
+// 回傳 n 天前的日期
 const daysAgo = (n: number): Date => {
   const d = new Date();
   d.setDate(d.getDate() - Math.abs(n));
@@ -29,10 +30,14 @@ const daysAgo = (n: number): Date => {
 
 export default function PSAList() {
   const router = useRouter();
-  const [psaData, setPsaData] = useState<PSAData[]>([]);
+
+  // 狀態定義
+  const [allPSAData, setAllPSAData] = useState<PSAData[]>([]);
   const [psa, setPsa] = useState<string>('');
+
+  // 預設顯示過去兩週的資料 (P 與 M 都如此)
   const [searchStartDate, setSearchStartDate] = useState<string>(
-    daysAgo(7).toISOString().split('T')[0]
+    daysAgo(14).toISOString().split('T')[0]
   );
   const [searchEndDate, setSearchEndDate] = useState<string>(
     daysAgo(0).toISOString().split('T')[0]
@@ -40,12 +45,15 @@ export default function PSAList() {
   const [addDate, setAddDate] = useState<string>(
     daysAgo(0).toISOString().split('T')[0]
   );
+
   const [currentRole, setCurrentRole] = useState<string>('');
   const [isSearchModalVisible, setSearchModalVisible] = useState<boolean>(false);
   const [isCreateModalVisible, setCreateModalVisible] = useState<boolean>(false);
   const [showStartDate, setShowStartDate] = useState<boolean>(false);
   const [showEndDate, setShowEndDate] = useState<boolean>(false);
   const [showAddDate, setShowAddDate] = useState<boolean>(false);
+
+  // 當角色為 M 時，需有病患選擇功能
   const [patientOptions, setPatientOptions] = useState<
     { id: number; name: string; value: string; label: string }[]
   >([]);
@@ -56,6 +64,15 @@ export default function PSAList() {
     label: string;
   }>({ id: -1, name: '', value: '', label: '' });
 
+  // 根據搜尋日期過濾資料
+  const filteredData = useMemo(() => {
+    return allPSAData.filter((item) => {
+      const itemDate = new Date(item.date);
+      return itemDate >= new Date(searchStartDate) && itemDate <= new Date(searchEndDate);
+    });
+  }, [allPSAData, searchStartDate, searchEndDate]);
+
+  // 日期 picker onChange 回呼
   const searchStartDateOnChange = useCallback(
     (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
       if (selectedDate) {
@@ -68,12 +85,12 @@ export default function PSAList() {
 
   const searchEndDateOnChange = useCallback(
     (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
-      if (searchStartDate && selectedDate && selectedDate < new Date(searchStartDate)) {
-        Alert.alert('錯誤', '結束日期不可早於開始日期');
-        setShowEndDate(false);
-        return;
-      }
       if (selectedDate) {
+        if (selectedDate < new Date(searchStartDate)) {
+          Alert.alert('錯誤', '結束日期不可早於開始日期');
+          setShowEndDate(false);
+          return;
+        }
         setSearchEndDate(selectedDate.toISOString().split('T')[0]);
       }
       setShowEndDate(false);
@@ -96,52 +113,58 @@ export default function PSAList() {
     []
   );
 
-  const fetchPatientData = useCallback(async (): Promise<boolean> => {
-    const token = await AsyncStorageGetItem('jwt');
-    const response = await fetch('https://allgood.peiren.info/api/patient', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await response.json();
-    if (response.ok) {
-      const pData = data?.patients.map(
-        (d: {
-          id: string;
-          name: string;
-          document_progression_data: string;
-          video_progression_data: string;
-          survey_data: string;
-          symptom_records: { date: string; survey_data: string }[];
-        }) => ({
-          id: Number(d.id),
-          name: d.name,
-          value: `${d.id}. ${d.name}`,
-          label: d.name,
-        })
-      );
-      if (pData.length > 0) {
-        setPatientOptions(pData);
-        setCurrentPatient(pData[0]);
+  // 取得所有病患資料 (僅角色為 M 時使用)
+  const fetchPatientData = async (): Promise<boolean> => {
+    try {
+      const token = await AsyncStorageGetItem('jwt');
+      const response = await fetch('https://allgood.peiren.info/api/patient', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data?.patients) {
+        const pData = data.patients.map(
+          (d: {
+            id: string;
+            name: string;
+            document_progression_data: string;
+            video_progression_data: string;
+            survey_data: string;
+            symptom_records: { date: string; survey_data: string }[];
+          }) => ({
+            id: Number(d.id),
+            name: d.name,
+            value: `${d.id}. ${d.name}`,
+            label: d.name,
+          })
+        );
+        if (pData.length > 0) {
+          setPatientOptions(pData);
+          setCurrentPatient(pData[0]);
+        }
+        return true;
       }
-      return true;
+    } catch (error) {
+      console.error('fetchPatientData error:', error);
     }
     return false;
-  }, []);
+  };
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     try {
       const token = await AsyncStorageGetItem('jwt');
       const role = await AsyncStorageGetItem('role');
-      if (!(typeof token === 'string' && typeof role === 'string' && token.length && ['M', 'P'].includes(role))) {
+      if (!token || !role || !['M', 'P'].includes(role)) {
         Alert.alert('錯誤', '無法取得資料');
         router.replace('/login');
         return;
       }
       setCurrentRole(role);
       if (role === 'P') {
+        // 病患抓自己的 PSA 資料
         const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
           method: 'GET',
           headers: {
@@ -150,33 +173,60 @@ export default function PSAList() {
           },
         });
         const data = await response.json();
-        if (response.ok) {
-          setPsaData(
-            data.psa.sort((a: PSAData, b: PSAData) =>
-              a.date > b.date ? 1 : a.date < b.date ? -1 : 0
-            )
+        if (response.ok && data.psa) {
+          const sortedData = data.psa.sort((a: PSAData, b: PSAData) =>
+            a.date.localeCompare(b.date)
           );
+          setAllPSAData(sortedData);
         }
       } else {
-        const r = await fetchPatientData();
-        if (!r) {
+        // 醫護人員抓取所有病患資料，並預設抓取第一位病患的 PSA 資料
+        const success = await fetchPatientData();
+        if (!success) {
           console.error('獲取全病患資料時發生錯誤');
+        } else if (currentPatient && currentPatient.id !== -1) {
+          await searchPSAData();
         }
       }
     } catch (error) {
-      console.error('獲取PSA記錄時發生錯誤:', error);
+      console.error('fetchData error:', error);
     }
-  }, [fetchPatientData, router]);
+  };
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const searchPSAData = async () => {
+    try {
+      const token = await AsyncStorageGetItem('jwt');
+      let url = '';
+      if (currentRole === 'M') {
+        if (!currentPatient || currentPatient.id < 0) {
+          Alert.alert('錯誤', '無法搜尋PSA記錄');
+          return;
+        }
+        url = `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&pid=${currentPatient.id}&role=${currentRole}`;
+      } else {
+        url = `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&role=${currentRole}`;
+      }
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok && data.psa) {
+        const sortedData = data.psa.sort((a: PSAData, b: PSAData) =>
+          a.date.localeCompare(b.date)
+        );
+        setAllPSAData(sortedData);
+      }
+    } catch (error) {
+      Alert.alert('錯誤', '無法搜尋PSA記錄');
+      console.error('searchPSAData error:', error);
+    }
+  };
 
-  useEffect(() => {
-    searchPSAData();
-  }, [currentPatient]);
-
-  const addPSAData = useCallback(async () => {
+  const addPSAData = async () => {
     if (!addDate || !psa) {
       Alert.alert('錯誤', '請輸入日期跟數值');
       return;
@@ -190,11 +240,11 @@ export default function PSAList() {
       return;
     }
     try {
+      const token = await AsyncStorageGetItem('jwt');
       const body =
         currentRole === 'M'
           ? { date: addDate, psa: parseFloat(psa), pid: currentPatient.id }
           : { date: addDate, psa: parseFloat(psa) };
-      const token = await AsyncStorageGetItem('jwt');
       const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
         method: 'PATCH',
         headers: {
@@ -205,81 +255,43 @@ export default function PSAList() {
       });
       await response.json();
       if (response.ok) {
-        await fetchPatientData();
         Alert.alert('成功', '新增成功');
+        // 更新原始 PSA 資料：如果已存在同一日期則更新，否則加入新紀錄
+        setAllPSAData((prevData) => {
+          const dataMap = new Map(prevData.map((item) => [item.date, item]));
+          dataMap.set(addDate, { date: addDate, psa: parseFloat(psa) });
+          return Array.from(dataMap.values()).sort((a, b) =>
+            a.date.localeCompare(b.date)
+          );
+        });
+      } else {
+        Alert.alert('錯誤', '無法新增PSA記錄');
       }
     } catch (error) {
       Alert.alert('錯誤', '無法新增PSA記錄');
-      console.error('無法新增PSA記錄:', error);
+      console.error('addPSAData error:', error);
+    } finally {
+      setPsa('');
+      setCreateModalVisible(false);
     }
+  };
 
-    const updatedData = [...psaData, { date: addDate, psa: parseFloat(psa) } as PSAData];
-    const mergedData: PSAData[] = Object.values(
-      updatedData.reduce((acc: { [key: string]: PSAData }, entry: PSAData) => {
-        if (!acc[entry.date]) {
-          acc[entry.date] = { date: entry.date, psa: entry.psa };
-        } else {
-          acc[entry.date].psa = entry.psa;
-        }
-        return acc;
-      }, {} as { [key: string]: PSAData })
-    ).sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
-    setPsaData(mergedData);
-    setPsa('');
-    setCreateModalVisible(false);
-  }, [addDate, psa, psaData, currentRole, currentPatient, fetchPatientData]);
-
-  const searchPSAData = useCallback(async () => {
-    if (currentRole === 'M' && (!currentPatient || currentPatient.id < 0)) {
-      Alert.alert('錯誤', '無法搜尋PSA記錄');
-      return;
+  useEffect(() => {
+    if (currentRole === 'M') {
+      searchPSAData();
     }
-    try {
-      const token = await AsyncStorageGetItem('jwt');
-      const url =
-        currentRole === 'M'
-          ? `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&pid=${currentPatient.id}&role=${currentRole}`
-          : `https://allgood.peiren.info/api/patient/psa_on_date?start_date=${searchStartDate}&end_date=${searchEndDate}&role=${currentRole}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setPsaData(
-          data?.psa?.sort((a: PSAData, b: PSAData) =>
-            a.date > b.date ? 1 : a.date < b.date ? -1 : 0
-          )
-        );
-      }
-    } catch (error) {
-      Alert.alert('錯誤', '無法搜尋PSA記錄');
-      console.error('無法搜尋PSA記錄:', error);
-    }
-  }, [currentRole, currentPatient, searchStartDate, searchEndDate]);
+  }, [currentPatient]);
 
-  const showPSAData = useCallback(() => {
-    if (!psaData) {
-      return [];
-    }
-    return psaData.filter((item) => {
-      const itemDate = new Date(item.date);
-      return itemDate >= new Date(searchStartDate) && itemDate <= new Date(searchEndDate);
-    });
-  }, [psaData, searchStartDate, searchEndDate]);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const selectPatient = useCallback(
-    (selectedValue: string) => {
-      const patient = patientOptions.find((p) => p.value === selectedValue);
-      if (patient) {
-        setCurrentPatient(patient);
-      }
-    },
-    [patientOptions]
-  );
+  const selectPatient = (selectedValue: string) => {
+    const patient = patientOptions.find((p) => p.value === selectedValue);
+    if (patient) {
+      setCurrentPatient(patient);
+    }
+  };
 
   const AndroidDateTimePicker = () => (
     <>
@@ -388,7 +400,7 @@ export default function PSAList() {
         </SafeAreaView>
         <View style={styles.scrollWrapper}>
           <ScrollView contentContainerStyle={localStyles.scrollContent}>
-            {showPSAData().map((item, index) => (
+            {filteredData.map((item, index) => (
               <View key={index} style={styles.listItem}>
                 <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
                 <View style={styles.listTag}>
@@ -400,7 +412,7 @@ export default function PSAList() {
           </ScrollView>
         </View>
       </View>
-      {/* 搜尋 PSA 的 Modal */}
+      {/* 搜尋 Modal */}
       <Modal
         visible={isSearchModalVisible}
         transparent
@@ -447,7 +459,7 @@ export default function PSAList() {
           </View>
         </View>
       </Modal>
-      {/* 醫護人員新增 PSA 的 Modal */}
+      {/* 新增/修改 PSA Modal */}
       <Modal
         visible={isCreateModalVisible}
         transparent
@@ -522,8 +534,6 @@ export default function PSAList() {
               <TouchableOpacity
                 onPress={() => {
                   addPSAData();
-                  setCreateModalVisible(false);
-                  searchPSAData();
                 }}
                 style={localStyles.modalButton}
               >
