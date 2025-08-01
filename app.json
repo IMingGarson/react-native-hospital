@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "病人管理系统",
+    "name": "Allgood System",
     "slug": "hospital-allgood",
     "scheme": "app",
     "version": "1.0.0",
@@ -8,13 +8,6 @@
     "icon": "./src/assets/images/app-icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "env": {
-      "nativeNotify": {
-        "appID": 28399,
-        "appToken": "UWdYG1804clZ7YhxKB1yMd"
-      },
-      "BASE_URL": "https://allgood.peiren.info"
-    },
     "splash": {
       "image": "./src/assets/images/splash.png",
       "backgroundColor": "#222"

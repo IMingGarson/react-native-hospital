@@ -27,7 +27,7 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@react-native-community/datetimepicker": "8.2.0",
+    "@react-native-community/datetimepicker": "^8.2.0",
     "@react-native-picker/picker": "2.9.0",
     "@react-navigation/native": "^7.0.13",
     "@react-navigation/native-stack": "^7.1.14",
@@ -60,7 +60,7 @@
     "react-native-webview": "13.12.5",
     "react-navigation": "^4.4.4",
     "react-navigation-stack": "^2.10.4",
-    "styled-components": "^6.1.13",
+    "styled-components": "^6.1.19",
     "twrnc": "^4.6.0"
   },
   "devDependencies": {
