@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, Alert, Text, Modal, TouchableOpacity, AppState } from 'react-native'
-import { WebView } from 'react-native-webview'
-import RNPickerSelect from 'react-native-picker-select'
-import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
+import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import { Link, useRouter } from 'expo-router'
-import { MaterialCommunityIcons, MaterialIcons, Foundation, FontAwesome } from '@expo/vector-icons'
-import { appTheme } from 'src/config/theme'
+import React, { useEffect, useState } from 'react'
+import { Alert, AppState, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import RNPickerSelect from 'react-native-picker-select'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { WebView } from 'react-native-webview'
+import { appTheme } from 'src/config/theme'
+import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
 interface PDFInterface {
   id: string
   label: string
@@ -32,7 +32,7 @@ const pdfs: PDFInterface[] = [
   { id: '6', label: '性福滿分', value: 'https://drive.google.com/file/d/1fHtg63DfxM9ymXcFX8IoKwPkKpdqd2e8/view?usp=sharing', duration: 0 },
   { id: '7', label: '電療筆記', value: 'https://drive.google.com/file/d/14Ke1sZc-2HpU54Sk35NN3DQtAdTPP5kG/view?usp=sharing', duration: 0 },
   { id: '8', label: '荷爾蒙站', value: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing', duration: 0 },
-  { id: '9', label: '共好統整', value: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing', duration: 0 }
+  { id: '9', label: '共好統整', value: 'https://drive.google.com/file/d/1uzlWqXT2umgDjRZegPPfvlOh-Qpi5pp-/view?usp=sharing', duration: 0 }
 ]
 
 export default function PDFScreen() {
