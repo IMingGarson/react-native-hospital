@@ -1,15 +1,15 @@
- 
- 
-import React, { useEffect, useState } from 'react';
-import { Alert, View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Pressable } from "react-native";
+
+
+import AntDesign from '@expo/vector-icons/AntDesign';
 import axios from 'axios';
-import { AsyncStorageGetItem, isJsonString } from '../utils';
-import BottomTabs from '../bottomTabs';
 import { useRouter } from 'expo-router';
-import { Document, Video, PatientProgressionData, APIPatientProgressionData, APISymptomRecord } from '../interfaces';
+import React, { useEffect, useState } from 'react';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { appTheme } from 'src/config/theme';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import BottomTabs from '../bottomTabs';
+import { APIPatientProgressionData, APISymptomRecord, Document, PatientProgressionData, Video } from '../interfaces';
+import { AsyncStorageGetItem, isJsonString } from '../utils';
 
 export default function NurseScreen() {
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([]);
@@ -64,7 +64,7 @@ export default function NurseScreen() {
     }
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchPatientData();
   }, []);
 
@@ -96,7 +96,7 @@ export default function NurseScreen() {
         "_page": type
       }
     });
-  
+
     // await fetch('https://exp.host/--/api/v2/push/send', {
     //   method: 'POST',
     //   headers: {
@@ -141,7 +141,7 @@ export default function NurseScreen() {
                     <View key={idx} style={styles.detailContainer}>
                       <Text style={styles.detailText}>{doc.label}</Text>
                       <Text style={styles.timeText}>{timeStamp(doc.duration)}</Text>
-                      <TouchableOpacity style={styles.notifyButton} onPress={(e) => {e.stopPropagation(); notifyPatient(item.id.toString(), 'document', idx + 1)}}>
+                      <TouchableOpacity style={styles.notifyButton} onPress={(e) => { e.stopPropagation(); notifyPatient(item.id.toString(), 'document', idx + 1) }}>
                         <Text style={styles.notifyText}>通知</Text>
                       </TouchableOpacity>
                     </View>
@@ -151,21 +151,21 @@ export default function NurseScreen() {
                     <View key={idx} style={styles.detailContainer}>
                       <Text style={styles.detailText}>{video.title}</Text>
                       <Text style={styles.timeText}>{timeStamp(video.duration)}</Text>
-                      <TouchableOpacity style={styles.notifyButton} onPress={(e) => {e.stopPropagation(); notifyPatient(item.id.toString(), 'video', idx + 1)}}>
+                      <TouchableOpacity style={styles.notifyButton} onPress={(e) => { e.stopPropagation(); notifyPatient(item.id.toString(), 'video', idx + 1) }}>
                         <Text style={styles.notifyText}>通知</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
                   <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
                     <Text style={styles.sectionTitle}>查看病人症狀</Text>
-                    <Pressable onPress={() => {router.push(`/records/${item.id}`)}}>
+                    <Pressable onPress={() => { router.push(`/records/${item.id}`) }}>
                       <AntDesign name="rightcircle" size={24} color="black" style={{
                         marginLeft: 15,
                         marginTop: 15
                       }} />
                     </Pressable>
                   </View>
-                  
+
                 </View>
               )}
             </Pressable>

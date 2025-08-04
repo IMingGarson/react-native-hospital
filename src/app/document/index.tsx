@@ -24,16 +24,16 @@ interface ProgressState {
 const HOST_PREFIX = 'https://docs.google.com/gview?embedded=true&url=';
 
 const pdfs: PDFInterface[] = [
-  { id: '0', label: '共好學習', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-1.pdf', duration: 0 },
-  { id: '1', label: '愛-溝通', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf', duration: 0 },
-  { id: '2', label: '資源補帖', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf', duration: 0 },
-  { id: '3', label: '疲憊防護', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-4.pdf', duration: 0 },
-  { id: '4', label: '照顧心靈', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf', duration: 0 },
-  { id: '5', label: '排尿康復', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-1.pdf', duration: 0 },
-  { id: '6', label: '性福滿分', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-2.pdf', duration: 0 },
-  { id: '7', label: '電療筆記', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-1.pdf', duration: 0 },
-  { id: '8', label: '荷爾蒙站', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-2.pdf', duration: 0 },
-  { id: '9', label: '共好統整', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf', duration: 0 }
+  { id: '0', label: '共好學習', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-1.pdf`, duration: 0 },
+  { id: '1', label: '愛-溝通', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf`, duration: 0 },
+  { id: '2', label: '資源補帖', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf`, duration: 0 },
+  { id: '3', label: '疲憊防護', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-4.pdf`, duration: 0 },
+  { id: '4', label: '照顧心靈', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf`, duration: 0 },
+  { id: '5', label: '排尿康復', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-1.pdf`, duration: 0 },
+  { id: '6', label: '性福滿分', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-2.pdf`, duration: 0 },
+  { id: '7', label: '電療筆記', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-1.pdf`, duration: 0 },
+  { id: '8', label: '荷爾蒙站', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-2.pdf`, duration: 0 },
+  { id: '9', label: '共好統整', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf`, duration: 0 }
 ]
 // 'https://docs.google.com/gview?embedded=true&url=https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/section-1.pdf'
 export default function PDFScreen() {
@@ -373,7 +373,7 @@ export default function PDFScreen() {
         />
         {currentPDF ? (
           <View style={styles.webviewContainer}>
-            <WebView source={{ uri: HOST_PREFIX + currentPDF.value }} javaScriptEnabled={true} domStorageEnabled={true} startInLoadingState={false} scalesPageToFit={true} style={styles.webview} />
+            <WebView source={{ uri: currentPDF.value }} javaScriptEnabled={true} domStorageEnabled={true} startInLoadingState={false} scalesPageToFit={true} style={styles.webview} />
           </View>
         ) : null}
         <BottomTabs role={currentRole} />

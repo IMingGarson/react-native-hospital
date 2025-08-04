@@ -1,251 +1,363 @@
-import styled from 'styled-components/native'
-import { Text, StyleSheet, TextInput, View, Alert, TouchableOpacity, Platform, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView } from 'react-native'
-import React, { useCallback, useState } from 'react'
-import { appTheme } from 'src/config/theme'
-import { MaterialCommunityIcons } from '@expo/vector-icons'
-import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
-import { useRouter } from 'expo-router'
-import Ionicons from '@expo/vector-icons/Ionicons'
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 
 export default function RegisterScreen() {
-  const [email, setEmail] = useState<string>('')
-  const [name, setName] = useState<string>('')
-  const [password, setPassword] = useState<string>('')
-  const [confirmPassword, setConfirmPassword] = useState<string>('')
-  const [showPassword, setShowPassword] = useState<boolean>(false)
-  const [showAgainPassword, setShowAgainPassword] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [show, setShow] = useState<boolean>(false)
-  const [inviteCode, setInviteCode] = useState<string>('')
-  const router = useRouter()
+  const [email, setEmail] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showAgainPassword, setShowAgainPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [show, setShow] = useState<boolean>(false);
+  const [inviteCode, setInviteCode] = useState<string>('');
+  const router = useRouter();
 
   const onChange = useCallback((_: DateTimePickerEvent, selectedDate: Date | undefined) => {
     if (selectedDate) {
       if (selectedDate > new Date()) {
-        Alert.alert('錯誤', '不可選擇未來日期')
-        setShow(false)
-        return
+        Alert.alert('錯誤', '不可選擇未來日期');
+        setShow(false);
+        return;
       }
-      setDate(selectedDate)
+      setDate(selectedDate);
     }
-    setShow(false)
-  }, [])
+    setShow(false);
+  }, []);
 
   const showMode = (): void => {
-    setShow(true)
-  }
+    setShow(true);
+  };
 
   const toggleShowPassword = (): void => {
-    setShowPassword((prev) => !prev)
-  }
+    setShowPassword((prev) => !prev);
+  };
 
   const toggleShowAgainPassword = (): void => {
-    setShowAgainPassword((prev) => !prev)
-  }
+    setShowAgainPassword((prev) => !prev);
+  };
 
   const handleSignup = async (): Promise<void> => {
     if (!email || !password || !confirmPassword || !name || !date || !inviteCode) {
-      Alert.alert('錯誤', '所有欄位皆為必填')
-      return
+      Alert.alert('錯誤', '所有欄位皆為必填');
+      return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('錯誤', '確認密碼有誤')
-      return
+      Alert.alert('錯誤', '確認密碼有誤');
+      return;
     }
     if (inviteCode !== '123456') {
-      Alert.alert('錯誤', '無效的邀請碼')
-      return
+      Alert.alert('錯誤', '無效的邀請碼');
+      return;
     }
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await fetch('https://allgood.peiren.info/api/patient', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email,
           password,
           name,
           birthday: date.toISOString().split('T')[0],
-          inviteCode
-        })
-      })
+          inviteCode,
+        }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
       if (response.ok) {
-        Alert.alert('註冊成功', '請回到首頁登入')
-        router.replace('/login')
+        Alert.alert('註冊成功', '請回到首頁登入');
+        router.replace('/login');
       } else {
-        Alert.alert('註冊失敗', data.message || '請稍後再試')
+        Alert.alert('註冊失敗', data.message || '請稍後再試');
       }
     } catch (error) {
-      Alert.alert('錯誤', '無法連接伺服器，請稍後再試')
-      console.error(error)
+      Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
+      console.error(error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.outerContainer}>
       <View style={styles.header}>
-        <TouchableOpacity style={{ zIndex: 1, width: '30%' }} onPress={() => router.back()}>
-          <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="arrow-back-circle-sharp" style={[styles.prevBtn, { paddingTop: 2 }]} />
-            <Text style={{ fontSize: 15, paddingLeft: 5 }}>{'回上一頁'}</Text>
+        <TouchableOpacity style={styles.backBtnWrap} onPress={() => router.replace('/login')}>
+          <View style={styles.backRow}>
+            <Ionicons name="arrow-back-circle-sharp" style={styles.prevBtn} />
+            <Text style={styles.backText}>{'回上一頁'}</Text>
           </View>
         </TouchableOpacity>
       </View>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.ScreenContainer} enabled>
-        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} overScrollMode="never">
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flexFill}
+        enabled
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          overScrollMode="never"
+        >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View>
-              <S.Text>帳號</S.Text>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>建立帳號</Text>
+
+              {/* 帳號 */}
+              <Text style={styles.label}>帳號</Text>
               <View style={styles.inputContainer}>
-                <TextInput style={[styles.input]} value={email} onChangeText={setEmail} />
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="可輸入大小寫英文數字或是特殊符號"
+                  autoCapitalize="none"
+                  editable={!loading}
+                  placeholderTextColor="#8f9aa3"
+                />
               </View>
-              <S.Text>密碼</S.Text>
+
+              {/* 密碼 */}
+              <Text style={styles.label}>密碼</Text>
               <View style={styles.inputContainer}>
-                <TextInput style={[styles.input]} secureTextEntry={!showPassword} value={password} onChangeText={setPassword} />
-                <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#000" onPress={toggleShowPassword} style={{ marginLeft: -30 }} />
+                <TextInput
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="輸入密碼"
+                  editable={!loading}
+                  placeholderTextColor="#8f9aa3"
+                />
+                <TouchableOpacity onPress={toggleShowPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <MaterialCommunityIcons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#4f4f4f"
+                    style={styles.eyeIcon}
+                  />
+                </TouchableOpacity>
               </View>
-              <S.Text>確認密碼</S.Text>
+
+              {/* 確認密碼 */}
+              <Text style={styles.label}>確認密碼</Text>
               <View style={styles.inputContainer}>
-                <TextInput style={[styles.input]} secureTextEntry={!showAgainPassword} value={confirmPassword} onChangeText={setConfirmPassword} />
-                <MaterialCommunityIcons name={showAgainPassword ? 'eye-off' : 'eye'} size={20} color="#000" onPress={toggleShowAgainPassword} style={{ marginLeft: -30 }} />
+                <TextInput
+                  style={styles.input}
+                  secureTextEntry={!showAgainPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="再次輸入密碼"
+                  editable={!loading}
+                  placeholderTextColor="#8f9aa3"
+                />
+                <TouchableOpacity onPress={toggleShowAgainPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <MaterialCommunityIcons
+                    name={showAgainPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#4f4f4f"
+                    style={styles.eyeIcon}
+                  />
+                </TouchableOpacity>
               </View>
-              <S.Text>姓名</S.Text>
+
+              {/* 姓名 */}
+              <Text style={styles.label}>姓名</Text>
               <View style={styles.inputContainer}>
-                <TextInput style={[styles.input]} value={name} onChangeText={setName} />
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="你的名字"
+                  editable={!loading}
+                  placeholderTextColor="#8f9aa3"
+                />
               </View>
-              <S.Text>邀請碼</S.Text>
+
+              {/* 邀請碼 */}
+              <Text style={styles.label}>邀請碼</Text>
               <View style={styles.inputContainer}>
-                <TextInput style={[styles.input]} value={inviteCode} onChangeText={setInviteCode} />
+                <TextInput
+                  style={styles.input}
+                  value={inviteCode}
+                  onChangeText={setInviteCode}
+                  placeholder="填入邀請碼"
+                  editable={!loading}
+                  placeholderTextColor="#8f9aa3"
+                />
               </View>
-              <S.Text>生日</S.Text>
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.preventDefault()
-                  showMode()
-                }}>
-                <View style={styles.inputContainer}>
-                  <TextInput style={[styles.input]} value={date?.toISOString().split('T')[0]} readOnly />
-                  <MaterialIcons name={'touch-app'} size={20} color="#000" style={{ marginLeft: -30 }} />
-                  {show && <DateTimePicker display={Platform.OS === 'ios' ? 'default' : 'spinner'} value={date || new Date()} mode="date" onChange={onChange} />}
+
+              {/* 生日 */}
+              <Text style={styles.label}>生日</Text>
+              <TouchableOpacity activeOpacity={1} onPress={() => showMode()}>
+                <View style={[styles.inputContainer, styles.dateContainer]}>
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={date ? date.toISOString().split('T')[0] : ''}
+                    editable={false}
+                    placeholder="選擇生日"
+                    placeholderTextColor="#8f9aa3"
+                  />
+                  <MaterialIcons name="touch-app" size={20} color="#4f4f4f" style={styles.eyeIcon} />
+                  {show && (
+                    <DateTimePicker
+                      value={date || new Date()}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'default' : 'spinner'}
+                      onChange={onChange}
+                      maximumDate={new Date()}
+                    />
+                  )}
                 </View>
+              </TouchableOpacity>
+
+              {/* Submit */}
+              <TouchableOpacity
+                onPress={handleSignup}
+                style={[styles.primaryButton, loading && { opacity: 0.6 }]}
+                disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="送出註冊"
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>送出</Text>
+                )}
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
-          <TouchableOpacity onPress={handleSignup} style={bottomsList.container} disabled={loading}>
-            <View style={bottomsList.button}>
-              <S.Text>送出</S.Text>
-            </View>
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
-  )
+  );
 }
 
-const bottomsList = StyleSheet.create({
-  container: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    marginTop: 20
-  },
-  button: {
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderColor: 'gray',
-    color: '#000',
-    borderRadius: 5,
-    backgroundColor: '#fff',
-    marginHorizontal: 45
-  }
-})
+const PRIMARY = '#6366F1';
+const BG = '#f0f5f9';
+const CARD_BG = '#fff';
+const INPUT_BG = '#f7f9fb';
+const BORDER = '#d1d7dd';
 
 const styles = StyleSheet.create({
-  ScreenContainer: {
+  outerContainer: {
     flex: 1,
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    backgroundColor: appTheme.primary,
-    paddingTop: 20
-  },
-  container: {
-    backgroundColor: '#fff6e5',
-    height: '100%',
-    paddingHorizontal: 20
+    backgroundColor: BG,
   },
   header: {
-    backgroundColor: '#fff6e5',
-    paddingTop: 45
+    paddingTop: 45,
+    paddingHorizontal: 16,
+    backgroundColor: BG,
+  },
+  backBtnWrap: {
+    width: '30%',
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   prevBtn: {
-    display: 'flex',
-    fontSize: 34,
-    color: '#303030'
+    fontSize: 30,
+    color: '#303030',
   },
-  button: {
-    borderWidth: 1,
-    paddingTop: 10,
-    paddingBottom: 10,
-    paddingLeft: 20,
-    paddingRight: 20,
-    borderColor: 'black',
-    borderRadius: 5,
-    backgroundColor: 'transparent'
+  backText: {
+    fontSize: 15,
+    paddingLeft: 6,
+    color: '#1f2d3a',
+  },
+  flexFill: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+    alignItems: 'center',
+  },
+  card: {
+    width: '100%',
+    maxWidth: 500,
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+    gap: 10,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#1f2d3a',
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#33475b',
+    marginBottom: 6,
+    marginTop: 6,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#000',
-    paddingVertical: 10
+    backgroundColor: INPUT_BG,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 2,
   },
   input: {
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    fontSize: 24,
-    backgroundColor: '#f9f9f9',
-    borderWidth: 1,
-    borderColor: '#d1d1d6',
-    borderRadius: 8
+    flex: 1,
+    fontSize: 16,
+    color: '#1f2d3a',
+    padding: 0,
+    margin: 0,
   },
-  focusedInput: {
-    borderColor: '#007aff',
-    shadowColor: '#007aff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3
+  eyeIcon: {
+    marginLeft: 6,
   },
-  darkInput: {
-    color: '#f2f2f7',
-    backgroundColor: '#1c1c1e',
-    borderColor: '#3a3a3c'
-  }
-})
-
-const S = {
-  View: styled.View`
-    gap: 10px;
-    background-color: ${appTheme.background};
-  `,
-  Content: styled.View`
-    gap: 10px;
-  `,
-  Title: styled.Text`
-    font-size: ${(p) => p.theme.size(150, 'px')};
-  `,
-  Text: styled.Text`
-    color: ${(p) => p.theme.text};
-    font-family: madeRegular;
-    font-size: ${(p) => p.theme.size(18, 'px')};
-  `
-}
+  dateContainer: {
+    paddingRight: 8,
+  },
+  primaryButton: {
+    marginTop: 18,
+    backgroundColor: PRIMARY,
+    borderRadius: 12,
+    paddingVertical: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+});

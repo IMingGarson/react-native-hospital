@@ -1,48 +1,54 @@
-import styled from 'styled-components/native';
-import React, { useEffect, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  StyleSheet,
-  Alert,
-  View,
-  TextInput,
-  Text,
-  TouchableOpacity,
-  Keyboard,
-  TouchableWithoutFeedback,
-  ActivityIndicator,
-} from 'react-native';
-import { appTheme } from 'src/config/theme';
-import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils';
-import { Link } from 'expo-router';
-import { RadioButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  useWindowDimensions,
+  View
+} from 'react-native';
+import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils';
+
+const IMAGE_SOURCE = require('../../assets/images/main.jpg');
 
 const LoginScreen: React.FC = (): JSX.Element => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [role, setRole] = useState<string>('2');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState('1');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isWide = width >= 420;
 
-  const fetchLoginData = async (): Promise<void> => {
-    const token = await AsyncStorageGetItem('jwt');
-    const storedRole = await AsyncStorageGetItem('role');
-    if (!token || !storedRole) return;
-    // 自動登入
-    router.replace(storedRole === 'M' ? '/nurse' : '/survey');
-  };
+  const dynamic = useMemo(() => {
+    const titleFont = Math.min(24, Math.max(20, width * 0.058));
+    const labelFont = Math.min(16, Math.max(13, width * 0.037));
+    const inputFont = Math.min(17, Math.max(14, width * 0.044));
+    const buttonFont = Math.min(17, Math.max(15, width * 0.045));
+    const verticalGap = 12;
+    return { titleFont, labelFont, inputFont, buttonFont, verticalGap };
+  }, [width]);
 
   useEffect(() => {
+    const fetchLoginData = async () => {
+      const token = await AsyncStorageGetItem('jwt');
+      const storedRole = await AsyncStorageGetItem('role');
+      if (!token || !storedRole) return;
+      router.replace(storedRole === 'M' ? '/nurse' : '/survey');
+    };
     fetchLoginData();
   }, []);
 
-  const toggleShowPassword = (): void => {
-    setShowPassword((prev) => !prev);
-  };
-
-  const handleSignIn = async (): Promise<void> => {
+  const handleSignIn = async () => {
     setLoading(true);
     try {
       if (!email || !password || !['0', '1'].includes(role)) {
@@ -50,221 +56,320 @@ const LoginScreen: React.FC = (): JSX.Element => {
         return;
       }
       const apiUrl = `https://allgood.peiren.info/api/${role === '0' ? 'user' : 'patient'}/signin`;
-      const response = await fetch(apiUrl, {
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await response.json();
-      if (response.ok) {
+      const data = await res.json();
+      if (res.ok) {
         const token = data.access_token;
         const resRole = data.role;
         if (!token || !['M', 'P'].includes(resRole)) {
           Alert.alert('登入錯誤', '請通知負責人員');
         } else {
-          const setTokenResult = await AsyncStorageSetItem('jwt', token);
-          const setRoleResult = await AsyncStorageSetItem('role', resRole);
-          if (!setTokenResult || !setRoleResult) {
-            Alert.alert('登入錯誤', '請先再試一次');
-          } else {
-            Alert.alert('登入成功');
-            // 註冊 Push Notification Token
-            if (resRole === 'P') {
-              router.replace('/survey');
-            } else {
-              router.replace('/nurse');
-            }
-          }
+          await AsyncStorageSetItem('jwt', token);
+          await AsyncStorageSetItem('role', resRole);
+          Alert.alert('登入成功');
+          router.replace(resRole === 'P' ? '/survey' : '/nurse');
         }
       } else {
         Alert.alert('登入錯誤', '帳號密碼有誤');
       }
-    } catch (error) {
+    } catch (e) {
       Alert.alert('登入錯誤', '無法連接伺服器，請稍後再試');
-      console.error(error);
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {loading && (
-        <View style={styles.loadingOverlay}>
+        <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
-          <LoadingText>登入中</LoadingText>
+          <Text style={[styles.loadingText, { fontSize: dynamic.labelFont }]}>登入中...</Text>
         </View>
       )}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.screenContainer}>
-          <Content testID="home-screen-content">
-            <Wrapper>
-              <Label>帳號</Label>
+        <View style={[styles.inner, { paddingHorizontal: isWide ? 32 : 20 }]}>
+          <View
+            style={[
+              styles.imageWrapper,
+              {
+                width: isWide ? 220 : width * 0.7,
+                height: isWide ? 220 : width * 0.7,
+              },
+            ]}
+          >
+            <Image
+              source={IMAGE_SOURCE}
+              style={styles.image}
+              resizeMode="cover"
+              accessibilityLabel="登入插圖"
+            />
+          </View>
+
+          <View style={[styles.card, isWide && { maxWidth: 480 }]}>
+            <Text style={[styles.title, { fontSize: dynamic.titleFont }]}>登入帳號</Text>
+
+            {/* 帳號 */}
+            <View style={{ marginBottom: dynamic.verticalGap }}>
+              <Text style={[styles.label, { fontSize: dynamic.labelFont }]}>帳號</Text>
               <TextInput
-                style={styles.input}
+                placeholder="請輸入帳號"
                 value={email}
-                autoFocus
                 onChangeText={setEmail}
+                placeholderTextColor="#8f9aa3"
+                style={[
+                  styles.input,
+                  {
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    fontSize: dynamic.inputFont,
+                  },
+                ]}
               />
-              <Label>密碼</Label>
-              <View style={styles.inputContainer}>
+            </View>
+
+            {/* 密碼 */}
+            <View style={{ marginBottom: dynamic.verticalGap }}>
+              <Text style={[styles.label, { fontSize: dynamic.labelFont }]}>密碼</Text>
+              <View style={styles.passwordWrapper}>
                 <TextInput
-                  style={styles.input}
+                  placeholder="請輸入密碼"
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
+                  placeholderTextColor="#8f9aa3"
+                  style={[
+                    styles.input,
+                    {
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      fontSize: dynamic.inputFont,
+                      paddingRight: 44,
+                    },
+                  ]}
                 />
-                <MaterialCommunityIcons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={30}
-                  color="#000"
-                  onPress={toggleShowPassword}
-                  style={{ marginLeft: -40 }}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <View style={radioStyle.container}>
-                  <View style={radioStyle.radioGroup}>
-                    <View style={radioStyle.radioButton}>
-                      <RadioButton.Android
-                        value="0"
-                        status={role === '0' ? 'checked' : 'unchecked'}
-                        onPress={() => setRole('0')}
-                        color="#007BFF"
-                      />
-                      <Text style={radioStyle.radioLabel}>醫護人員</Text>
-                    </View>
-                    <View style={radioStyle.radioButton}>
-                      <RadioButton.Android
-                        value="1"
-                        status={role === '1' ? 'checked' : 'unchecked'}
-                        onPress={() => setRole('1')}
-                        color="#007BFF"
-                      />
-                      <Text style={radioStyle.radioLabel}>一般民眾</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-              <View style={bottomsList.container}>
-                <TouchableOpacity onPress={handleSignIn} style={{ zIndex: 1 }}>
-                  <View style={bottomsList.button}>
-                    <Text style={{ fontSize: 20 }}>登入</Text>
-                  </View>
+                <TouchableOpacity
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.eyeButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessible
+                  accessibilityLabel={showPassword ? '隱藏密碼' : '顯示密碼'}
+                >
+                  <MaterialCommunityIcons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={22}
+                    color="#4f4f4f"
+                  />
                 </TouchableOpacity>
-                <Link href="/register" style={bottomsList.button}>
-                  <Text style={{ fontSize: 20 }}>註冊</Text>
-                </Link>
               </View>
-            </Wrapper>
-          </Content>
+            </View>
+
+            {/* 角色選擇 segmented */}
+            <View style={styles.segmentContainer}>
+              <TouchableOpacity
+                onPress={() => setRole('0')}
+                style={[
+                  styles.segmentButton,
+                  role === '0' ? styles.segmentActive : { borderRightWidth: 1, borderRightColor: '#cfd9e5' },
+                ]}
+                disabled={loading}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { fontSize: dynamic.labelFont },
+                    role === '0' ? styles.segmentTextActive : null,
+                  ]}
+                >
+                  醫護人員
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setRole('1')}
+                style={[styles.segmentButton, role === '1' ? styles.segmentActive : null]}
+                disabled={loading}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { fontSize: dynamic.labelFont },
+                    role === '1' ? styles.segmentTextActive : null,
+                  ]}
+                >
+                  一般民眾
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 按鈕列 */}
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                onPress={handleSignIn}
+                disabled={loading}
+                style={[
+                  styles.primaryBtn,
+                  loading && { opacity: 0.65 },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="登入"
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={[styles.primaryText, { fontSize: dynamic.buttonFont }]}>登入</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push('/register')}
+                style={[styles.registerBtn]}
+                accessibilityRole="button"
+                accessibilityLabel="註冊"
+              >
+                <Text style={[styles.registerText, { fontSize: dynamic.buttonFont }]}>註冊</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </TouchableWithoutFeedback>
-    </View>
+    </SafeAreaView>
   );
 };
 
 export default LoginScreen;
 
-const bottomsList = StyleSheet.create({
-  container: {
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    paddingTop: 20,
-  },
-  button: {
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderColor: 'gray',
-    borderRadius: 5,
-    backgroundColor: '#fff',
-    marginHorizontal: 45,
-  },
-});
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: appTheme.primary,
+    backgroundColor: '#f0f5f9',
   },
-  screenContainer: {
+  inner: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    gap: 12,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderColor: '#000',
+  imageWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 8,
+    backgroundColor: '#e2e8f0',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  card: {
+    width: '100%',
+    maxWidth: 480,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+    gap: 12,
+  },
+  title: {
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#1f2d3a',
+    marginBottom: 4,
+  },
+  label: {
+    color: '#2f3e50',
+    fontWeight: '500',
+    marginBottom: 4,
   },
   input: {
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    fontSize: 24,
-    backgroundColor: appTheme.background,
+    backgroundColor: '#f7f9fb',
     borderWidth: 1,
-    borderColor: '#d1d1d6',
-    borderRadius: 8,
+    borderColor: '#d1d7dd',
+    borderRadius: 12,
+    color: '#1f2d3a',
   },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2,
+  passwordWrapper: {
+    position: 'relative',
   },
-});
-
-const Content = styled.View`
-  gap: 10px;
-`;
-
-const Wrapper = styled.View`
-  gap: 10px;
-  background-color: ${appTheme.primary};
-`;
-
-const Label = styled.Text`
-  color: ${(p) => p.theme.text};
-  font-family: madeRegular;
-  font-size: ${(p) => p.theme.size(18, 'px')};
-`;
-
-const LoadingText = styled.Text`
-  color: #fff;
-  margin-top: 10px;
-  font-size: 18px;
-`;
-
-const radioStyle = StyleSheet.create({
-  container: {
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -11 }],
+  },
+  segmentContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#eef4f7',
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#d1d7dd',
+    marginTop: 6,
+  },
+  segmentButton: {
     flex: 1,
-    backgroundColor: appTheme.primary,
+    paddingVertical: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  radioGroup: {
+  segmentActive: {
+    backgroundColor: '#2596be',
+  },
+  segmentText: {
+    fontWeight: '600',
+    color: '#33475b',
+  },
+  segmentTextActive: {
+    color: '#fff',
+  },
+  actionRow: {
+    marginTop: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    padding: 16,
-    elevation: 4,
   },
-  radioButton: {
+  primaryBtn: {
+    flex: 1,
+    backgroundColor: '#2596be',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 14
+  },
+  primaryText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  registerBtn: {
+    flex: 1,
+    marginLeft: 14,
+    paddingVertical: 14,
     flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    justifyContent: 'center',
+    borderColor: '#2596be',
+    backgroundColor: '#EEF2FF',
   },
-  radioLabel: {
-    marginRight: 8,
-    fontSize: 16,
-    color: '#333',
-    alignSelf: 'center',
+  registerText: {
+    color: '#2596be',
+    fontWeight: '500',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 50,
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#fff',
   },
 });

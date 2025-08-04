@@ -5,7 +5,7 @@
     "scheme": "app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/app-icon.png",
+    "icon": "./src/assets/images/logo.jpg",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -24,7 +24,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/app-icon.png",
+        "foregroundImage": "./src/assets/images/logo.jpg",
         "backgroundColor": "#222"
       },
       "package": "com.hospital.allgood",
@@ -32,10 +32,12 @@
       "orientation": "default",
       "softwareKeyboardLayoutMode": "pan",
       "useNextNotificationsApi": true,
-      "permissions": ["RECEIVE_BOOT_COMPLETED"]
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED"
+      ]
     },
     "web": {
-      "favicon": "./src/assets/images/app-icon.png",
+      "favicon": "./src/assets/images/logo.jpg",
       "output": "static",
       "bundler": "metro"
     },
