@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Dimensions, Alert, AppState, Modal, Platform } from 'react-native'
-import { useVideoPlayer, VideoView } from 'expo-video'
+import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import { useEventListener } from 'expo'
-import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
 import { Link, useRouter } from 'expo-router'
-import { VideoInterface, ProgressState } from '../interfaces'
-import { MaterialCommunityIcons, MaterialIcons, Foundation, FontAwesome } from '@expo/vector-icons'
-import { appTheme } from 'src/config/theme'
+import { useVideoPlayer, VideoView } from 'expo-video'
+import React, { useEffect, useState } from 'react'
+import { Alert, AppState, Dimensions, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { appTheme } from 'src/config/theme'
+import { ProgressState, VideoInterface } from '../interfaces'
+import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
 interface Props {
   role: string
 }
@@ -16,7 +16,7 @@ export default function VideoScreen() {
   const [currentVideo, setCurrentVideo] = useState<VideoInterface>({
     id: '1',
     title: '單元一：共好學習',
-    uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+    uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-1.mp4',
     timestamp: 0,
     watched: false,
     duration: 0
@@ -29,7 +29,7 @@ export default function VideoScreen() {
     {
       id: '1',
       title: '共好學習',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-1.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -37,7 +37,7 @@ export default function VideoScreen() {
     {
       id: '2',
       title: '愛-溝通',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-2.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -45,7 +45,7 @@ export default function VideoScreen() {
     {
       id: '3',
       title: '資源補帖',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-3.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -53,7 +53,7 @@ export default function VideoScreen() {
     {
       id: '4',
       title: '疲憊防護',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-4.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -61,7 +61,7 @@ export default function VideoScreen() {
     {
       id: '5',
       title: '照顧心靈',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-5.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -69,7 +69,7 @@ export default function VideoScreen() {
     {
       id: '6',
       title: '排尿康復',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-1.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -77,7 +77,7 @@ export default function VideoScreen() {
     {
       id: '7',
       title: '性福滿分',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-2.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -85,7 +85,7 @@ export default function VideoScreen() {
     {
       id: '8',
       title: '電療筆記',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-1.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -93,7 +93,7 @@ export default function VideoScreen() {
     {
       id: '9',
       title: '荷爾蒙站',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-2.mp4',
       timestamp: 0,
       watched: false,
       duration: 0
@@ -101,7 +101,7 @@ export default function VideoScreen() {
     {
       id: '10',
       title: '共好統整',
-      uri: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing',
+      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-8.mp4',
       timestamp: 0,
       watched: false,
       duration: 0

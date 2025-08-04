@@ -21,20 +21,21 @@ interface Props {
 interface ProgressState {
   [key: string]: PDFInterface
 }
+const HOST_PREFIX = 'https://docs.google.com/gview?embedded=true&url=';
 
 const pdfs: PDFInterface[] = [
-  { id: '0', label: '共好學習', value: 'https://drive.google.com/file/d/1ysZ10K6QvaE2kSYSfKm0OspC6SFX2TOZ/view?usp=sharing', duration: 0 },
-  { id: '1', label: '愛-溝通', value: 'https://drive.google.com/file/d/13N_jqOAt-4FYCzSIv9GFy7nbvBB9XVZm/view?usp=sharing', duration: 0 },
-  { id: '2', label: '資源補帖', value: 'https://drive.google.com/file/d/16chZcF4R8HMMNUvzoU4t38GSP3ky-DwV/view?usp=sharing', duration: 0 },
-  { id: '3', label: '疲憊防護', value: 'https://drive.google.com/file/d/1cgAJcd9nFlcuRw1MeTMGXprgXeKA-yc-/view?usp=sharing', duration: 0 },
-  { id: '4', label: '照顧心靈', value: 'https://drive.google.com/file/d/1bJ8kWurRxuTa4bmYOZvUkKUsgSXpIE8G/view?usp=sharing', duration: 0 },
-  { id: '5', label: '排尿康復', value: 'https://drive.google.com/file/d/1YEGYaeOscOm6ZjD2fD67ZRsItDPz-592/view?usp=sharing', duration: 0 },
-  { id: '6', label: '性福滿分', value: 'https://drive.google.com/file/d/1fHtg63DfxM9ymXcFX8IoKwPkKpdqd2e8/view?usp=sharing', duration: 0 },
-  { id: '7', label: '電療筆記', value: 'https://drive.google.com/file/d/14Ke1sZc-2HpU54Sk35NN3DQtAdTPP5kG/view?usp=sharing', duration: 0 },
-  { id: '8', label: '荷爾蒙站', value: 'https://drive.google.com/file/d/13EkPN3Ar2_4vnvJdot2vwo3XVFy1vaU0/view?usp=sharing', duration: 0 },
-  { id: '9', label: '共好統整', value: 'https://drive.google.com/file/d/1uzlWqXT2umgDjRZegPPfvlOh-Qpi5pp-/view?usp=sharing', duration: 0 }
+  { id: '0', label: '共好學習', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-1.pdf', duration: 0 },
+  { id: '1', label: '愛-溝通', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf', duration: 0 },
+  { id: '2', label: '資源補帖', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf', duration: 0 },
+  { id: '3', label: '疲憊防護', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-4.pdf', duration: 0 },
+  { id: '4', label: '照顧心靈', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf', duration: 0 },
+  { id: '5', label: '排尿康復', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-1.pdf', duration: 0 },
+  { id: '6', label: '性福滿分', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-2.pdf', duration: 0 },
+  { id: '7', label: '電療筆記', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-1.pdf', duration: 0 },
+  { id: '8', label: '荷爾蒙站', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-2.pdf', duration: 0 },
+  { id: '9', label: '共好統整', value: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf', duration: 0 }
 ]
-
+// 'https://docs.google.com/gview?embedded=true&url=https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/section-1.pdf'
 export default function PDFScreen() {
   const [currentPDF, setCurrentPDF] = useState<PDFInterface>(pdfs[0])
   const [progress, setProgress] = useState<ProgressState>({})
@@ -372,7 +373,7 @@ export default function PDFScreen() {
         />
         {currentPDF ? (
           <View style={styles.webviewContainer}>
-            <WebView source={{ uri: currentPDF.value }} javaScriptEnabled={true} domStorageEnabled={true} startInLoadingState={false} scalesPageToFit={true} style={styles.webview} />
+            <WebView source={{ uri: HOST_PREFIX + currentPDF.value }} javaScriptEnabled={true} domStorageEnabled={true} startInLoadingState={false} scalesPageToFit={true} style={styles.webview} />
           </View>
         ) : null}
         <BottomTabs role={currentRole} />
