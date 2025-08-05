@@ -1,30 +1,22 @@
-import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
-import { useEventListener } from 'expo'
-import { Link, useRouter } from 'expo-router'
-import { useVideoPlayer, VideoView } from 'expo-video'
 import React, { useEffect, useState } from 'react'
-import { Alert, AppState, Dimensions, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { appTheme } from 'src/config/theme'
+import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
+import { useVideoPlayer, VideoView } from 'expo-video'
+import { useEventListener } from 'expo'
+import { AppState, Modal, Pressable, StyleSheet, Text, TouchableOpacity, ActivityIndicator, useWindowDimensions, View, ScrollView, Alert } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { ProgressState, VideoInterface } from '../interfaces'
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
-interface Props {
-  role: string
-}
+
+const PRIMARY = '#6366F1'
+const BG = '#f0f5f9'
+const SURFACE = '#fff'
+const BORDER = '#e2e8f0'
+const TEXT_PRIMARY = '#1f2d3a'
+const TEXT_SECONDARY = '#33475b'
+const MUTED = '#6b7280'
 
 export default function VideoScreen() {
-  const [currentVideo, setCurrentVideo] = useState<VideoInterface>({
-    id: '1',
-    title: '單元一：共好學習',
-    uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-1.mp4',
-    timestamp: 0,
-    watched: false,
-    duration: 0
-  })
-  const router = useRouter()
-  const [startTime, setStartTime] = useState<number>(Date.now())
-  const [loading, setLoading] = useState<boolean>(true)
-  const [progress, setProgress] = useState<ProgressState>({})
   const [videos] = useState<VideoInterface[]>([
     {
       id: '1',
@@ -32,7 +24,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-1.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '04:17'
     },
     {
       id: '2',
@@ -40,7 +33,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-2.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '16:44'
     },
     {
       id: '3',
@@ -48,7 +42,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-3.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '11:17'
     },
     {
       id: '4',
@@ -56,7 +51,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-4.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '3:11'
     },
     {
       id: '5',
@@ -64,7 +60,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-5.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '18:27'
     },
     {
       id: '6',
@@ -72,7 +69,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-1.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '11:34'
     },
     {
       id: '7',
@@ -80,7 +78,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-2.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '14:40'
     },
     {
       id: '8',
@@ -88,7 +87,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-1.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '07:25'
     },
     {
       id: '9',
@@ -96,7 +96,8 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-2.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '06:52'
     },
     {
       id: '10',
@@ -104,10 +105,17 @@ export default function VideoScreen() {
       uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-8.mp4',
       timestamp: 0,
       watched: false,
-      duration: 0
+      duration: 0,
+      length: '03:52'
     }
   ])
+  const router = useRouter()
+  const { width } = useWindowDimensions()
+  const [currentVideo, setCurrentVideo] = useState<VideoInterface>(videos[0])
+  const [progress, setProgress] = useState<ProgressState>({})
+  const [startTime, setStartTime] = useState<number>(Date.now())
   const [currentRole, setCurrentRole] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
 
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt')
@@ -207,7 +215,6 @@ export default function VideoScreen() {
         }
       })
       setStartTime(Date.now())
-      // https://allgood.peiren.info
       const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
         method: 'PATCH',
         headers: {
@@ -253,14 +260,9 @@ export default function VideoScreen() {
     }))
   }
 
-  const selectVideo = (video: VideoInterface) => {
-    handleVideoProgress(player.currentTime)
-    setCurrentVideo(video)
-  }
-
-  const player = useVideoPlayer(currentVideo.uri, (player) => {
-    player.pause()
-    player.currentTime = progress[currentVideo.id]?.timestamp || 0
+  const player = useVideoPlayer(currentVideo.uri, (p) => {
+    p.play()
+    p.currentTime = progress[currentVideo.id]?.timestamp || 0
   })
 
   useEventListener(player, 'statusChange', () => {
@@ -277,285 +279,165 @@ export default function VideoScreen() {
     }
   })
 
-  const BottomTabs = ({ role }: Props) => {
-    const router = useRouter()
-    const [showModal, setShowModal] = useState<boolean>(false)
-
-    const handleSignOut = async () => {
-      saveProgress(true)
-      await AsyncStorageRemoveItem('token')
-      await AsyncStorageRemoveItem('role')
-      setShowModal(false)
-      Alert.alert('登出成功')
-      router.replace('/login')
-      return
-    }
-
-    return (
-      <SafeAreaView edges={['bottom']} style={bottomsList.bottomSafeview}>
-        <View style={[bottomsList.container]}>
-          {role === 'M' ? (
-            <View style={bottomsList.tabItem}>
-              <Link href="/nurse">
-                <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon} />
-              </Link>
-              <Link href="/nurse">
-                <Text style={bottomsList.tabText}>病人列表</Text>
-              </Link>
-            </View>
-          ) : (
-            <View style={bottomsList.tabItem}>
-              <Link
-                href="/survey"
-                onPress={() => {
-                  saveProgress(true)
-                }}>
-                <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
-              </Link>
-              <Link
-                href="/survey"
-                onPress={() => {
-                  saveProgress(true)
-                }}>
-                <Text style={bottomsList.tabText}>症狀</Text>
-              </Link>
-            </View>
-          )}
-          <View style={[bottomsList.tabItem]}>
-            <Link
-              href="/video"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Foundation name="play-video" style={bottomsList.tabIcon} />
-            </Link>
-            <Link
-              href="/video"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Text style={bottomsList.tabText}>影片</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <Link
-              href="/psa"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <MaterialCommunityIcons name="file-chart-outline" size={24} style={bottomsList.tabIcon} />
-            </Link>
-            <Link
-              href="/psa"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Text style={bottomsList.tabText}>PSA</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <Link
-              href="/document"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon} />
-            </Link>
-            <Link
-              href="/document"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Text style={bottomsList.tabText}>手冊</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <MaterialIcons
-              onPress={() => {
-                setShowModal(true)
-              }}
-              name="logout"
-              style={bottomsList.tabIcon}
-            />
-            <TouchableOpacity
-              onPress={() => {
-                setShowModal(true)
-              }}>
-              <Text style={bottomsList.tabText}>登出</Text>
-            </TouchableOpacity>
-          </View>
-          <Modal visible={showModal} transparent={true} onRequestClose={() => setShowModal(false)}>
-            <View style={modal.modalContainer}>
-              <View style={modal.modalContent}>
-                <Text style={modal.modalTitle}>確定登出？</Text>
-                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                  <TouchableOpacity onPress={() => handleSignOut()} style={modal.button}>
-                    <Text>確定</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setShowModal(false)} style={modal.button}>
-                    <Text>取消</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        </View>
-      </SafeAreaView>
-    )
+  const selectVideo = (video: VideoInterface) => {
+    handleVideoProgress(player.currentTime)
+    setCurrentVideo(video)
   }
+
+  const fontSize = Math.max(14, Math.min(18, width * 0.045))
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>取得資料中</Text>
-      </View>
+      <SafeAreaProvider>
+        <SafeAreaView edges={['top', 'left', 'right']} style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={PRIMARY} />
+          <Text style={styles.loadingText}>取得資料中</Text>
+        </SafeAreaView>
+      </SafeAreaProvider>
     )
   }
+
   return (
-    <>
-      <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}>
-        <View style={styles.videoContainer}>
+    <SafeAreaProvider>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
+        <View style={styles.videoWrapper}>
           <VideoView style={styles.video} player={player} allowsFullscreen allowsPictureInPicture />
         </View>
-        <FlatList
-          data={Object.values(progress)}
-          keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => {
-            const isCurrentVideo = item.id === currentVideo.id
+        <ScrollView contentContainerStyle={styles.scrollList}>
+          {videos.map((item) => {
+            const active = item.id === currentVideo.id
             return (
-              <TouchableOpacity style={[styles.listItem, isCurrentVideo && styles.activeListItem]} onPress={() => selectVideo(item)}>
-                <Text style={styles.listItemTitle}>{item.title}</Text>
-              </TouchableOpacity>
+              <Pressable key={item.id} style={[styles.itemCard, active && styles.itemCardActive]} onPress={() => selectVideo(item)}>
+                <View style={styles.itemText}>
+                  <Text style={[styles.itemTitle, { fontSize }]} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <View style={styles.itemMeta}>
+                    <MaterialCommunityIcons name="clock-outline" size={14} color={MUTED} />
+                    <Text style={styles.itemMetaText}>{item.length}</Text>
+                  </View>
+                </View>
+                {active && <MaterialCommunityIcons name="play-circle" size={28} color={PRIMARY} />}
+              </Pressable>
             )
-          }}
-        />
+          })}
+        </ScrollView>
       </SafeAreaView>
       <BottomTabs role={currentRole} />
-    </>
+    </SafeAreaProvider>
   )
 }
 
-const modal = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
-  },
-  modalContent: {
-    width: '80%',
-    height: 150,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 20
-  },
-  modalTitle: {
-    display: 'flex',
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000'
-  },
-  button: {
-    zIndex: 1,
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderColor: 'gray',
-    color: '#000',
-    borderRadius: 5,
-    backgroundColor: '#fff',
-    marginHorizontal: 45
-  }
-})
+interface Props {
+  role: string
+}
 
-const bottomsList = StyleSheet.create({
-  bottomSafeview: {
-    flex: 0,
-    backgroundColor: appTheme.background,
-    paddingBottom: 0
-  },
-  container: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    bottom: 0,
-    backgroundColor: appTheme.background,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.3)'
-  },
-  tabItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 5
-  },
-  tabText: {
-    display: 'flex',
-    fontSize: 14,
-    color: 'black'
-  },
-  tabIcon: {
-    display: 'flex',
-    fontSize: 34,
-    color: '#303030'
+function BottomTabs({ role }: Props) {
+  const router = useRouter()
+  const [showModal, setShowModal] = useState(false)
+
+  const handleSignOut = async () => {
+    setShowModal(false)
+    await AsyncStorageRemoveItem('token')
+    await AsyncStorageRemoveItem('role')
+    Alert.alert('登出成功')
+    router.replace('/login')
+    return
   }
-})
+
+  return (
+    <SafeAreaView edges={['bottom']} style={bottoms.bottomSafeview}>
+      <View style={bottoms.container}>
+        {role === 'M' ? (
+          <Tab label="病人列表" icon={<MaterialCommunityIcons name="emoticon-sick-outline" size={24} />} onPress={() => router.replace('/nurse')} />
+        ) : (
+          <Tab label="症狀" icon={<FontAwesome name="pencil-square-o" size={24} />} onPress={() => router.replace('/survey')} />
+        )}
+        <Tab label="影片" icon={<Foundation name="play-video" size={24} />} onPress={() => router.replace('/video')} />
+        <Tab label="PSA" icon={<MaterialCommunityIcons name="file-chart-outline" size={24} />} onPress={() => router.replace('/psa')} />
+        <Tab label="手冊" icon={<MaterialCommunityIcons name="file-document-multiple-outline" size={24} />} onPress={() => router.replace('/document')} />
+        <Tab label="登出" icon={<MaterialIcons name="logout" size={24} />} onPress={() => setShowModal(true)} />
+      </View>
+      <Modal visible={showModal} transparent onRequestClose={() => setShowModal(false)}>
+        <View style={modalStyles.container}>
+          <View style={modalStyles.content}>
+            <Text style={modalStyles.title}>確定登出？</Text>
+            <View style={modalStyles.actions}>
+              <TouchableOpacity style={[modalStyles.btn, modalStyles.primary]} onPress={handleSignOut}>
+                <Text style={[modalStyles.btnText, { color: '#fff' }]}>確定</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[modalStyles.btn, modalStyles.secondary]} onPress={() => setShowModal(false)}>
+                <Text style={[modalStyles.btnText, { color: TEXT_SECONDARY }]}>取消</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  )
+}
+
+interface TabProps {
+  label: string
+  icon: React.ReactNode
+  onPress: () => void
+}
+
+function Tab({ label, icon, onPress }: TabProps) {
+  return (
+    <TouchableOpacity style={bottoms.tab} onPress={onPress}>
+      {icon}
+      <Text style={bottoms.tabText}>{label}</Text>
+    </TouchableOpacity>
+  )
+}
 
 const styles = StyleSheet.create({
-  topSafeview: {
-    flex: 1,
-    backgroundColor: appTheme.primary,
-    paddingTop: Platform.OS === 'android' ? 0 : 10
-  },
-  saveBotton: {
-    paddingVertical: 5
-  },
-  videoContainer: {
-    backgroundColor: '#ffe4b2',
-    width: '100%',
-    height: Dimensions.get('window').width * 0.5625,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8
-  },
-  video: {
-    width: '100%',
-    height: '100%'
-  },
-  listItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#d1a679',
+  container: { flex: 1, backgroundColor: BG, paddingHorizontal: 16 },
+  videoWrapper: { width: '100%', aspectRatio: 16 / 9, marginTop: 16, borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
+  video: { width: '100%', height: '100%' },
+  scrollList: { paddingTop: 16, paddingBottom: 32 },
+  itemCard: {
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    marginVertical: 8,
+    marginHorizontal: 0,
+    padding: 12,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  activeListItem: {
-    backgroundColor: '#ffd59a'
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#663300'
-  },
-  listItemStatus: {
-    fontSize: 14,
-    color: '#804000'
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: appTheme.primary
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3
   },
-  loadingText: {
-    fontSize: 18,
-    color: '#804000'
-  }
+  itemCardActive: {
+    borderColor: PRIMARY,
+    borderWidth: 2
+  },
+  itemText: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  itemTitle: { color: TEXT_PRIMARY, fontWeight: '600', flexShrink: 1 },
+  itemMeta: { flexDirection: 'row', alignItems: 'center', marginLeft: 12 },
+  itemMetaText: { marginLeft: 4, fontSize: 14, color: MUTED },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: PRIMARY },
+  loadingText: { marginTop: 8, fontSize: 18, color: '#fff', fontWeight: '500' }
+})
+
+const bottoms = StyleSheet.create({
+  bottomSafeview: { backgroundColor: SURFACE },
+  container: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: BORDER, backgroundColor: SURFACE },
+  tab: { alignItems: 'center', justifyContent: 'center' },
+  tabText: { marginTop: 2, fontSize: 12, color: TEXT_SECONDARY, fontWeight: '500' }
+})
+
+const modalStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
+  content: { width: '80%', backgroundColor: SURFACE, borderRadius: 12, padding: 20, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, elevation: 6 },
+  title: { fontSize: 18, fontWeight: '700', color: TEXT_PRIMARY, marginBottom: 16, textAlign: 'center' },
+  actions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  btn: { flex: 1, borderRadius: 8, paddingVertical: 12, alignItems: 'center', borderWidth: 1 },
+  primary: { backgroundColor: PRIMARY, borderColor: PRIMARY },
+  secondary: { backgroundColor: SURFACE, borderColor: MUTED },
+  btnText: { fontSize: 15, fontWeight: '600' }
 })

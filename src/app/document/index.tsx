@@ -1,12 +1,11 @@
 import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import { Link, useRouter } from 'expo-router'
-import React, { useEffect, useState } from 'react'
-import { Alert, AppState, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import RNPickerSelect from 'react-native-picker-select'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import React, { useEffect, useMemo, useState } from 'react'
+import { ActivityIndicator, Alert, AppState, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
-import { appTheme } from 'src/config/theme'
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
+
 interface PDFInterface {
   id: string
   label: string
@@ -21,9 +20,22 @@ interface Props {
 interface ProgressState {
   [key: string]: PDFInterface
 }
-const HOST_PREFIX = 'https://docs.google.com/gview?embedded=true&url=';
 
-const pdfs: PDFInterface[] = [
+const iOS_PDFS: PDFInterface[] = [
+  { id: '0', label: '共好學習', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-1.pdf`, duration: 0 },
+  { id: '1', label: '愛-溝通', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf`, duration: 0 },
+  { id: '2', label: '資源補帖', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf`, duration: 0 },
+  { id: '3', label: '疲憊防護', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-4.pdf`, duration: 0 },
+  { id: '4', label: '照顧心靈', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf`, duration: 0 },
+  { id: '5', label: '排尿康復', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-1.pdf`, duration: 0 },
+  { id: '6', label: '性福滿分', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-2.pdf`, duration: 0 },
+  { id: '7', label: '電療筆記', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-1.pdf`, duration: 0 },
+  { id: '8', label: '荷爾蒙站', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-2.pdf`, duration: 0 },
+  { id: '9', label: '共好統整', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf`, duration: 0 }
+]
+
+const HOST_PREFIX = 'https://docs.google.com/gview?embedded=true&url='
+const ANDRIOD_PDFS: PDFInterface[] = [
   { id: '0', label: '共好學習', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-1.pdf`, duration: 0 },
   { id: '1', label: '愛-溝通', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf`, duration: 0 },
   { id: '2', label: '資源補帖', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf`, duration: 0 },
@@ -35,14 +47,32 @@ const pdfs: PDFInterface[] = [
   { id: '8', label: '荷爾蒙站', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-2.pdf`, duration: 0 },
   { id: '9', label: '共好統整', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf`, duration: 0 }
 ]
-// 'https://docs.google.com/gview?embedded=true&url=https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/section-1.pdf'
+
 export default function PDFScreen() {
-  const [currentPDF, setCurrentPDF] = useState<PDFInterface>(pdfs[0])
+  const [currentPDF, setCurrentPDF] = useState<PDFInterface>(Platform.OS === 'android' ? ANDRIOD_PDFS[0] : iOS_PDFS[0])
   const [progress, setProgress] = useState<ProgressState>({})
   const [startTime, setStartTime] = useState<number>(Date.now())
   const [currentRole, setCurrentRole] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  const [showDropdown, setShowDropdown] = useState(false)
+  const { width } = useWindowDimensions()
+
+  const dynamic = useMemo(() => {
+    const header = Math.max(18, Math.min(24, width * 0.06))
+    const item = Math.max(14, Math.min(18, width * 0.045))
+    return { header, item }
+  }, [width])
+
+  const modalHeight = 'auto'
+
+  const _source = () => {
+    if (Platform.OS === 'android') {
+      return ANDRIOD_PDFS
+    }
+    return iOS_PDFS
+  }
 
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt')
@@ -71,11 +101,10 @@ export default function PDFScreen() {
             const progressionData = JSON.parse(data.patient.document_progression_data)
             if (Object.keys(progressionData).length === 0) {
               // default data
-              pdfs.forEach((document: PDFInterface) => {
+              _source().forEach((document: PDFInterface) => {
                 currentProgress[parseInt(document.id)] = { ...document }
               })
               setProgress(currentProgress)
-              setCurrentPDF(pdfs[0])
             } else {
               progressionData.forEach((document: PDFInterface) => {
                 currentProgress[parseInt(document.id)] = { ...document }
@@ -85,11 +114,11 @@ export default function PDFScreen() {
             }
           } else {
             // default data
-            pdfs.forEach((document: PDFInterface) => {
+            _source().forEach((document: PDFInterface) => {
               currentProgress[parseInt(document.id)] = { ...document }
             })
             setProgress(currentProgress)
-            setCurrentPDF(pdfs[0])
+            setCurrentPDF(Platform.OS === 'android' ? ANDRIOD_PDFS[0] : iOS_PDFS[0])
           }
         }
       } catch (error) {
@@ -100,11 +129,11 @@ export default function PDFScreen() {
     } else {
       // default data
       const currentProgress: ProgressState = {}
-      pdfs.forEach((document: PDFInterface) => {
+      _source().forEach((document: PDFInterface) => {
         currentProgress[parseInt(document.id)] = { ...document }
       })
       setProgress(currentProgress)
-      setCurrentPDF(pdfs[0])
+      setCurrentPDF(Platform.OS === 'android' ? ANDRIOD_PDFS[0] : iOS_PDFS[0])
       setLoading(false)
     }
   }
@@ -123,28 +152,21 @@ export default function PDFScreen() {
     }
   }, [])
 
-  const selectPDF = (selectedValue: string) => {
-    if (selectedValue === 'NONE') {
-      return false
-    }
-    const target = pdfs.find((p: PDFInterface) => p.value == selectedValue)
-    if (!target || !target.id) {
-      Alert.alert('錯誤', '無法找到該 PDF')
-      return false
-    }
+  const handleSelectPDF = (pdf: PDFInterface) => {
     const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000)
     setProgress((prev) => ({
       ...prev,
-      [currentPDF.id]: {
-        ...currentPDF,
-        duration: accumulatedTime + progress[currentPDF.id].duration
+      [pdf.id]: {
+        ...pdf,
+        duration: accumulatedTime + (progress[pdf.id]?.duration ?? 0)
       }
     }))
-    setCurrentPDF(progress[parseInt(target.id)])
+    setCurrentPDF(pdf)
     setStartTime(Date.now())
+    return true
   }
 
-  const saveProgress = async (background: boolean = false) => {
+  const saveProgress = async (background = false) => {
     try {
       const token = await AsyncStorageGetItem('jwt')
       if (!token) {
@@ -195,7 +217,7 @@ export default function PDFScreen() {
 
   const BottomTabs = ({ role }: Props) => {
     const router = useRouter()
-    const [showModal, setShowModal] = useState<boolean>(false)
+    const [showModal, setShowModal] = useState(false)
 
     const handleSignOut = async () => {
       saveProgress(true)
@@ -208,8 +230,8 @@ export default function PDFScreen() {
     }
 
     return (
-      <SafeAreaView edges={['bottom']} style={bottomsList.bottomSafeview}>
-        <View style={[bottomsList.container]}>
+      <SafeAreaView edges={['bottom']} style={{ backgroundColor: '#f0f5f9' }}>
+        <View style={bottomsList.container}>
           {role === 'M' ? (
             <View style={bottomsList.tabItem}>
               <Link href="/nurse">
@@ -237,7 +259,7 @@ export default function PDFScreen() {
               </Link>
             </View>
           )}
-          <View style={[bottomsList.tabItem]}>
+          <View style={bottomsList.tabItem}>
             <Link
               href="/video"
               onPress={() => {
@@ -320,67 +342,174 @@ export default function PDFScreen() {
     )
   }
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>取得資料中</Text>
-      </View>
-    )
-  }
   return (
-    <>
-      <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}></SafeAreaView>
-      <View style={styles.container}>
-        <RNPickerSelect
-          placeholder={{ label: '請選擇', value: 'NONE', color: '#000' }}
-          value={currentPDF.value}
-          onValueChange={(itemValue: string) => {
-            if (itemValue !== currentPDF.value) {
-              selectPDF(itemValue)
-            }
-          }}
-          useNativeAndroidPickerStyle={false}
-          items={pdfs}
-          fixAndroidTouchableBug={true}
-          style={StyleSheet.create({
-            inputIOSContainer: {
-              paddingVertical: 15,
-              paddingHorizontal: 10
-            },
-            placeholder: { color: '#000' },
-            inputIOS: {
-              fontSize: 16,
-              paddingVertical: 12,
-              paddingHorizontal: 10,
-              color: 'black',
-              paddingRight: 30
-            },
-            inputAndroid: {
-              fontSize: 18,
-              paddingVertical: 15,
-              paddingHorizontal: 15,
-              color: 'black',
-              paddingRight: 30
-            },
-            iconContainer: {
-              paddingVertical: 15,
-              paddingHorizontal: 15
-            }
-          })}
-          Icon={() => {
-            return <MaterialCommunityIcons name="chevron-down" size={24} color="black" />
-          }}
-        />
-        {currentPDF ? (
-          <View style={styles.webviewContainer}>
-            <WebView source={{ uri: currentPDF.value }} javaScriptEnabled={true} domStorageEnabled={true} startInLoadingState={false} scalesPageToFit={true} style={styles.webview} />
-          </View>
-        ) : null}
-        <BottomTabs role={currentRole} />
-      </View>
-    </>
+    <SafeAreaProvider>
+      <SafeAreaView edges={['top']} style={styles.container}>
+        {/* Dropdown */}
+        <Pressable style={styles.dropdown} onPress={() => setShowDropdown(true)}>
+          <Text style={[styles.dropdownText, { fontSize: dynamic.item }]}>{currentPDF?.label ?? '請選擇 PDF'}</Text>
+          <MaterialCommunityIcons name="chevron-down" size={20} color="#333" />
+        </Pressable>
+
+        {/* Dropdown Modal */}
+        <Modal transparent visible={showDropdown} animationType="fade" onRequestClose={() => setShowDropdown(false)}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPressOut={() => setShowDropdown(false)}>
+            <View style={[styles.modalContent, { height: modalHeight }]}>
+              <ScrollView>
+                {_source().map((pdf) => (
+                  <Pressable
+                    key={pdf.id}
+                    style={[styles.modalItem, currentPDF?.id === pdf.id && styles.modalItemActive]}
+                    onPress={() => {
+                      handleSelectPDF(pdf)
+                      setShowDropdown(false)
+                    }}>
+                    <Text style={[styles.modalText, { fontSize: dynamic.item }, currentPDF?.id === pdf.id && styles.modalTextActive]}>{pdf.label}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* PDF Viewer */}
+        <View style={styles.webviewContainer}>
+          {currentPDF ? (
+            <>
+              {loading && (
+                <View style={styles.overlay}>
+                  <ActivityIndicator size="large" color="#6366F1" />
+                </View>
+              )}
+              <WebView source={{ uri: currentPDF.value }} style={styles.webview} onLoadStart={() => setLoading(true)} onLoadEnd={() => setLoading(false)} />
+            </>
+          ) : (
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>請選擇文件</Text>
+            </View>
+          )}
+        </View>
+      </SafeAreaView>
+      <BottomTabs role={currentRole} />
+    </SafeAreaProvider>
   )
 }
+
+const PRIMARY = '#6366F1'
+const BG = '#f0f5f9'
+const CARD_BG = '#fff'
+const BORDER = '#d1d7dd'
+const TEXT = '#1f2d3a'
+const MUTED = '#6b7280'
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: BG
+  },
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: CARD_BG,
+    borderColor: BORDER,
+    borderWidth: 1,
+    borderRadius: 8,
+    margin: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10
+  },
+  dropdownText: {
+    color: TEXT,
+    fontWeight: '500'
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'flex-start',
+    paddingTop: Platform.OS === 'android' ? 100 : 200
+  },
+  modalContent: {
+    backgroundColor: CARD_BG,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    overflow: 'hidden'
+  },
+  modalItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomColor: BORDER,
+    borderBottomWidth: 1
+  },
+  modalItemActive: {
+    backgroundColor: PRIMARY
+  },
+  modalText: {
+    color: TEXT
+  },
+  modalTextActive: {
+    color: '#fff',
+    fontWeight: '600'
+  },
+  webviewContainer: {
+    flex: 1,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: CARD_BG
+  },
+  webview: {
+    flex: 1
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1
+  },
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  emptyText: {
+    fontSize: 16,
+    color: MUTED
+  }
+})
+
+const bottomsList = StyleSheet.create({
+  container: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingBottom: 0,
+    backgroundColor: BG,
+    borderTopWidth: 1,
+    borderTopColor: BG
+  },
+  tabItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5
+  },
+  tabText: {
+    display: 'flex',
+    fontSize: 14,
+    color: 'black'
+  },
+  tabIcon: {
+    display: 'flex',
+    fontSize: 34,
+    color: '#303030'
+  }
+})
 
 const modal = StyleSheet.create({
   modalContainer: {
@@ -415,81 +544,5 @@ const modal = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#fff',
     marginHorizontal: 45
-  }
-})
-
-const bottomsList = StyleSheet.create({
-  bottomSafeview: {
-    flex: 0,
-    backgroundColor: appTheme.background,
-    paddingBottom: 0
-  },
-  container: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    bottom: 0,
-    backgroundColor: appTheme.background,
-    borderTopWidth: 1,
-    borderTopColor: '#ffffff'
-  },
-  tabItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 5
-  },
-  tabText: {
-    display: 'flex',
-    fontSize: 14,
-    color: 'black'
-  },
-  tabIcon: {
-    display: 'flex',
-    fontSize: 34,
-    color: '#303030'
-  }
-})
-
-const styles = StyleSheet.create({
-  topSafeview: {
-    flex: 0,
-    backgroundColor: appTheme.primary,
-    paddingTop: 0
-  },
-  container: {
-    flex: 1,
-    backgroundColor: appTheme.primary
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  loadingText: {
-    fontSize: 18,
-    color: '#804000'
-  },
-  picker: {
-    width: '100%',
-    backgroundColor: '#fff6e5',
-    borderRadius: 5
-  },
-  pickerText: {
-    fontSize: 20,
-    color: 'black',
-    fontWeight: 'bold'
-  },
-  webviewContainer: {
-    flex: 1
-  },
-  webview: {
-    flex: 1
-  },
-  saveBotton: {
-    paddingVertical: 5
   }
 })
