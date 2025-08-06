@@ -28,7 +28,7 @@ interface PatientProgressionData {
   document: Document[]
   records: SymptomRecord[]
   pushToken?: string
-  birthday: string
+  birthday?: string
 }
 
 interface APIPatientProgressionData {
