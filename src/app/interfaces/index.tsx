@@ -38,8 +38,8 @@ interface APIPatientProgressionData {
   video_progression_data: string
   survey_data: string
   symptom_records: APISymptomRecord[]
-  push_token: string | null
-  birthday: string
+  push_token?: string
+  birthday?: string
 }
 
 interface SymptomRecord {

@@ -1,40 +1,38 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { View, Text, TextInput, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity, Dimensions } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { View, Text, TextInput, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
-import RNPickerSelect from 'react-native-picker-select'
 import AntDesign from '@expo/vector-icons/AntDesign'
 import BottomTabs from '../bottomTabs'
-import { PSAData } from '../interfaces'
+import { APIPatientProgressionData, PSAData } from '../interfaces'
 import { AsyncStorageGetItem } from '../utils'
-import { appTheme } from 'src/config/theme'
+import { useRouter } from 'expo-router'
+import RNPickerSelect from 'react-native-picker-select'
 
-// 回傳 n 天前的日期
-const daysAgo = (n: number): Date => {
+const PRIMARY = '#6366F1'
+const BG = '#f0f5f9'
+const CARD_BG = '#fff'
+const TEXT = '#1f2d3a'
+const MUTED = '#6b7280'
+const BORDER = '#d1d7dd'
+
+const daysAgo = (n: number) => {
   const d = new Date()
-  d.setDate(d.getDate() - Math.abs(n))
-  return d
+  d.setDate(d.getDate() - n)
+  return d.toISOString().split('T')[0]
 }
 
 export default function PSAList() {
   const router = useRouter()
-
   // 狀態定義
   const [allPSAData, setAllPSAData] = useState<PSAData[]>([])
   const [psa, setPsa] = useState<string>('')
+  const [currentRole, setCurrentRole] = useState('')
 
   // 預設顯示過去兩週的資料 (P 與 M 都如此)
-  const [searchStartDate, setSearchStartDate] = useState<string>(daysAgo(14).toISOString().split('T')[0])
-  const [searchEndDate, setSearchEndDate] = useState<string>(daysAgo(0).toISOString().split('T')[0])
-  const [addDate, setAddDate] = useState<string>(daysAgo(0).toISOString().split('T')[0])
-
-  const [currentRole, setCurrentRole] = useState<string>('')
-  const [isSearchModalVisible, setSearchModalVisible] = useState<boolean>(false)
-  const [isCreateModalVisible, setCreateModalVisible] = useState<boolean>(false)
-  const [showStartDate, setShowStartDate] = useState<boolean>(false)
-  const [showEndDate, setShowEndDate] = useState<boolean>(false)
-  const [showAddDate, setShowAddDate] = useState<boolean>(false)
+  const [searchStartDate, setSearchStartDate] = useState<string>(daysAgo(14))
+  const [searchEndDate, setSearchEndDate] = useState<string>(daysAgo(0))
+  const [addDate, setAddDate] = useState<string>(daysAgo(0))
 
   // 當角色為 M 時，需有病患選擇功能
   const [patientOptions, setPatientOptions] = useState<{ id: number; name: string; value: string; label: string }[]>([])
@@ -45,47 +43,38 @@ export default function PSAList() {
     label: string
   }>({ id: -1, name: '', value: '', label: '' })
 
-  // 根據搜尋日期過濾資料
-  const filteredData = useMemo(() => {
-    return allPSAData.filter((item) => {
-      const itemDate = new Date(item.date)
-      return itemDate >= new Date(searchStartDate) && itemDate <= new Date(searchEndDate)
-    })
-  }, [allPSAData, searchStartDate, searchEndDate])
+  const [showSearchModal, setShowSearchModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showStartDate, setShowStartDate] = useState(false)
+  const [showEndDate, setShowEndDate] = useState(false)
+  const [showAddDate, setShowAddDate] = useState(false)
 
-  // 日期 picker onChange 回呼
-  const searchStartDateOnChange = useCallback((_: DateTimePickerEvent, selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      setSearchStartDate(selectedDate.toISOString().split('T')[0])
-    }
+  const filteredData = useMemo(
+    () =>
+      allPSAData.filter((item) => {
+        const d = new Date(item.date)
+        return d >= new Date(searchStartDate) && d <= new Date(searchEndDate)
+      }),
+    [allPSAData, searchStartDate, searchEndDate]
+  )
+
+  const onStartChange = useCallback((_: DateTimePickerEvent, d?: Date) => {
     setShowStartDate(false)
+    if (d) setSearchStartDate(d.toISOString().split('T')[0])
   }, [])
 
-  const searchEndDateOnChange = useCallback(
-    (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
-      if (selectedDate) {
-        if (selectedDate < new Date(searchStartDate)) {
-          Alert.alert('錯誤', '結束日期不可早於開始日期')
-          setShowEndDate(false)
-          return
-        }
-        setSearchEndDate(selectedDate.toISOString().split('T')[0])
-      }
+  const onEndChange = useCallback(
+    (_: DateTimePickerEvent, d?: Date) => {
       setShowEndDate(false)
+      if (d && d >= new Date(searchStartDate)) setSearchEndDate(d.toISOString().split('T')[0])
+      if (d && d < new Date(searchStartDate)) Alert.alert('錯誤', '結束不可早於開始')
     },
     [searchStartDate]
   )
-
-  const addDateOnChange = useCallback((_: DateTimePickerEvent, selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      if (selectedDate > new Date()) {
-        Alert.alert('錯誤', '不可選擇未來日期')
-        setShowAddDate(false)
-        return
-      }
-      setAddDate(selectedDate.toISOString().split('T')[0])
-    }
+  const onAddChange = useCallback((_: DateTimePickerEvent, d?: Date) => {
     setShowAddDate(false)
+    if (d && d <= new Date()) setAddDate(d.toISOString().split('T')[0])
+    if (d && d > new Date()) Alert.alert('錯誤', '不可選未來日期')
   }, [])
 
   // 取得所有病患資料 (僅角色為 M 時使用)
@@ -101,14 +90,12 @@ export default function PSAList() {
       })
       const data = await response.json()
       if (response.ok && data?.patients) {
-        const pData = data.patients.map(
-          (d: { id: string; name: string; document_progression_data: string; video_progression_data: string; survey_data: string; symptom_records: { date: string; survey_data: string }[] }) => ({
-            id: Number(d.id),
-            name: d.name,
-            value: `${d.id}. ${d.name}`,
-            label: d.name
-          })
-        )
+        const pData = data.patients.map((d: APIPatientProgressionData) => ({
+          id: Number(d.id),
+          name: d.name,
+          value: `${d.id}. ${d.name}`,
+          label: d.name
+        }))
         if (pData.length > 0) {
           setPatientOptions(pData)
           setCurrentPatient(pData[0])
@@ -231,7 +218,7 @@ export default function PSAList() {
       console.error('addPSAData error:', error)
     } finally {
       setPsa('')
-      setCreateModalVisible(false)
+      setShowCreateModal(false)
     }
   }
 
@@ -252,96 +239,40 @@ export default function PSAList() {
     }
   }
 
-  const AndroidDateTimePicker = () => (
-    <>
-      {showStartDate && <DateTimePicker display="calendar" value={new Date(searchStartDate)} mode="date" onChange={searchStartDateOnChange} />}
-      <View style={localStyles.rowContainer}>
-        <Text style={localStyles.label}>開始日期: </Text>
-        <TouchableOpacity
-          onPress={(e) => {
-            e.preventDefault()
-            setShowStartDate(true)
-          }}
-          style={localStyles.touchableInput}>
-          <TextInput readOnly style={styles.input} value={searchStartDate} />
-        </TouchableOpacity>
-      </View>
-      {showEndDate && <DateTimePicker display="calendar" value={new Date(searchEndDate)} mode="date" onChange={searchEndDateOnChange} />}
-      <View style={localStyles.rowContainer}>
-        <Text style={localStyles.label}>結束日期: </Text>
-        <TouchableOpacity
-          onPress={(e) => {
-            e.preventDefault()
-            setShowEndDate(true)
-          }}
-          style={localStyles.touchableInput}>
-          <TextInput readOnly style={styles.input} value={searchEndDate} />
-        </TouchableOpacity>
-      </View>
-    </>
-  )
-
-  const IOSDateTimePicker = () => (
-    <>
-      <View style={[localStyles.rowContainer, localStyles.marginBottom]}>
-        <Text style={localStyles.label}>開始日期: </Text>
-        <DateTimePicker style={localStyles.datePicker} display="default" value={new Date(searchStartDate)} mode="date" onChange={searchStartDateOnChange} />
-      </View>
-      <View style={localStyles.rowContainer}>
-        <Text style={localStyles.label}>結束日期: </Text>
-        <DateTimePicker style={localStyles.datePicker} display="default" value={new Date(searchEndDate)} mode="date" onChange={searchEndDateOnChange} />
-      </View>
-    </>
-  )
-
   return (
-    <>
-      <View style={styles.container}>
-        <SafeAreaView edges={['top', 'left', 'right']} style={styles.topSafeview}>
-          <View style={styles.header}>
-            {currentRole === 'M' ? (
-              <View style={localStyles.flexColumn}>
-                <Text style={styles.title}>病人: {currentPatient.name}</Text>
-                <Text style={styles.title}>
-                  日期: {searchStartDate} ~ {searchEndDate}
-                </Text>
-              </View>
-            ) : (
-              <View style={localStyles.flexColumn}>
-                <Text style={styles.title}>
-                  日期: {searchStartDate} ~ {searchEndDate}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={localStyles.actionContainer}>
-            <TouchableOpacity onPress={() => setSearchModalVisible(true)} style={localStyles.actionButton}>
-              <Text style={styles.textStyle}>搜尋</Text>
+    <SafeAreaProvider>
+      <SafeAreaView edges={['top']} style={styles.page}>
+        <View style={styles.header}>
+          {currentRole === 'M' && <Text style={styles.headerText}>病患：{currentPatient.name}</Text>}
+          <Text style={styles.headerText}>
+            {searchStartDate} ~ {searchEndDate}
+          </Text>
+          <View style={styles.buttons}>
+            <TouchableOpacity style={styles.btn} onPress={() => setShowSearchModal(true)}>
+              <Text style={styles.btnText}>搜尋</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setCreateModalVisible(true)} style={localStyles.actionButton}>
-              <Text style={styles.textStyle}>新增</Text>
+            <TouchableOpacity style={styles.btn} onPress={() => setShowCreateModal(true)}>
+              <Text style={styles.btnText}>新增</Text>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
-        <View style={styles.scrollWrapper}>
-          <ScrollView contentContainerStyle={localStyles.scrollContent}>
-            {filteredData.map((item, index) => (
-              <View key={index} style={styles.listItem}>
-                <Text style={[styles.listItemText, { flex: 1 }]}>日期: {item.date}</Text>
-                <View style={styles.listTag}>
-                  <Text style={[styles.listItemText, styles.listPSAText]}>PSA: </Text>
-                  <Text style={[styles.listItemText, styles.listPSAText]}>{item.psa}</Text>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
         </View>
-      </View>
+        <ScrollView contentContainerStyle={styles.list}>
+          {filteredData.map((i, idx) => (
+            <View key={idx} style={styles.item}>
+              <Text style={styles.itemDate}>{i.date}</Text>
+              <View style={styles.itemTag}>
+                <Text style={styles.itemTagText}>PSA: {i.psa}</Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+
       {/* 搜尋 Modal */}
-      <Modal visible={isSearchModalVisible} transparent animationType="slide" onRequestClose={() => setSearchModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>搜尋資料</Text>
+      <Modal visible={showSearchModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>搜尋 PSA</Text>
             {currentRole === 'M' && (
               <RNPickerSelect
                 placeholder={{ label: '選擇病人', value: 'NONE', color: '#000' }}
@@ -354,32 +285,57 @@ export default function PSAList() {
                 items={patientOptions}
                 useNativeAndroidPickerStyle={false}
                 fixAndroidTouchableBug={true}
-                Icon={() => <AntDesign name="downcircleo" style={localStyles.pickerIcon} />}
+                Icon={() => <AntDesign name="downcircleo" style={pickerSelectStyles.iconContainer} />}
                 style={pickerSelectStyles}
               />
             )}
-            {Platform.OS === 'ios' ? <IOSDateTimePicker /> : <AndroidDateTimePicker />}
-            <View style={localStyles.modalButtonContainer}>
+            {Platform.OS === 'android' ? (
+              <>
+                <Text>開始日期</Text>
+                {showStartDate && <DateTimePicker value={new Date(searchStartDate)} mode="date" display="calendar" onChange={onStartChange} />}
+                <TouchableOpacity onPress={() => setShowStartDate(true)} style={styles.modalInput}>
+                  <Text>{searchStartDate}</Text>
+                </TouchableOpacity>
+                <Text>結束日期</Text>
+                {showEndDate && <DateTimePicker value={new Date(searchEndDate)} mode="date" display="calendar" onChange={onEndChange} />}
+                <TouchableOpacity onPress={() => setShowEndDate(true)} style={styles.modalInput}>
+                  <Text>{searchEndDate}</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={{ display: 'flex', flexDirection: 'column', gap: '10' }}>
+                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text>開始日期</Text>
+                  <DateTimePicker value={new Date(searchStartDate)} mode="date" onChange={onStartChange} />
+                </View>
+                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text>結束日期</Text>
+                  <DateTimePicker value={new Date(searchEndDate)} mode="date" onChange={onEndChange} />
+                </View>
+              </View>
+            )}
+            <View style={styles.modalButtons}>
               <TouchableOpacity
+                style={styles.modalBtn}
                 onPress={() => {
                   searchPSAData()
-                  setSearchModalVisible(false)
-                }}
-                style={localStyles.modalButton}>
-                <Text style={styles.textStyle}>搜尋</Text>
+                  setShowSearchModal(false)
+                }}>
+                <Text style={styles.modalBtnText}>搜尋</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setSearchModalVisible(false)} style={localStyles.modalButton}>
-                <Text style={styles.textStyle}>取消</Text>
+              <TouchableOpacity style={styles.modalBtn} onPress={() => setShowSearchModal(false)}>
+                <Text style={styles.modalBtnText}>取消</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-      {/* 新增/修改 PSA Modal */}
-      <Modal visible={isCreateModalVisible} transparent animationType="slide" onRequestClose={() => setCreateModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>新增資料</Text>
+
+      {/* 新增 Modal */}
+      <Modal visible={showCreateModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>新增 PSA</Text>
             {currentRole === 'M' && (
               <RNPickerSelect
                 placeholder={{ label: '選擇病人', value: 'NONE', color: '#000' }}
@@ -392,255 +348,190 @@ export default function PSAList() {
                 items={patientOptions}
                 useNativeAndroidPickerStyle={false}
                 fixAndroidTouchableBug={true}
+                Icon={() => <AntDesign name="downcircleo" style={pickerSelectStyles.iconContainer} />}
                 style={pickerSelectStyles}
-                Icon={() => <AntDesign name="downcircleo" style={localStyles.pickerIcon} />}
               />
             )}
-            {Platform.OS === 'ios' ? (
-              <View style={localStyles.rowContainer}>
-                <Text style={localStyles.label}>選擇日期: </Text>
-                <DateTimePicker display="default" value={new Date()} mode="date" onChange={addDateOnChange} style={localStyles.datePicker} />
-              </View>
-            ) : (
+            {Platform.OS === 'android' ? (
               <>
-                {showAddDate && <DateTimePicker display="calendar" value={new Date()} mode="date" onChange={addDateOnChange} />}
-                <View style={localStyles.rowContainer}>
-                  <Text style={localStyles.label}>選擇日期: </Text>
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.preventDefault()
-                      setShowAddDate(true)
-                    }}
-                    style={localStyles.touchableInput}>
-                    <TextInput readOnly style={styles.input} value={addDate} />
-                  </TouchableOpacity>
-                </View>
+                <Text>選擇日期</Text>
+                {showAddDate && <DateTimePicker value={new Date(addDate)} mode="date" display="calendar" onChange={onAddChange} />}
+                <TouchableOpacity onPress={() => setShowAddDate(true)} style={styles.modalInput}>
+                  <Text>{addDate}</Text>
+                </TouchableOpacity>
               </>
+            ) : (
+              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text>選擇日期</Text>
+                <DateTimePicker value={new Date(addDate)} mode="date" onChange={onAddChange} />
+              </View>
             )}
-            <View style={localStyles.rowContainer}>
-              <Text style={localStyles.label}>輸入數值: </Text>
-              <TextInput style={[styles.input, localStyles.inputHalf]} placeholder="PSA 數值" value={psa} onChangeText={setPsa} keyboardType="numeric" />
-            </View>
-            <View style={localStyles.modalButtonContainer}>
-              <TouchableOpacity
-                onPress={() => {
-                  addPSAData()
-                }}
-                style={localStyles.modalButton}>
-                <Text style={styles.textStyle}>新增</Text>
+            <TextInput style={styles.modalInput} placeholder="PSA" keyboardType="numeric" value={psa} onChangeText={setPsa} />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalBtn} onPress={addPSAData}>
+                <Text style={styles.modalBtnText}>新增</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setCreateModalVisible(false)} style={localStyles.modalButton}>
-                <Text style={styles.textStyle}>取消</Text>
+              <TouchableOpacity style={styles.modalBtn} onPress={() => setShowCreateModal(false)}>
+                <Text style={styles.modalBtnText}>取消</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
       <BottomTabs role={currentRole} />
-    </>
+    </SafeAreaProvider>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  page: {
     flex: 1,
-    backgroundColor: appTheme.primary
-  },
-  topSafeview: {
-    flex: 0,
-    backgroundColor: appTheme.primary,
-    paddingTop: 10
+    backgroundColor: BG
   },
   header: {
-    width: Dimensions.get('window').width,
-    paddingHorizontal: 10
+    backgroundColor: BG,
+    paddingHorizontal: 12
   },
-  title: {
-    fontSize: 20,
-    color: appTheme.text,
-    marginBottom: 10,
+  headerText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: TEXT,
+    marginBottom: 4
+  },
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8
+  },
+  btn: {
+    width: 100,
+    backgroundColor: PRIMARY,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center'
+  },
+  btnText: {
+    color: CARD_BG,
+    fontSize: 16,
     fontWeight: '500'
   },
-  input: {
-    fontSize: 16,
-    backgroundColor: appTheme.background,
-    borderWidth: 1,
-    borderColor: '#000',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginVertical: 5
+  list: {
+    paddingVertical: 16,
+    paddingHorizontal: 12
   },
-  scrollWrapper: {
-    flex: 1,
-    borderTopWidth: 2,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    borderTopColor: appTheme.highlight,
-    borderRightWidth: 2,
-    borderRightColor: appTheme.highlight,
-    borderLeftWidth: 2,
-    borderLeftColor: appTheme.highlight,
-    backgroundColor: appTheme.background,
-    paddingHorizontal: 10,
-    paddingVertical: 5
-  },
-  listItem: {
+  item: {
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
     padding: 16,
-    borderColor: appTheme.highlight,
-    borderWidth: 2,
-    borderRadius: 20,
+    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: appTheme.background,
-    marginBottom: 10
+    borderColor: BORDER,
+    borderWidth: 1
   },
-  listItemText: {
+  itemDate: {
     fontSize: 16,
-    color: appTheme.text
+    color: TEXT
   },
-  listTag: {
-    flexDirection: 'row',
-    width: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ff0',
-    borderRadius: 5,
-    borderColor: '#ff4',
-    borderWidth: 2,
-    paddingHorizontal: 10,
-    paddingVertical: 5
+  itemTag: {
+    backgroundColor: PRIMARY,
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    width: 80,
+    alignItems: 'center'
   },
-  listPSAText: {
-    fontWeight: 'bold'
+  itemTagText: {
+    color: CARD_BG,
+    fontSize: 14
   },
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+    alignItems: 'center'
   },
-  modalContent: {
+  modal: {
     width: '80%',
-    backgroundColor: appTheme.background,
-    padding: 20,
-    borderRadius: 10
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
+    padding: 16
   },
   modalTitle: {
-    fontSize: 22,
-    marginBottom: 10,
-    fontWeight: 'bold',
-    color: appTheme.text,
+    fontSize: 18,
+    fontWeight: '600',
+    color: TEXT,
+    marginBottom: 12,
     textAlign: 'center'
   },
-  textStyle: {
-    color: '#5A3E2B',
-    fontSize: 20,
-    lineHeight: 28,
+  modalInput: {
+    backgroundColor: BG,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginVertical: 8,
+    color: TEXT
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12
+  },
+  modalBtn: {
+    backgroundColor: PRIMARY,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16
+  },
+  modalBtnText: {
+    color: CARD_BG,
+    fontSize: 16,
     fontWeight: '500'
-  }
-})
-
-const localStyles = StyleSheet.create({
-  flexColumn: {
-    flexDirection: 'column'
   },
-  actionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingBottom: 10,
-    width: Dimensions.get('window').width
-  },
-  actionButton: {
-    width: 80,
-    height: 40,
-    borderRadius: 15,
-    backgroundColor: appTheme.highlight,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    width: '100%'
-  },
-  label: {
-    fontSize: 18,
-    color: '#000'
-  },
-  touchableInput: {
-    zIndex: 1,
-    width: '50%'
-  },
-  datePicker: {
-    width: '100%'
-  },
-  marginBottom: {
-    marginBottom: 10
-  },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    width: '100%'
-  },
-  modalButton: {
-    width: 80,
-    height: 40,
-    borderRadius: 15,
-    backgroundColor: appTheme.highlight,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  inputHalf: {
-    width: '50%'
-  },
-  scrollContent: {
-    padding: 10
-  },
-  pickerIcon: {
-    fontSize: 20,
-    color: '#303030',
-    marginRight: Platform.OS === 'ios' ? 20 : 22,
-    marginTop: Platform.OS === 'ios' ? 10 : 15
+  picker: {
+    marginVertical: 8
   }
 })
 
 const pickerSelectStyles = StyleSheet.create({
-  placeHolder: {
-    fontSize: 20,
-    marginHorizontal: 12,
-    marginVertical: 5,
+  placeholder: {
+    fontSize: 16,
+    color: MUTED,
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    color: 'black'
+    paddingVertical: 8
   },
   inputIOS: {
-    fontSize: 20,
-    marginHorizontal: 12,
-    marginVertical: 5,
+    fontSize: 16,
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingRight: 40,
     borderWidth: 1,
-    color: 'black'
+    borderColor: BORDER,
+    borderRadius: 8,
+    color: TEXT,
+    backgroundColor: CARD_BG,
+    marginBottom: 10
   },
   inputAndroid: {
-    fontSize: 20,
-    marginHorizontal: 12,
-    marginVertical: 5,
+    fontSize: 16,
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingRight: 40,
     borderWidth: 1,
-    color: 'black'
+    borderColor: BORDER,
+    borderRadius: 8,
+    color: TEXT,
+    backgroundColor: CARD_BG,
+    marginBottom: 5
+  },
+  iconContainer: {
+    fontSize: 20,
+    color: '#303030',
+    marginRight: 5,
+    marginTop: Platform.OS === 'ios' ? 3 : 5
   }
 })
