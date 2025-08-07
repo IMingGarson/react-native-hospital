@@ -92,7 +92,7 @@ export default function SurveyRecordScreen() {
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
               <Ionicons name="arrow-back-circle" size={25} color={TEXT} style={{ marginTop: 2.5 }} />
-              <Text style={styles.backText}>回上一頁</Text>
+              <Text style={styles.backText}>上一頁</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.content}>

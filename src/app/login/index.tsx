@@ -7,10 +7,10 @@ import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils'
 const IMAGE_SOURCE = require('../../assets/images/main.jpg')
 
 const LoginScreen: React.FC = (): JSX.Element => {
-  const [email, setEmail] = useState('tester2')
-  const [password, setPassword] = useState('tester2')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [role, setRole] = useState('1')
+  const [role, setRole] = useState('0')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { width } = useWindowDimensions()

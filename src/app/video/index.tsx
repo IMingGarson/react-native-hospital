@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { useVideoPlayer, VideoView } from 'expo-video'
 import { useEventListener } from 'expo'
 import { AppState, Modal, Pressable, StyleSheet, Text, TouchableOpacity, ActivityIndicator, useWindowDimensions, View, ScrollView, Alert } from 'react-native'
@@ -9,12 +9,13 @@ import { ProgressState, VideoInterface } from '../interfaces'
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
 
 const PRIMARY = '#6366F1'
-const BG = '#f0f5f9'
 const SURFACE = '#fff'
-const BORDER = '#e2e8f0'
-const TEXT_PRIMARY = '#1f2d3a'
-const TEXT_SECONDARY = '#33475b'
+const CARD_BG = '#fff'
+const BORDER = '#d1d7dd'
+const TEXT = '#1f2d3a'
 const MUTED = '#6b7280'
+const TEXT_SECONDARY = '#33475b'
+const BG = '#f0f5f9'
 
 export default function VideoScreen() {
   const [videos] = useState<VideoInterface[]>([
@@ -303,7 +304,7 @@ export default function VideoScreen() {
         <View style={styles.videoWrapper}>
           <VideoView style={styles.video} player={player} allowsFullscreen allowsPictureInPicture />
         </View>
-        <ScrollView contentContainerStyle={styles.scrollList}>
+        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollList}>
           {videos.map((item) => {
             const active = item.id === currentVideo.id
             return (
@@ -327,19 +328,18 @@ export default function VideoScreen() {
     </SafeAreaProvider>
   )
 }
-
 interface Props {
   role: string
 }
 
-function BottomTabs({ role }: Props) {
+const BottomTabs: React.FC<Props> = ({ role }: Props) => {
   const router = useRouter()
   const [showModal, setShowModal] = useState(false)
 
   const handleSignOut = async () => {
-    setShowModal(false)
     await AsyncStorageRemoveItem('token')
     await AsyncStorageRemoveItem('role')
+    setShowModal(false)
     Alert.alert('登出成功')
     router.replace('/login')
     return
@@ -349,25 +349,31 @@ function BottomTabs({ role }: Props) {
     <SafeAreaView edges={['bottom']} style={bottoms.bottomSafeview}>
       <View style={bottoms.container}>
         {role === 'M' ? (
-          <Tab label="病人列表" icon={<MaterialCommunityIcons name="emoticon-sick-outline" size={24} />} onPress={() => router.replace('/nurse')} />
+          <View>
+            <TabItem label="病人列表" icon={<MaterialCommunityIcons name="emoticon-sick-outline" size={24} />} href="/nurse" />
+          </View>
         ) : (
-          <Tab label="症狀" icon={<FontAwesome name="pencil-square-o" size={24} />} onPress={() => router.replace('/survey')} />
+          <TabItem label="症狀" icon={<FontAwesome name="pencil-square-o" size={24} />} href="/survey" />
         )}
-        <Tab label="影片" icon={<Foundation name="play-video" size={24} />} onPress={() => router.replace('/video')} />
-        <Tab label="PSA" icon={<MaterialCommunityIcons name="file-chart-outline" size={24} />} onPress={() => router.replace('/psa')} />
-        <Tab label="手冊" icon={<MaterialCommunityIcons name="file-document-multiple-outline" size={24} />} onPress={() => router.replace('/document')} />
-        <Tab label="登出" icon={<MaterialIcons name="logout" size={24} />} onPress={() => setShowModal(true)} />
+        <TabItem label="影片" icon={<Foundation name="play-video" size={24} />} href="/video" />
+        <TabItem label="PSA" icon={<MaterialCommunityIcons name="file-chart-outline" size={24} />} href="/psa" />
+        <TabItem label="手冊" icon={<MaterialCommunityIcons name="file-document-multiple-outline" size={24} />} href="/document" />
+        <TouchableOpacity style={bottoms.tab} onPress={() => setShowModal(true)}>
+          <MaterialIcons name="logout" size={24} color={TEXT} />
+          <Text style={bottoms.tabText}>登出</Text>
+        </TouchableOpacity>
       </View>
+
       <Modal visible={showModal} transparent onRequestClose={() => setShowModal(false)}>
-        <View style={modalStyles.container}>
-          <View style={modalStyles.content}>
-            <Text style={modalStyles.title}>確定登出？</Text>
-            <View style={modalStyles.actions}>
-              <TouchableOpacity style={[modalStyles.btn, modalStyles.primary]} onPress={handleSignOut}>
-                <Text style={[modalStyles.btnText, { color: '#fff' }]}>確定</Text>
+        <View style={modal.overlay}>
+          <View style={modal.content}>
+            <Text style={modal.title}>確定登出？</Text>
+            <View style={modal.actions}>
+              <TouchableOpacity style={[modal.btn, modal.primary]} onPress={handleSignOut}>
+                <Text style={[modal.btnText, { color: SURFACE }]}>確定</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[modalStyles.btn, modalStyles.secondary]} onPress={() => setShowModal(false)}>
-                <Text style={[modalStyles.btnText, { color: TEXT_SECONDARY }]}>取消</Text>
+              <TouchableOpacity style={[modal.btn, modal.secondary]} onPress={() => setShowModal(false)}>
+                <Text style={[modal.btnText, { color: TEXT }]}>取消</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -377,18 +383,16 @@ function BottomTabs({ role }: Props) {
   )
 }
 
-interface TabProps {
-  label: string
-  icon: React.ReactNode
-  onPress: () => void
-}
-
-function Tab({ label, icon, onPress }: TabProps) {
+function TabItem({ label, icon, href }: { label: string; icon: React.ReactNode; href: string }) {
   return (
-    <TouchableOpacity style={bottoms.tab} onPress={onPress}>
-      {icon}
-      <Text style={bottoms.tabText}>{label}</Text>
-    </TouchableOpacity>
+    <View style={bottoms.tabItem}>
+      <Link href={href} style={bottoms.tabIcon}>
+        {icon}
+      </Link>
+      <Link href={href} style={bottoms.tab}>
+        <Text style={bottoms.tabText}>{label}</Text>
+      </Link>
+    </View>
   )
 }
 
@@ -417,27 +421,86 @@ const styles = StyleSheet.create({
     borderWidth: 2
   },
   itemText: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  itemTitle: { color: TEXT_PRIMARY, fontWeight: '600', flexShrink: 1 },
+  itemTitle: { color: TEXT, fontWeight: '600', flexShrink: 1 },
   itemMeta: { flexDirection: 'row', alignItems: 'center', marginLeft: 12 },
   itemMetaText: { marginLeft: 4, fontSize: 14, color: MUTED },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: PRIMARY },
   loadingText: { marginTop: 8, fontSize: 18, color: '#fff', fontWeight: '500' }
 })
 
+const modal = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  content: {
+    width: '80%',
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: TEXT,
+    marginBottom: 16,
+    textAlign: 'center'
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  btn: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1
+  },
+  primary: {
+    backgroundColor: PRIMARY,
+    borderColor: PRIMARY,
+    marginRight: 8
+  },
+  secondary: {
+    backgroundColor: CARD_BG,
+    borderColor: MUTED
+  },
+  btnText: {
+    fontSize: 15,
+    fontWeight: '600'
+  }
+})
+
 const bottoms = StyleSheet.create({
   bottomSafeview: { backgroundColor: SURFACE },
   container: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: BORDER, backgroundColor: SURFACE },
-  tab: { alignItems: 'center', justifyContent: 'center' },
-  tabText: { marginTop: 2, fontSize: 12, color: TEXT_SECONDARY, fontWeight: '500' }
-})
-
-const modalStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
-  content: { width: '80%', backgroundColor: SURFACE, borderRadius: 12, padding: 20, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, elevation: 6 },
-  title: { fontSize: 18, fontWeight: '700', color: TEXT_PRIMARY, marginBottom: 16, textAlign: 'center' },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  btn: { flex: 1, borderRadius: 8, paddingVertical: 12, alignItems: 'center', borderWidth: 1 },
-  primary: { backgroundColor: PRIMARY, borderColor: PRIMARY },
-  secondary: { backgroundColor: SURFACE, borderColor: MUTED },
-  btnText: { fontSize: 15, fontWeight: '600' }
+  tab: {
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  tabItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5
+  },
+  tabIcon: {
+    display: 'flex',
+    fontSize: 34,
+    color: '#303030'
+  },
+  tabText: {
+    marginTop: 2,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    fontWeight: '500'
+  }
 })

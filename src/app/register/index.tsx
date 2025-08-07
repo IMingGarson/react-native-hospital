@@ -1,104 +1,91 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
+import { useRouter } from 'expo-router'
+import React, { useCallback, useState } from 'react'
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
 
 export default function RegisterScreen() {
-  const [email, setEmail] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showAgainPassword, setShowAgainPassword] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [show, setShow] = useState<boolean>(false);
-  const [inviteCode, setInviteCode] = useState<string>('');
-  const router = useRouter();
+  const [email, setEmail] = useState<string>('')
+  const [name, setName] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const [showAgainPassword, setShowAgainPassword] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [show, setShow] = useState<boolean>(false)
+  const [inviteCode, setInviteCode] = useState<string>('')
+  const router = useRouter()
 
   const onChange = useCallback((_: DateTimePickerEvent, selectedDate: Date | undefined) => {
     if (selectedDate) {
       if (selectedDate > new Date()) {
-        Alert.alert('錯誤', '不可選擇未來日期');
-        setShow(false);
-        return;
+        Alert.alert('錯誤', '不可選擇未來日期')
+        setShow(false)
+        return
       }
-      setDate(selectedDate);
+      setDate(selectedDate)
     }
-    setShow(false);
-  }, []);
+    setShow(false)
+  }, [])
 
   const showMode = (): void => {
-    setShow(true);
-  };
+    setShow(true)
+  }
 
   const toggleShowPassword = (): void => {
-    setShowPassword((prev) => !prev);
-  };
+    setShowPassword((prev) => !prev)
+  }
 
   const toggleShowAgainPassword = (): void => {
-    setShowAgainPassword((prev) => !prev);
-  };
+    setShowAgainPassword((prev) => !prev)
+  }
 
   const handleSignup = async (): Promise<void> => {
     if (!email || !password || !confirmPassword || !name || !date || !inviteCode) {
-      Alert.alert('錯誤', '所有欄位皆為必填');
-      return;
+      Alert.alert('錯誤', '所有欄位皆為必填')
+      return
     }
     if (password !== confirmPassword) {
-      Alert.alert('錯誤', '確認密碼有誤');
-      return;
+      Alert.alert('錯誤', '確認密碼有誤')
+      return
     }
     if (inviteCode !== '123456') {
-      Alert.alert('錯誤', '無效的邀請碼');
-      return;
+      Alert.alert('錯誤', '無效的邀請碼')
+      return
     }
-    setLoading(true);
+    setLoading(true)
     try {
       const response = await fetch('https://allgood.peiren.info/api/patient', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           email,
           password,
           name,
           birthday: date.toISOString().split('T')[0],
-          inviteCode,
-        }),
-      });
+          inviteCode
+        })
+      })
 
-      const data = await response.json();
+      const data = await response.json()
       if (response.ok) {
-        Alert.alert('註冊成功', '請回到首頁登入');
-        router.replace('/login');
+        Alert.alert('註冊成功', '請回到首頁登入')
+        router.replace('/login')
       } else {
-        Alert.alert('註冊失敗', data.message || '請稍後再試');
+        Alert.alert('註冊失敗', data.message || '請稍後再試')
       }
     } catch (error) {
-      Alert.alert('錯誤', '無法連接伺服器，請稍後再試');
-      console.error(error);
+      Alert.alert('錯誤', '無法連接伺服器，請稍後再試')
+      console.error(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <View style={styles.outerContainer}>
@@ -106,22 +93,13 @@ export default function RegisterScreen() {
         <TouchableOpacity style={styles.backBtnWrap} onPress={() => router.replace('/login')}>
           <View style={styles.backRow}>
             <Ionicons name="arrow-back-circle-sharp" style={styles.prevBtn} />
-            <Text style={styles.backText}>{'回上一頁'}</Text>
+            <Text style={styles.backText}>{'上一頁'}</Text>
           </View>
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flexFill}
-        enabled
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          overScrollMode="never"
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flexFill} enabled>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} overScrollMode="never">
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>建立帳號</Text>
@@ -143,22 +121,9 @@ export default function RegisterScreen() {
               {/* 密碼 */}
               <Text style={styles.label}>密碼</Text>
               <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="輸入密碼"
-                  editable={!loading}
-                  placeholderTextColor="#8f9aa3"
-                />
+                <TextInput style={styles.input} secureTextEntry={!showPassword} value={password} onChangeText={setPassword} placeholder="輸入密碼" editable={!loading} placeholderTextColor="#8f9aa3" />
                 <TouchableOpacity onPress={toggleShowPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <MaterialCommunityIcons
-                    name={showPassword ? 'eye-off' : 'eye'}
-                    size={20}
-                    color="#4f4f4f"
-                    style={styles.eyeIcon}
-                  />
+                  <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#4f4f4f" style={styles.eyeIcon} />
                 </TouchableOpacity>
               </View>
 
@@ -175,126 +140,83 @@ export default function RegisterScreen() {
                   placeholderTextColor="#8f9aa3"
                 />
                 <TouchableOpacity onPress={toggleShowAgainPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <MaterialCommunityIcons
-                    name={showAgainPassword ? 'eye-off' : 'eye'}
-                    size={20}
-                    color="#4f4f4f"
-                    style={styles.eyeIcon}
-                  />
+                  <MaterialCommunityIcons name={showAgainPassword ? 'eye-off' : 'eye'} size={20} color="#4f4f4f" style={styles.eyeIcon} />
                 </TouchableOpacity>
               </View>
 
               {/* 姓名 */}
               <Text style={styles.label}>姓名</Text>
               <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="你的名字"
-                  editable={!loading}
-                  placeholderTextColor="#8f9aa3"
-                />
+                <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="你的名字" editable={!loading} placeholderTextColor="#8f9aa3" />
               </View>
 
               {/* 邀請碼 */}
               <Text style={styles.label}>邀請碼</Text>
               <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  value={inviteCode}
-                  onChangeText={setInviteCode}
-                  placeholder="填入邀請碼"
-                  editable={!loading}
-                  placeholderTextColor="#8f9aa3"
-                />
+                <TextInput style={styles.input} value={inviteCode} onChangeText={setInviteCode} placeholder="填入邀請碼" editable={!loading} placeholderTextColor="#8f9aa3" />
               </View>
 
               {/* 生日 */}
               <Text style={styles.label}>生日</Text>
               <TouchableOpacity activeOpacity={1} onPress={() => showMode()}>
                 <View style={[styles.inputContainer, styles.dateContainer]}>
-                  <TextInput
-                    style={[styles.input, { flex: 1 }]}
-                    value={date ? date.toISOString().split('T')[0] : ''}
-                    editable={false}
-                    placeholder="選擇生日"
-                    placeholderTextColor="#8f9aa3"
-                  />
+                  <TextInput style={[styles.input, { flex: 1 }]} value={date ? date.toISOString().split('T')[0] : ''} editable={false} placeholder="選擇生日" placeholderTextColor="#8f9aa3" />
                   <MaterialIcons name="touch-app" size={20} color="#4f4f4f" style={styles.eyeIcon} />
-                  {show && (
-                    <DateTimePicker
-                      value={date || new Date()}
-                      mode="date"
-                      display={Platform.OS === 'ios' ? 'default' : 'spinner'}
-                      onChange={onChange}
-                      maximumDate={new Date()}
-                    />
-                  )}
+                  {show && <DateTimePicker value={date || new Date()} mode="date" display={Platform.OS === 'ios' ? 'default' : 'spinner'} onChange={onChange} maximumDate={new Date()} />}
                 </View>
               </TouchableOpacity>
 
               {/* Submit */}
-              <TouchableOpacity
-                onPress={handleSignup}
-                style={[styles.primaryButton, loading && { opacity: 0.6 }]}
-                disabled={loading}
-                accessibilityRole="button"
-                accessibilityLabel="送出註冊"
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>送出</Text>
-                )}
+              <TouchableOpacity onPress={handleSignup} style={[styles.primaryButton, loading && { opacity: 0.6 }]} disabled={loading} accessibilityRole="button" accessibilityLabel="送出註冊">
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>送出</Text>}
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
-  );
+  )
 }
 
-const PRIMARY = '#6366F1';
-const BG = '#f0f5f9';
-const CARD_BG = '#fff';
-const INPUT_BG = '#f7f9fb';
-const BORDER = '#d1d7dd';
+const PRIMARY = '#6366F1'
+const BG = '#f0f5f9'
+const CARD_BG = '#fff'
+const INPUT_BG = '#f7f9fb'
+const BORDER = '#d1d7dd'
 
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    backgroundColor: BG,
+    backgroundColor: BG
   },
   header: {
-    paddingTop: 45,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: BG,
+    backgroundColor: BG
   },
   backBtnWrap: {
-    width: '30%',
+    width: '30%'
   },
   backRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   prevBtn: {
     fontSize: 30,
-    color: '#303030',
+    marginTop: 2.5,
+    color: '#303030'
   },
   backText: {
     fontSize: 15,
     paddingLeft: 6,
-    color: '#1f2d3a',
+    color: '#1f2d3a'
   },
   flexFill: {
-    flex: 1,
+    flex: 1
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    alignItems: 'center'
   },
   card: {
     width: '100%',
@@ -307,21 +229,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 8,
-    gap: 10,
+    gap: 10
   },
   sectionTitle: {
     fontSize: 22,
     fontWeight: '600',
     textAlign: 'center',
     color: '#1f2d3a',
-    marginBottom: 12,
+    marginBottom: 12
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
     color: '#33475b',
     marginBottom: 6,
-    marginTop: 6,
+    marginTop: 6
   },
   inputContainer: {
     flexDirection: 'row',
@@ -332,20 +254,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    marginBottom: 2,
+    marginBottom: 2
   },
   input: {
     flex: 1,
     fontSize: 16,
     color: '#1f2d3a',
     padding: 0,
-    margin: 0,
+    margin: 0
   },
   eyeIcon: {
-    marginLeft: 6,
+    marginLeft: 6
   },
   dateContainer: {
-    paddingRight: 8,
+    paddingRight: 8
   },
   primaryButton: {
     marginTop: 18,
@@ -353,11 +275,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   primaryButtonText: {
     color: '#fff',
     fontSize: 17,
-    fontWeight: '600',
-  },
-});
+    fontWeight: '600'
+  }
+})
