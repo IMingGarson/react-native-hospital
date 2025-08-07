@@ -212,10 +212,9 @@ export default function PDFScreen() {
       }
       console.error('儲存進度時發生錯誤:', error)
     }
-    router.reload()
   }
 
-  const BottomTabs = ({ role }: Props) => {
+  const BottomTabs: React.FC<Props> = ({ role }: Props) => {
     const router = useRouter()
     const [showModal, setShowModal] = useState(false)
 
@@ -230,115 +229,53 @@ export default function PDFScreen() {
     }
 
     return (
-      <SafeAreaView edges={['bottom']} style={{ backgroundColor: '#f0f5f9' }}>
-        <View style={bottomsList.container}>
+      <SafeAreaView edges={['bottom']} style={bottoms.bottomSafeview}>
+        <View style={bottoms.container}>
           {role === 'M' ? (
-            <View style={bottomsList.tabItem}>
-              <Link href="/nurse">
-                <MaterialCommunityIcons name="emoticon-sick-outline" style={bottomsList.tabIcon} />
-              </Link>
-              <Link href="/nurse">
-                <Text style={bottomsList.tabText}>病人列表</Text>
-              </Link>
+            <View>
+              <TabItem label="病人列表" icon={<MaterialCommunityIcons name="emoticon-sick-outline" size={24} />} href="/nurse" />
             </View>
           ) : (
-            <View style={bottomsList.tabItem}>
-              <Link
-                href="/survey"
-                onPress={() => {
-                  saveProgress(true)
-                }}>
-                <FontAwesome name="pencil-square-o" size={24} style={bottomsList.tabIcon} />
-              </Link>
-              <Link
-                href="/survey"
-                onPress={() => {
-                  saveProgress(true)
-                }}>
-                <Text style={bottomsList.tabText}>症狀</Text>
-              </Link>
-            </View>
+            <TabItem label="症狀" icon={<FontAwesome name="pencil-square-o" size={24} />} href="/survey" />
           )}
-          <View style={bottomsList.tabItem}>
-            <Link
-              href="/video"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Foundation name="play-video" style={bottomsList.tabIcon} />
-            </Link>
-            <Link
-              href="/video"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Text style={bottomsList.tabText}>影片</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <Link
-              href="/psa"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <MaterialCommunityIcons name="file-chart-outline" size={24} style={bottomsList.tabIcon} />
-            </Link>
-            <Link
-              href="/psa"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Text style={bottomsList.tabText}>PSA</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <Link
-              href="/document"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <MaterialCommunityIcons name="file-document-multiple-outline" style={bottomsList.tabIcon} />
-            </Link>
-            <Link
-              href="/document"
-              onPress={() => {
-                saveProgress(true)
-              }}>
-              <Text style={bottomsList.tabText}>手冊</Text>
-            </Link>
-          </View>
-          <View style={bottomsList.tabItem}>
-            <MaterialIcons
-              onPress={() => {
-                setShowModal(true)
-              }}
-              name="logout"
-              style={bottomsList.tabIcon}
-            />
-            <TouchableOpacity
-              onPress={() => {
-                setShowModal(true)
-              }}>
-              <Text style={bottomsList.tabText}>登出</Text>
-            </TouchableOpacity>
-          </View>
-          <Modal visible={showModal} transparent={true} onRequestClose={() => setShowModal(false)}>
-            <View style={modal.modalContainer}>
-              <View style={modal.modalContent}>
-                <Text style={modal.modalTitle}>確定登出？</Text>
-                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                  <TouchableOpacity onPress={() => handleSignOut()} style={modal.button}>
-                    <Text>確定</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setShowModal(false)} style={modal.button}>
-                    <Text>取消</Text>
-                  </TouchableOpacity>
-                </View>
+          <TabItem label="影片" icon={<Foundation name="play-video" size={24} />} href="/video" />
+          <TabItem label="PSA" icon={<MaterialCommunityIcons name="file-chart-outline" size={24} />} href="/psa" />
+          <TabItem label="手冊" icon={<MaterialCommunityIcons name="file-document-multiple-outline" size={24} />} href="/document" />
+          <TouchableOpacity style={bottoms.tab} onPress={() => setShowModal(true)}>
+            <MaterialIcons name="logout" size={24} color={TEXT} />
+            <Text style={bottoms.tabText}>登出</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Modal visible={showModal} transparent onRequestClose={() => setShowModal(false)}>
+          <View style={modal.overlay}>
+            <View style={modal.content}>
+              <Text style={modal.title}>確定登出？</Text>
+              <View style={modal.actions}>
+                <TouchableOpacity style={[modal.btn, modal.primary]} onPress={handleSignOut}>
+                  <Text style={[modal.btnText, { color: SURFACE }]}>確定</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[modal.btn, modal.secondary]} onPress={() => setShowModal(false)}>
+                  <Text style={[modal.btnText, { color: TEXT }]}>取消</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          </Modal>
-        </View>
+          </View>
+        </Modal>
       </SafeAreaView>
+    )
+  }
+
+  function TabItem({ label, icon, href }: { label: string; icon: React.ReactNode; href: string }) {
+    return (
+      <View style={bottoms.tabItem}>
+        <Link href={href} style={bottoms.tabIcon}>
+          {icon}
+        </Link>
+        <Link href={href} style={bottoms.tab}>
+          <Text style={bottoms.tabText}>{label}</Text>
+        </Link>
+      </View>
     )
   }
 
@@ -396,11 +333,13 @@ export default function PDFScreen() {
 }
 
 const PRIMARY = '#6366F1'
-const BG = '#f0f5f9'
+const SURFACE = '#fff'
 const CARD_BG = '#fff'
 const BORDER = '#d1d7dd'
 const TEXT = '#1f2d3a'
 const MUTED = '#6b7280'
+const TEXT_SECONDARY = '#33475b'
+const BG = '#f0f5f9'
 
 const styles = StyleSheet.create({
   container: {
@@ -480,17 +419,62 @@ const styles = StyleSheet.create({
   }
 })
 
-const bottomsList = StyleSheet.create({
-  container: {
-    width: '100%',
-    display: 'flex',
+const modal = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  content: {
+    width: '80%',
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: TEXT,
+    marginBottom: 16,
+    textAlign: 'center'
+  },
+  actions: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between'
+  },
+  btn: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: 'center',
-    paddingBottom: 0,
-    backgroundColor: BG,
-    borderTopWidth: 1,
-    borderTopColor: BG
+    borderWidth: 1
+  },
+  primary: {
+    backgroundColor: PRIMARY,
+    borderColor: PRIMARY,
+    marginRight: 8
+  },
+  secondary: {
+    backgroundColor: CARD_BG,
+    borderColor: MUTED
+  },
+  btnText: {
+    fontSize: 15,
+    fontWeight: '600'
+  }
+})
+
+const bottoms = StyleSheet.create({
+  bottomSafeview: { backgroundColor: SURFACE },
+  container: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: BORDER, backgroundColor: SURFACE },
+  tab: {
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   tabItem: {
     display: 'flex',
@@ -499,50 +483,15 @@ const bottomsList = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 5
   },
-  tabText: {
-    display: 'flex',
-    fontSize: 14,
-    color: 'black'
-  },
   tabIcon: {
     display: 'flex',
     fontSize: 34,
     color: '#303030'
-  }
-})
-
-const modal = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
-  modalContent: {
-    width: '80%',
-    height: 150,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 20
-  },
-  modalTitle: {
-    display: 'flex',
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000'
-  },
-  button: {
-    zIndex: 1,
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderColor: 'gray',
-    color: '#000',
-    borderRadius: 5,
-    backgroundColor: '#fff',
-    marginHorizontal: 45
+  tabText: {
+    marginTop: 2,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    fontWeight: '500'
   }
 })

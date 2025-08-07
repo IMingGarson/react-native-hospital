@@ -387,7 +387,8 @@ export default function PSAList() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: BG
+    backgroundColor: BG,
+    paddingVertical: 16
   },
   header: {
     backgroundColor: BG,
@@ -440,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    width: 80,
+    width: 100,
     alignItems: 'center'
   },
   itemTagText: {

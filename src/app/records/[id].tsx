@@ -24,38 +24,40 @@ export default function SurveyRecordScreen() {
   const [name, setName] = useState<string>('')
 
   useEffect(() => {
-    ;(async () => {
-      try {
-        const id = Array.isArray(PATH_ID) ? PATH_ID[0] : PATH_ID
-        const token = await AsyncStorageGetItem('jwt')
-        const res = await fetch('https://allgood.peiren.info/api/patient', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const { patients } = await res.json()
-        const found = patients.find((p: any) => p.id === id)
-        if (!found) {
-          Alert.alert('錯誤', '找不到病患資料')
-          return
-        }
-        const data: PatientProgressionData = {
-          id: found.id,
-          name: found.name,
-          document: isJsonString(found.document_progression_data) ? JSON.parse(found.document_progression_data) : [],
-          video: isJsonString(found.video_progression_data) ? JSON.parse(found.video_progression_data) : [],
-          survey: isJsonString(found.survey_data) ? JSON.parse(found.survey_data) : [],
-          records: found.symptom_records?.map((s: Record<string, string>) => ({
-            date: s.date,
-            data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []
-          })),
-          pushToken: found.push_token
-        }
-        setSelectedPatient(data)
-        setName(data.name)
-      } catch {
-        Alert.alert('錯誤', '無法取得資料')
-      }
-    })()
+    fetchPatientData()
   }, [])
+
+  const fetchPatientData = async () => {
+    try {
+      const id = Array.isArray(PATH_ID) ? PATH_ID[0] : PATH_ID
+      const token = await AsyncStorageGetItem('jwt')
+      const res = await fetch('https://allgood.peiren.info/api/patient', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const { patients } = await res.json()
+      const found = patients.find((p: any) => p.id == id)
+      if (!found) {
+        Alert.alert('錯誤', '找不到病患資料')
+        return
+      }
+      const data: PatientProgressionData = {
+        id: found.id,
+        name: found.name,
+        document: isJsonString(found.document_progression_data) ? JSON.parse(found.document_progression_data) : [],
+        video: isJsonString(found.video_progression_data) ? JSON.parse(found.video_progression_data) : [],
+        survey: isJsonString(found.survey_data) ? JSON.parse(found.survey_data) : [],
+        records: found.symptom_records?.map((s: Record<string, string>) => ({
+          date: s.date,
+          data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []
+        })),
+        pushToken: found.push_token
+      }
+      setSelectedPatient(data)
+      setName(data.name)
+    } catch {
+      Alert.alert('錯誤', '無法取得資料')
+    }
+  }
 
   const onChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
     if (typeof selectedDate !== 'undefined') {
@@ -89,7 +91,7 @@ export default function SurveyRecordScreen() {
         <View style={styles.page}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-              <Ionicons name="arrow-back-circle" size={28} color={TEXT} />
+              <Ionicons name="arrow-back-circle" size={25} color={TEXT} style={{ marginTop: 2.5 }} />
               <Text style={styles.backText}>回上一頁</Text>
             </TouchableOpacity>
           </View>
@@ -122,7 +124,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BG
   },
-  page: { flex: 1, backgroundColor: BG },
+  page: { flex: 1, backgroundColor: BG, paddingVertical: 16 },
   header: { paddingHorizontal: 16, backgroundColor: BG },
   backBtn: { flexDirection: 'row', alignItems: 'center' },
   backText: { marginLeft: 6, fontSize: 16, color: TEXT },

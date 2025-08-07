@@ -136,7 +136,7 @@ export default function NurseScreen() {
                   ))}
                   <Pressable style={styles.viewRecords} onPress={() => router.push(`/records/${p.id}`)}>
                     <Text style={styles.viewText}>查看症狀紀錄</Text>
-                    <AntDesign name="rightcircle" size={20} color={TEXT} />
+                    <AntDesign name="rightcircle" size={20} color={TEXT} style={{ marginTop: 2.5 }} />
                   </Pressable>
                 </View>
               )}
@@ -153,7 +153,8 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     backgroundColor: BG,
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
+    paddingVertical: 16
   },
   list: {
     paddingBottom: 32
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: TEXT,
-    marginVertical: 16
+    paddingBottom: 16
   },
   card: {
     backgroundColor: CARD_BG,
@@ -189,7 +190,9 @@ const styles = StyleSheet.create({
     backgroundColor: PRIMARY,
     borderRadius: 6,
     paddingVertical: 4,
-    paddingHorizontal: 8
+    paddingHorizontal: 8,
+    width: 180,
+    alignItems: 'center'
   },
   badgeText: {
     color: CARD_BG,
@@ -242,7 +245,8 @@ const styles = StyleSheet.create({
   viewText: {
     fontSize: 16,
     color: TEXT,
-    marginRight: 6
+    marginRight: 6,
+    fontWeight: '600'
   },
   loading: {
     flex: 1,
