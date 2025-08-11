@@ -120,28 +120,38 @@ export default function PSAList() {
       setCurrentRole(role)
       if (role === 'P') {
         // 病患抓自己的 PSA 資料
-        let response = await fetch('https://allgood.peiren.info/api/patient/psa', {
+        const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           }
         })
-        let data = await response.json()
+        const data = await response.json()
         if (response.ok && data.psa) {
           const sortedData = data.psa.sort((a: PSAData, b: PSAData) => a.date.localeCompare(b.date))
           setAllPSAData(sortedData)
         }
-        response = await fetch('https://allgood.peiren.info/api/patient/get', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+        const currentPatientData = (await AsyncStorageGetItem('currentPatient')) as APIPatientProgressionData
+        if (!currentPatientData) {
+          const response = await fetch('https://allgood.peiren.info/api/patient/get', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          })
+          const data = await response.json()
+          if (response.ok && data.patient) {
+            setCurrentPatient(data.patient)
           }
-        })
-        data = await response.json()
-        if (response.ok && data.patient) {
-          setCurrentPatient(data.patient)
+        } else {
+          setCurrentPatient({
+            id: +currentPatientData.id,
+            name: currentPatientData.name,
+            value: `${currentPatientData.id}. ${currentPatientData.name}`,
+            label: currentPatientData.name
+          })
         }
       } else {
         // 醫護人員抓取所有病患資料，並預設抓取第一位病患的 PSA 資料

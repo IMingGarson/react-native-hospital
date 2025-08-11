@@ -4,7 +4,7 @@
     "slug": "hospital-allgood",
     "scheme": "app",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./src/assets/images/logo.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -20,7 +20,8 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.hospital.allgood"
+      "bundleIdentifier": "com.hospital.allgood",
+      "requireFullScreen": true
     },
     "android": {
       "adaptiveIcon": {
@@ -70,7 +71,8 @@
             "useFrameworks": "static"
           }
         }
-      ]
+      ],
+      ["expo-screen-orientation", { "initialOrientation": "DEFAULT" }]
     ],
     "extra": {
       "router": {

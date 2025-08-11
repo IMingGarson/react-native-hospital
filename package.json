@@ -61,7 +61,8 @@
     "react-navigation": "^4.4.4",
     "react-navigation-stack": "^2.10.4",
     "styled-components": "^6.1.19",
-    "twrnc": "^4.6.0"
+    "twrnc": "^4.6.0",
+    "expo-screen-orientation": "~8.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import { Link, useRouter } from 'expo-router'
 import { useVideoPlayer, VideoView } from 'expo-video'
 import { useEventListener } from 'expo'
-import { AppState, Modal, Pressable, StyleSheet, Text, TouchableOpacity, ActivityIndicator, useWindowDimensions, View, ScrollView, Alert } from 'react-native'
+import { AppState, Modal, Pressable, StyleSheet, Text, TouchableOpacity, ActivityIndicator, useWindowDimensions, View, ScrollView, Alert, Platform, InteractionManager } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { ProgressState, VideoInterface } from '../interfaces'
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
+import * as ScreenOrientation from 'expo-screen-orientation'
 
 const PRIMARY = '#6366F1'
 const SURFACE = '#fff'
@@ -16,6 +17,10 @@ const TEXT = '#1f2d3a'
 const MUTED = '#6b7280'
 const TEXT_SECONDARY = '#33475b'
 const BG = '#f0f5f9'
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms))
+}
 
 export default function VideoScreen() {
   const [videos] = useState<VideoInterface[]>([
@@ -111,6 +116,9 @@ export default function VideoScreen() {
     }
   ])
   const router = useRouter()
+  const videoRef = useRef<React.ElementRef<typeof VideoView>>(null)
+  const isFullscreenRef = React.useRef(false)
+  const portraitExitTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const { width } = useWindowDimensions()
   const [currentVideo, setCurrentVideo] = useState<VideoInterface>(videos[0])
   const [progress, setProgress] = useState<ProgressState>({})
@@ -264,6 +272,7 @@ export default function VideoScreen() {
   const player = useVideoPlayer(currentVideo.uri, (p) => {
     p.play()
     p.currentTime = progress[currentVideo.id]?.timestamp || 0
+    p.timeUpdateEventInterval = 0.5
   })
 
   useEventListener(player, 'statusChange', () => {
@@ -279,6 +288,69 @@ export default function VideoScreen() {
       handleVideoEnd(player.currentTime)
     }
   })
+
+  const enterFullscreenStable = async (orientation: ScreenOrientation.Orientation) => {
+    const isLeft = orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT
+    const lock = isLeft ? ScreenOrientation.OrientationLock.LANDSCAPE_LEFT : ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT
+
+    await ScreenOrientation.lockAsync(lock)
+
+    if (!isFullscreenRef.current) {
+      if (Platform.OS === 'ios') {
+        await new Promise<void>((resolve) => InteractionManager.runAfterInteractions(() => resolve()))
+        await sleep(160)
+      }
+      await videoRef.current?.enterFullscreen?.()
+    }
+  }
+
+  const exitFullscreenStable = async () => {
+    if (!isFullscreenRef.current) {
+      await ScreenOrientation.unlockAsync()
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+      return
+    }
+    await ScreenOrientation.unlockAsync()
+    await videoRef.current?.exitFullscreen?.().catch(() => {})
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+  }
+
+  useEffect(() => {
+    let sub: ScreenOrientation.Subscription | undefined
+    ;(async () => {
+      await ScreenOrientation.unlockAsync()
+
+      sub = ScreenOrientation.addOrientationChangeListener(async ({ orientationInfo }) => {
+        const o = orientationInfo.orientation
+        const isLandscape = o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+
+        if (portraitExitTimerRef.current) {
+          clearTimeout(portraitExitTimerRef.current)
+          portraitExitTimerRef.current = null
+        }
+
+        if (isLandscape) {
+          await enterFullscreenStable(o)
+        } else {
+          const dwellMs = Platform.OS === 'ios' ? 280 : 360
+          portraitExitTimerRef.current = setTimeout(async () => {
+            const finalO = await ScreenOrientation.getOrientationAsync()
+            const stillPortrait = finalO === ScreenOrientation.Orientation.PORTRAIT_UP || finalO === ScreenOrientation.Orientation.PORTRAIT_DOWN
+
+            if (stillPortrait) {
+              await exitFullscreenStable()
+            }
+          }, dwellMs)
+        }
+      })
+    })()
+
+    return () => {
+      if (sub) ScreenOrientation.removeOrientationChangeListener(sub)
+      if (portraitExitTimerRef.current) clearTimeout(portraitExitTimerRef.current)
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {})
+    }
+  }, [])
 
   const selectVideo = (video: VideoInterface) => {
     handleVideoProgress(player.currentTime)
@@ -302,7 +374,19 @@ export default function VideoScreen() {
     <SafeAreaProvider>
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
         <View style={styles.videoWrapper}>
-          <VideoView style={styles.video} player={player} allowsFullscreen allowsPictureInPicture />
+          <VideoView
+            ref={videoRef}
+            style={styles.video}
+            player={player}
+            allowsFullscreen
+            allowsPictureInPicture
+            onFullscreenEnter={() => {
+              isFullscreenRef.current = true
+            }}
+            onFullscreenExit={() => {
+              isFullscreenRef.current = false
+            }}
+          />
         </View>
         <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollList}>
           {videos.map((item) => {

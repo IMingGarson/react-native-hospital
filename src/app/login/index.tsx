@@ -7,8 +7,8 @@ import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils'
 const IMAGE_SOURCE = require('../../assets/images/main.jpg')
 
 const LoginScreen: React.FC = (): JSX.Element => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('hasd093156@gmail.com')
+  const [password, setPassword] = useState('securepassword')
   const [showPassword, setShowPassword] = useState(false)
   const [role, setRole] = useState('0')
   const [loading, setLoading] = useState(false)
@@ -57,6 +57,9 @@ const LoginScreen: React.FC = (): JSX.Element => {
         } else {
           await AsyncStorageSetItem('jwt', token)
           await AsyncStorageSetItem('role', resRole)
+          if (resRole === 'P') {
+            await AsyncStorageSetItem('currentPatient', data.data)
+          }
           Alert.alert('登入成功')
           router.replace(resRole === 'P' ? '/survey' : '/nurse')
         }
