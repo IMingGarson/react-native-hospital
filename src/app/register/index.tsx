@@ -187,7 +187,8 @@ const BORDER = '#d1d7dd'
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    backgroundColor: BG
+    backgroundColor: BG,
+    paddingVertical: 16
   },
   header: {
     paddingVertical: 16,

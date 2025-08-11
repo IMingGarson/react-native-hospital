@@ -13,7 +13,6 @@ const BG = '#f0f5f9'
 const CARD_BG = '#fff'
 const BORDER = '#d1d7dd'
 const TEXT = '#1f2d3a'
-const MUTED = '#6b7280'
 
 export default function NurseScreen() {
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([])
@@ -114,7 +113,11 @@ export default function NurseScreen() {
               </View>
               {expandedId === String(p.id) && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>文件進度</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={styles.sectionTitle}>文件閱讀進度</Text>
+                    <Text style={styles.sectionTitle}>已閱讀時數</Text>
+                  </View>
+                  {p.document.length === 0 && <Text style={{ fontSize: 16, color: TEXT, paddingVertical: 12 }}>尚未閱讀文件</Text>}
                   {p.document.map((d, i) => (
                     <View key={i} style={styles.detailRow}>
                       <Text style={styles.detailLabel}>{d.label}</Text>
@@ -124,7 +127,11 @@ export default function NurseScreen() {
                       </TouchableOpacity> */}
                     </View>
                   ))}
-                  <Text style={styles.sectionTitle}>影片進度</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={styles.sectionTitle}>影片觀看進度</Text>
+                    <Text style={styles.sectionTitle}>已觀看時數</Text>
+                  </View>
+                  {p.video.length === 0 && <Text style={{ fontSize: 16, color: TEXT, paddingVertical: 12 }}>尚未觀看影片</Text>}
                   {p.video.map((v, i) => (
                     <View key={i} style={styles.detailRow}>
                       <Text style={styles.detailLabel}>{v.title}</Text>
@@ -210,6 +217,7 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 10,
     paddingBottom: 5,
     borderBottomColor: BORDER,
@@ -224,7 +232,7 @@ const styles = StyleSheet.create({
     width: 80,
     textAlign: 'right',
     fontSize: 16,
-    color: MUTED
+    color: TEXT
   },
   notifyBtn: {
     marginLeft: 8,

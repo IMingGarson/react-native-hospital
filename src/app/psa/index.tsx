@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { View, Text, TextInput, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
@@ -49,14 +49,14 @@ export default function PSAList() {
   const [showEndDate, setShowEndDate] = useState(false)
   const [showAddDate, setShowAddDate] = useState(false)
 
-  const filteredData = useMemo(
-    () =>
-      allPSAData.filter((item) => {
-        const d = new Date(item.date)
-        return d >= new Date(searchStartDate) && d <= new Date(searchEndDate)
-      }),
-    [allPSAData, searchStartDate, searchEndDate]
-  )
+  // const filteredData = useMemo(
+  //   () =>
+  //     allPSAData.filter((item) => {
+  //       const d = new Date(item.date)
+  //       return d >= new Date(searchStartDate) && d <= new Date(searchEndDate)
+  //     }),
+  //   [allPSAData, searchStartDate, searchEndDate]
+  // )
 
   const onStartChange = useCallback((_: DateTimePickerEvent, d?: Date) => {
     setShowStartDate(false)
@@ -120,17 +120,28 @@ export default function PSAList() {
       setCurrentRole(role)
       if (role === 'P') {
         // 病患抓自己的 PSA 資料
-        const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
+        let response = await fetch('https://allgood.peiren.info/api/patient/psa', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           }
         })
-        const data = await response.json()
+        let data = await response.json()
         if (response.ok && data.psa) {
           const sortedData = data.psa.sort((a: PSAData, b: PSAData) => a.date.localeCompare(b.date))
           setAllPSAData(sortedData)
+        }
+        response = await fetch('https://allgood.peiren.info/api/patient/get', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        })
+        data = await response.json()
+        if (response.ok && data.patient) {
+          setCurrentPatient(data.patient)
         }
       } else {
         // 醫護人員抓取所有病患資料，並預設抓取第一位病患的 PSA 資料
@@ -238,15 +249,11 @@ export default function PSAList() {
       setCurrentPatient(patient)
     }
   }
-
   return (
     <SafeAreaProvider>
       <SafeAreaView edges={['top']} style={styles.page}>
         <View style={styles.header}>
-          {currentRole === 'M' && <Text style={styles.headerText}>病患：{currentPatient.name}</Text>}
-          <Text style={styles.headerText}>
-            {searchStartDate} ~ {searchEndDate}
-          </Text>
+          <Text style={styles.headerText}>姓名：{currentPatient.name}</Text>
           <View style={styles.buttons}>
             <TouchableOpacity style={styles.btn} onPress={() => setShowSearchModal(true)}>
               <Text style={styles.btnText}>搜尋</Text>
@@ -257,7 +264,7 @@ export default function PSAList() {
           </View>
         </View>
         <ScrollView contentContainerStyle={styles.list}>
-          {filteredData.map((i, idx) => (
+          {allPSAData.map((i, idx) => (
             <View key={idx} style={styles.item}>
               <Text style={styles.itemDate}>{i.date}</Text>
               <View style={styles.itemTag}>
