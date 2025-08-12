@@ -131,16 +131,15 @@ export default function PDFScreen() {
   const _source = () => (Platform.OS === 'android' ? ANDRIOD_PDFS : iOS_PDFS)
 
   const fetchProgress = async () => {
-    const token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1NDkyMTQyMiwianRpIjoiMTQ5N2I1ZjAtZTU5YS00MDY0LTk0NjktYWVhNTg1YmM0MGEyIiwidHlwZSI6ImFjY2VzcyIsIkkyXjhfcVBWPD5RMXpjbyI6IjYiLCJuYmYiOjE3NTQ5MjE0MjIsImNzcmYiOiJlYmIxNzM3YS1iMzc0LTQ4MzYtOTg3My0wODExZGQ5NTk5MWYiLCJleHAiOjE3NTU1MjYyMjJ9.rsXPO8E--nVwbhqeq-Mgfr6sNH-eB0IrDTLBzz-PJLE'
-    const role = 'P'
+    const token = await AsyncStorageGetItem('jwt')
+    const role = (await AsyncStorageRemoveItem('role')) as unknown as string
     if (typeof token === 'string' && typeof role === 'string' && token.length && ['M', 'P'].includes(role)) {
       setCurrentRole(role)
     } else {
       Alert.alert('錯誤', '無法取得資料')
       router.replace('/login')
     }
-    if (role === 'P') {
+    if (role && role === 'P') {
       try {
         const response = await fetch('https://allgood.peiren.info/api/patient/get', {
           method: 'GET',
