@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
-import { Link, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { useVideoPlayer, VideoView } from 'expo-video'
 import { useEventListener } from 'expo'
 import { AppState, Modal, Pressable, StyleSheet, Text, TouchableOpacity, ActivityIndicator, useWindowDimensions, View, ScrollView, Alert } from 'react-native'
@@ -176,16 +176,14 @@ export default function VideoScreen() {
 
   useEffect(() => {
     fetchProgress()
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState.match(/inactive|background/)) {
+    const subscription = AppState.addEventListener('change', async (s) => {
+      if (s === 'inactive' || s === 'background') {
         if (currentRole === 'P') {
-          saveProgress(true)
+          await saveProgress(true)
         }
       }
     })
-    return () => {
-      subscription.remove()
-    }
+    return () => subscription.remove()
   }, [])
 
   const saveProgress = async (background: boolean = false) => {
@@ -256,6 +254,7 @@ export default function VideoScreen() {
       }
     }))
     setStartTime(Date.now())
+    saveProgress(true)
   }
 
   const handleVideoEnd = (seconds: number) => {
@@ -263,6 +262,7 @@ export default function VideoScreen() {
       ...prev,
       [currentVideo.id]: { ...prev[currentVideo.id], watched: true, timestamp: seconds }
     }))
+    saveProgress(true)
   }
 
   const player = useVideoPlayer(currentVideo.uri, (p) => {
@@ -315,10 +315,9 @@ export default function VideoScreen() {
     const [showModal, setShowModal] = useState(false)
 
     const handleSignOut = async () => {
-      await AsyncStorageRemoveItem('token')
+      await AsyncStorageRemoveItem('jwt')
       await AsyncStorageRemoveItem('role')
       setShowModal(false)
-      saveProgress(true)
       Alert.alert('登出成功')
       router.replace('/login')
       return
@@ -332,11 +331,11 @@ export default function VideoScreen() {
               <TabItem label="病人列表" icon={<MaterialCommunityIcons name="emoticon-sick-outline" size={24} />} href="/nurse" />
             </View>
           ) : (
-            <TabItem label="症狀" icon={<FontAwesome name="pencil-square-o" size={24} />} href="/survey" />
+            <TabItem label="症狀" icon={<FontAwesome name="pencil-square-o" size={24} />} href="/survey" onPress={() => saveProgress(true)} />
           )}
-          <TabItem label="影片" icon={<Foundation name="play-video" size={24} />} href="/video" />
-          <TabItem label="PSA" icon={<MaterialCommunityIcons name="file-chart-outline" size={24} />} href="/psa" />
-          <TabItem label="手冊" icon={<MaterialCommunityIcons name="file-document-multiple-outline" size={24} />} href="/document" />
+          <TabItem label="影片" icon={<Foundation name="play-video" size={24} />} href="/video" onPress={role === 'P' ? () => saveProgress(true) : undefined} />
+          <TabItem label="PSA" icon={<MaterialCommunityIcons name="file-chart-outline" size={24} />} href="/psa" onPress={role === 'P' ? () => saveProgress(true) : undefined} />
+          <TabItem label="手冊" icon={<MaterialCommunityIcons name="file-document-multiple-outline" size={24} />} href="/document" onPress={role === 'P' ? () => saveProgress(true) : undefined} />
           <TouchableOpacity style={bottoms.tab} onPress={() => setShowModal(true)}>
             <MaterialIcons name="logout" size={24} color={TEXT} />
             <Text style={bottoms.tabText}>登出</Text>
@@ -348,7 +347,14 @@ export default function VideoScreen() {
             <View style={modal.content}>
               <Text style={modal.title}>確定登出？</Text>
               <View style={modal.actions}>
-                <TouchableOpacity style={[modal.btn, modal.primary]} onPress={handleSignOut}>
+                <TouchableOpacity
+                  style={[modal.btn, modal.primary]}
+                  onPress={() => {
+                    handleSignOut()
+                    if (currentRole === 'P') {
+                      saveProgress(true)
+                    }
+                  }}>
                   <Text style={[modal.btnText, { color: SURFACE }]}>確定</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[modal.btn, modal.secondary]} onPress={() => setShowModal(false)}>
@@ -362,16 +368,23 @@ export default function VideoScreen() {
     )
   }
 
-  function TabItem({ label, icon, href }: { label: string; icon: React.ReactNode; href: string }) {
+  function TabItem({ label, icon, href, onPress }: { label: string; icon: React.ReactNode; href: string; onPress?: () => void }) {
+    const router = useRouter()
+
+    const handlePress = () => {
+      if (onPress) {
+        onPress()
+      }
+      router.push(href)
+    }
+
     return (
-      <View style={bottoms.tabItem}>
-        <Link href={href} style={bottoms.tabIcon}>
-          {icon}
-        </Link>
-        <Link href={href} style={bottoms.tab}>
+      <TouchableOpacity style={bottoms.tabItem} onPress={handlePress}>
+        <View style={bottoms.tabIcon}>{icon}</View>
+        <View style={bottoms.tab}>
           <Text style={bottoms.tabText}>{label}</Text>
-        </Link>
-      </View>
+        </View>
+      </TouchableOpacity>
     )
   }
 

@@ -1,8 +1,23 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, Alert, Image, Keyboard, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  useWindowDimensions,
+  View
+} from 'react-native'
 import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 
 const IMAGE_SOURCE = require('../../assets/images/main.jpg')
 
@@ -75,105 +90,109 @@ const LoginScreen: React.FC = (): JSX.Element => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {loading && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={[styles.loadingText, { fontSize: dynamic.labelFont }]}>登入中...</Text>
-        </View>
-      )}
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={[styles.inner, { paddingHorizontal: isWide ? 32 : 20 }]}>
-          <View
-            style={[
-              styles.imageWrapper,
-              {
-                width: isWide ? 220 : width * 0.7,
-                height: isWide ? 220 : width * 0.7
-              }
-            ]}>
-            <Image source={IMAGE_SOURCE} style={styles.image} resizeMode="cover" accessibilityLabel="登入插圖" />
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        {loading && (
+          <View style={styles.overlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={[styles.loadingText, { fontSize: dynamic.labelFont }]}>登入中...</Text>
           </View>
-
-          <View style={[styles.card, isWide && { maxWidth: 480 }]}>
-            <Text style={[styles.title, { fontSize: dynamic.titleFont }]}>登入帳號</Text>
-
-            {/* 帳號 */}
-            <View style={{ marginBottom: dynamic.verticalGap }}>
-              <Text style={[styles.label, { fontSize: dynamic.labelFont }]}>帳號</Text>
-              <TextInput
-                placeholder="請輸入帳號"
-                value={email}
-                onChangeText={setEmail}
-                placeholderTextColor="#8f9aa3"
+        )}
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={[styles.inner, { paddingHorizontal: isWide ? 32 : 20 }]}>
+              <View
                 style={[
-                  styles.input,
+                  styles.imageWrapper,
                   {
-                    paddingVertical: 12,
-                    paddingHorizontal: 14,
-                    fontSize: dynamic.inputFont
+                    width: isWide ? 220 : width * 0.7,
+                    height: isWide ? 220 : width * 0.7
                   }
-                ]}
-              />
-            </View>
+                ]}>
+                <Image source={IMAGE_SOURCE} style={styles.image} resizeMode="cover" accessibilityLabel="登入插圖" />
+              </View>
 
-            {/* 密碼 */}
-            <View style={{ marginBottom: dynamic.verticalGap }}>
-              <Text style={[styles.label, { fontSize: dynamic.labelFont }]}>密碼</Text>
-              <View style={styles.passwordWrapper}>
-                <TextInput
-                  placeholder="請輸入密碼"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholderTextColor="#8f9aa3"
-                  style={[
-                    styles.input,
-                    {
-                      paddingVertical: 12,
-                      paddingHorizontal: 14,
-                      fontSize: dynamic.inputFont,
-                      paddingRight: 44
-                    }
-                  ]}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword((v) => !v)}
-                  style={styles.eyeButton}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  accessible
-                  accessibilityLabel={showPassword ? '隱藏密碼' : '顯示密碼'}>
-                  <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#4f4f4f" />
-                </TouchableOpacity>
+              <View style={[styles.card, isWide && { maxWidth: 480 }]}>
+                <Text style={[styles.title, { fontSize: dynamic.titleFont }]}>登入帳號</Text>
+
+                {/* 帳號 */}
+                <View style={{ marginBottom: dynamic.verticalGap }}>
+                  <Text style={[styles.label, { fontSize: dynamic.labelFont }]}>帳號</Text>
+                  <TextInput
+                    placeholder="請輸入帳號"
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholderTextColor="#8f9aa3"
+                    style={[
+                      styles.input,
+                      {
+                        paddingVertical: 12,
+                        paddingHorizontal: 14,
+                        fontSize: dynamic.inputFont
+                      }
+                    ]}
+                  />
+                </View>
+
+                {/* 密碼 */}
+                <View style={{ marginBottom: dynamic.verticalGap }}>
+                  <Text style={[styles.label, { fontSize: dynamic.labelFont }]}>密碼</Text>
+                  <View style={styles.passwordWrapper}>
+                    <TextInput
+                      placeholder="請輸入密碼"
+                      secureTextEntry={!showPassword}
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholderTextColor="#8f9aa3"
+                      style={[
+                        styles.input,
+                        {
+                          paddingVertical: 12,
+                          paddingHorizontal: 14,
+                          fontSize: dynamic.inputFont,
+                          paddingRight: 44
+                        }
+                      ]}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword((v) => !v)}
+                      style={styles.eyeButton}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      accessible
+                      accessibilityLabel={showPassword ? '隱藏密碼' : '顯示密碼'}>
+                      <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#4f4f4f" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* 角色選擇 segmented */}
+                <View style={styles.segmentContainer}>
+                  <TouchableOpacity
+                    onPress={() => setRole('0')}
+                    style={[styles.segmentButton, role === '0' ? styles.segmentActive : { borderRightWidth: 1, borderRightColor: '#cfd9e5' }]}
+                    disabled={loading}>
+                    <Text style={[styles.segmentText, { fontSize: dynamic.labelFont }, role === '0' ? styles.segmentTextActive : null]}>醫護人員</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setRole('1')} style={[styles.segmentButton, role === '1' ? styles.segmentActive : null]} disabled={loading}>
+                    <Text style={[styles.segmentText, { fontSize: dynamic.labelFont }, role === '1' ? styles.segmentTextActive : null]}>一般民眾</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* 按鈕列 */}
+                <View style={styles.actionRow}>
+                  <TouchableOpacity onPress={handleSignIn} disabled={loading} style={[styles.primaryBtn, loading && { opacity: 0.65 }]} accessibilityRole="button" accessibilityLabel="登入">
+                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.primaryText, { fontSize: dynamic.buttonFont }]}>登入</Text>}
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => router.push('/register')} style={[styles.registerBtn]} accessibilityRole="button" accessibilityLabel="註冊">
+                    <Text style={[styles.registerText, { fontSize: dynamic.buttonFont }]}>註冊</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-
-            {/* 角色選擇 segmented */}
-            <View style={styles.segmentContainer}>
-              <TouchableOpacity
-                onPress={() => setRole('0')}
-                style={[styles.segmentButton, role === '0' ? styles.segmentActive : { borderRightWidth: 1, borderRightColor: '#cfd9e5' }]}
-                disabled={loading}>
-                <Text style={[styles.segmentText, { fontSize: dynamic.labelFont }, role === '0' ? styles.segmentTextActive : null]}>醫護人員</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setRole('1')} style={[styles.segmentButton, role === '1' ? styles.segmentActive : null]} disabled={loading}>
-                <Text style={[styles.segmentText, { fontSize: dynamic.labelFont }, role === '1' ? styles.segmentTextActive : null]}>一般民眾</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* 按鈕列 */}
-            <View style={styles.actionRow}>
-              <TouchableOpacity onPress={handleSignIn} disabled={loading} style={[styles.primaryBtn, loading && { opacity: 0.65 }]} accessibilityRole="button" accessibilityLabel="登入">
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={[styles.primaryText, { fontSize: dynamic.buttonFont }]}>登入</Text>}
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/register')} style={[styles.registerBtn]} accessibilityRole="button" accessibilityLabel="註冊">
-                <Text style={[styles.registerText, { fontSize: dynamic.buttonFont }]}>註冊</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </SafeAreaView>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   )
 }
 

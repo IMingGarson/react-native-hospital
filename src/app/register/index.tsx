@@ -3,8 +3,9 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { useRouter } from 'expo-router'
-import React, { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState<string>('')
@@ -88,93 +89,103 @@ export default function RegisterScreen() {
   }
 
   return (
-    <View style={styles.outerContainer}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtnWrap} onPress={() => router.replace('/login')}>
-          <View style={styles.backRow}>
-            <Ionicons name="arrow-back-circle-sharp" style={styles.prevBtn} />
-            <Text style={styles.backText}>{'上一頁'}</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flexFill} enabled>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} overScrollMode="never">
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>建立帳號</Text>
-
-              {/* 帳號 */}
-              <Text style={styles.label}>帳號</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="可輸入大小寫英文數字或是特殊符號"
-                  autoCapitalize="none"
-                  editable={!loading}
-                  placeholderTextColor="#8f9aa3"
-                />
-              </View>
-
-              {/* 密碼 */}
-              <Text style={styles.label}>密碼</Text>
-              <View style={styles.inputContainer}>
-                <TextInput style={styles.input} secureTextEntry={!showPassword} value={password} onChangeText={setPassword} placeholder="輸入密碼" editable={!loading} placeholderTextColor="#8f9aa3" />
-                <TouchableOpacity onPress={toggleShowPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#4f4f4f" style={styles.eyeIcon} />
-                </TouchableOpacity>
-              </View>
-
-              {/* 確認密碼 */}
-              <Text style={styles.label}>確認密碼</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  secureTextEntry={!showAgainPassword}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="再次輸入密碼"
-                  editable={!loading}
-                  placeholderTextColor="#8f9aa3"
-                />
-                <TouchableOpacity onPress={toggleShowAgainPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <MaterialCommunityIcons name={showAgainPassword ? 'eye-off' : 'eye'} size={20} color="#4f4f4f" style={styles.eyeIcon} />
-                </TouchableOpacity>
-              </View>
-
-              {/* 姓名 */}
-              <Text style={styles.label}>姓名</Text>
-              <View style={styles.inputContainer}>
-                <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="你的名字" editable={!loading} placeholderTextColor="#8f9aa3" />
-              </View>
-
-              {/* 邀請碼 */}
-              <Text style={styles.label}>邀請碼</Text>
-              <View style={styles.inputContainer}>
-                <TextInput style={styles.input} value={inviteCode} onChangeText={setInviteCode} placeholder="填入邀請碼" editable={!loading} placeholderTextColor="#8f9aa3" />
-              </View>
-
-              {/* 生日 */}
-              <Text style={styles.label}>生日</Text>
-              <TouchableOpacity activeOpacity={1} onPress={() => showMode()}>
-                <View style={[styles.inputContainer, styles.dateContainer]}>
-                  <TextInput style={[styles.input, { flex: 1 }]} value={date ? date.toISOString().split('T')[0] : ''} editable={false} placeholder="選擇生日" placeholderTextColor="#8f9aa3" />
-                  <MaterialIcons name="touch-app" size={20} color="#4f4f4f" style={styles.eyeIcon} />
-                  {show && <DateTimePicker value={date || new Date()} mode="date" display={Platform.OS === 'ios' ? 'default' : 'spinner'} onChange={onChange} maximumDate={new Date()} />}
-                </View>
-              </TouchableOpacity>
-
-              {/* Submit */}
-              <TouchableOpacity onPress={handleSignup} style={[styles.primaryButton, loading && { opacity: 0.6 }]} disabled={loading} accessibilityRole="button" accessibilityLabel="送出註冊">
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>送出</Text>}
-              </TouchableOpacity>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.outerContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backBtnWrap} onPress={() => router.replace('/login')}>
+            <View style={styles.backRow}>
+              <Ionicons name="arrow-back-circle-sharp" style={styles.prevBtn} />
+              <Text style={styles.backText}>{'上一頁'}</Text>
             </View>
-          </TouchableWithoutFeedback>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+          </TouchableOpacity>
+        </View>
+
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} overScrollMode="never">
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>建立帳號</Text>
+
+                {/* 帳號 */}
+                <Text style={styles.label}>帳號</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="可輸入大小寫英文數字或是特殊符號"
+                    autoCapitalize="none"
+                    editable={!loading}
+                    placeholderTextColor="#8f9aa3"
+                  />
+                </View>
+
+                {/* 密碼 */}
+                <Text style={styles.label}>密碼</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="輸入密碼"
+                    editable={!loading}
+                    placeholderTextColor="#8f9aa3"
+                  />
+                  <TouchableOpacity onPress={toggleShowPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#4f4f4f" style={styles.eyeIcon} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* 確認密碼 */}
+                <Text style={styles.label}>確認密碼</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    secureTextEntry={!showAgainPassword}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="再次輸入密碼"
+                    editable={!loading}
+                    placeholderTextColor="#8f9aa3"
+                  />
+                  <TouchableOpacity onPress={toggleShowAgainPassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <MaterialCommunityIcons name={showAgainPassword ? 'eye-off' : 'eye'} size={20} color="#4f4f4f" style={styles.eyeIcon} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* 姓名 */}
+                <Text style={styles.label}>姓名</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="你的名字" editable={!loading} placeholderTextColor="#8f9aa3" />
+                </View>
+
+                {/* 邀請碼 */}
+                <Text style={styles.label}>邀請碼</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput style={styles.input} value={inviteCode} onChangeText={setInviteCode} placeholder="填入邀請碼" editable={!loading} placeholderTextColor="#8f9aa3" />
+                </View>
+
+                {/* 生日 */}
+                <Text style={styles.label}>生日</Text>
+                <TouchableOpacity activeOpacity={1} onPress={() => showMode()}>
+                  <View style={[styles.inputContainer, styles.dateContainer]}>
+                    <TextInput style={[styles.input, { flex: 1 }]} value={date ? date.toISOString().split('T')[0] : ''} editable={false} placeholder="選擇生日" placeholderTextColor="#8f9aa3" />
+                    <MaterialIcons name="touch-app" size={20} color="#4f4f4f" style={styles.eyeIcon} />
+                    {show && <DateTimePicker value={date || new Date()} mode="date" display={Platform.OS === 'ios' ? 'default' : 'spinner'} onChange={onChange} maximumDate={new Date()} />}
+                  </View>
+                </TouchableOpacity>
+
+                {/* Submit */}
+                <TouchableOpacity onPress={handleSignup} style={[styles.primaryButton, loading && { opacity: 0.6 }]} disabled={loading} accessibilityRole="button" accessibilityLabel="送出註冊">
+                  {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>送出</Text>}
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   )
 }
 
@@ -212,9 +223,6 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
     color: '#1f2d3a'
   },
-  flexFill: {
-    flex: 1
-  },
   scrollContent: {
     paddingHorizontal: 20,
     alignItems: 'center'
@@ -224,12 +232,8 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     backgroundColor: CARD_BG,
     borderRadius: 20,
-    paddingVertical: 24,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
     gap: 10
   },
   sectionTitle: {
