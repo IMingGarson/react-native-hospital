@@ -53,7 +53,7 @@ export default function RegisterScreen() {
       Alert.alert('錯誤', '確認密碼有誤')
       return
     }
-    if (inviteCode !== '123456') {
+    if (inviteCode !== 'FRS24680') {
       Alert.alert('錯誤', '無效的邀請碼')
       return
     }
