@@ -172,7 +172,16 @@ export default function RegisterScreen() {
                   <View style={[styles.inputContainer, styles.dateContainer]}>
                     <TextInput style={[styles.input, { flex: 1 }]} value={date ? date.toISOString().split('T')[0] : ''} editable={false} placeholder="選擇生日" placeholderTextColor="#8f9aa3" />
                     <MaterialIcons name="touch-app" size={20} color="#4f4f4f" style={styles.eyeIcon} />
-                    {show && <DateTimePicker value={date || new Date()} mode="date" display={Platform.OS === 'ios' ? 'default' : 'spinner'} onChange={onChange} maximumDate={new Date()} />}
+                    {show && (
+                      <DateTimePicker
+                        value={date || new Date()}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'default' : 'spinner'}
+                        onChange={onChange}
+                        maximumDate={new Date()}
+                        minimumDate={new Date(1900, 0, 1)}
+                      />
+                    )}
                   </View>
                 </TouchableOpacity>
 

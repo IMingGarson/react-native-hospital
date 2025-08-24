@@ -143,19 +143,16 @@ export default function VideoScreen() {
 
         const data = await response.json()
         if (response.ok) {
-          const updatedProgress: ProgressState = {}
-          if (isJsonString(data.patient.video_progression_data)) {
-            const progressionData = JSON.parse(data.patient.video_progression_data)
-            progressionData.forEach((item: VideoInterface) => {
-              updatedProgress[item.id] = { ...item }
-            })
-            setCurrentVideo(progressionData[0])
-          } else {
-            videos.forEach((item: VideoInterface) => {
-              updatedProgress[item.id] = { ...item }
-            })
-            setCurrentVideo(videos[0])
+          let progressionData: VideoInterface[] = []
+
+          try {
+            const parsed = isJsonString(data.patient.video_progression_data) ? JSON.parse(data.patient.video_progression_data) : []
+            progressionData = parsed.length ? parsed : videos
+          } catch {
+            progressionData = videos
           }
+          const updatedProgress: ProgressState = progressionData.reduce((acc, item) => ({ ...acc, [item.id]: { ...item } }), {} as ProgressState)
+          setCurrentVideo(progressionData[0])
           setProgress(updatedProgress)
         }
       } catch (error) {
