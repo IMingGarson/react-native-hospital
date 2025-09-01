@@ -8,10 +8,6 @@
     "icon": "./src/assets/images/logo.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./src/assets/images/splash.png",
-      "backgroundColor": "#222"
-    },
     "experiments": {
       "reactServerFunctions": false
     },
