@@ -1,13 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react'
 import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
-import { useVideoPlayer, VideoView } from 'expo-video'
 import { useEventListener } from 'expo'
-import { AppState, Modal, Pressable, StyleSheet, Text, TouchableOpacity, ActivityIndicator, useWindowDimensions, View, ScrollView, Alert } from 'react-native'
+import { useRouter } from 'expo-router'
+import * as ScreenOrientation from 'expo-screen-orientation'
+import { useVideoPlayer, VideoView } from 'expo-video'
+import React, { useEffect, useRef, useState } from 'react'
+import { ActivityIndicator, Alert, AppState, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { ProgressState, VideoInterface } from '../interfaces'
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
-import * as ScreenOrientation from 'expo-screen-orientation'
 interface Props {
   role: string
 }
@@ -120,7 +120,7 @@ export default function VideoScreen() {
   const [progress, setProgress] = useState<ProgressState>({})
   const [startTime, setStartTime] = useState<number>(Date.now())
   const [currentRole, setCurrentRole] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
 
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt')
@@ -140,19 +140,21 @@ export default function VideoScreen() {
             Authorization: `Bearer ${token}`
           }
         })
-
         const data = await response.json()
         if (response.ok) {
-          let progressionData: VideoInterface[] = []
-
-          try {
-            const parsed = isJsonString(data.patient.video_progression_data) ? JSON.parse(data.patient.video_progression_data) : []
-            progressionData = parsed.length ? parsed : videos
-          } catch {
-            progressionData = videos
+          let parsed = videos;
+          if (isJsonString(data.patient.video_progression_data)) {
+            const d = JSON.parse(data.patient.video_progression_data);
+            if (d.length) {
+              parsed = d;
+            }
           }
-          const updatedProgress: ProgressState = progressionData.reduce((acc, item) => ({ ...acc, [item.id]: { ...item } }), {} as ProgressState)
-          setCurrentVideo(progressionData[0])
+
+          const updatedProgress: ProgressState = {}
+          for (const item of parsed) {
+            updatedProgress[item.id] = { ...item }
+          }
+          setCurrentVideo(parsed[0])
           setProgress(updatedProgress)
         }
       } catch (error) {
@@ -172,7 +174,7 @@ export default function VideoScreen() {
   }
 
   useEffect(() => {
-    fetchProgress()
+    fetchProgress();
     const subscription = AppState.addEventListener('change', async (s) => {
       if (s === 'inactive' || s === 'background') {
         if (currentRole === 'P') {
@@ -184,6 +186,9 @@ export default function VideoScreen() {
   }, [])
 
   const saveProgress = async (background: boolean = false) => {
+    if (loading) {
+      return true;
+    }
     try {
       const token = await AsyncStorageGetItem('jwt')
       if (!token) {
@@ -192,10 +197,10 @@ export default function VideoScreen() {
         }
         return
       }
-
+      const time = Date.now();
       const data = Object.keys(progress).map(function (videoId: string) {
         if (videoId === currentVideo.id) {
-          const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000)
+          const accumulatedTime = Math.ceil((time - startTime) / 1000)
           return {
             id: videoId,
             title: progress[videoId].title,
@@ -214,7 +219,7 @@ export default function VideoScreen() {
           duration: progress[videoId].duration
         }
       })
-      setStartTime(Date.now())
+      setStartTime(time)
       const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
         method: 'PATCH',
         headers: {
@@ -241,7 +246,8 @@ export default function VideoScreen() {
   }
 
   const handleVideoProgress = (seconds: number) => {
-    const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000)
+    const time = Date.now()
+    const accumulatedTime = Math.ceil((time - startTime) / 1000)
     setProgress((prev) => ({
       ...prev,
       [currentVideo.id]: {
@@ -250,7 +256,8 @@ export default function VideoScreen() {
         duration: accumulatedTime + (prev[currentVideo.id]?.duration || 0)
       }
     }))
-    setStartTime(Date.now())
+    setStartTime(time)
+    console.log("handleVideoProgress");
     saveProgress(true)
   }
 
@@ -259,6 +266,7 @@ export default function VideoScreen() {
       ...prev,
       [currentVideo.id]: { ...prev[currentVideo.id], watched: true, timestamp: seconds }
     }))
+    console.log("handleVideoEnd");
     saveProgress(true)
   }
 
@@ -295,15 +303,15 @@ export default function VideoScreen() {
       }
     })
 
-    ;(async () => {
-      const o = await ScreenOrientation.getOrientationAsync()
-      if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
-        setIsLandscape(false)
-        videoRef.current?.enterFullscreen()
-      } else {
-        setIsLandscape(true)
-      }
-    })()
+      ; (async () => {
+        const o = await ScreenOrientation.getOrientationAsync()
+        if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
+          setIsLandscape(false)
+          videoRef.current?.enterFullscreen()
+        } else {
+          setIsLandscape(true)
+        }
+      })()
 
     return () => ScreenOrientation.removeOrientationChangeListener(sub)
   }, [isLandscape])
@@ -384,7 +392,7 @@ export default function VideoScreen() {
     }
 
     return (
-      <TouchableOpacity style={bottoms.tabItem} onPress={handlePress}>
+      <TouchableOpacity style={bottoms.tabItem} onPress={(e) => { e.preventDefault(); handlePress(); }}>
         <View style={bottoms.tabIcon}>{icon}</View>
         <View style={bottoms.tab}>
           <Text style={bottoms.tabText}>{label}</Text>
@@ -407,7 +415,7 @@ export default function VideoScreen() {
   return (
     <SafeAreaProvider>
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
-        <View style={styles.videoWrapper}>
+        <View style={[styles.videoWrapper, Platform.OS === 'android' && { marginTop: 16 }]}>
           <VideoView style={styles.video} player={player} ref={videoRef} allowsFullscreen allowsPictureInPicture />
         </View>
         <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollList}>
