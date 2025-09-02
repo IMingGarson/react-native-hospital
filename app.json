@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "共好 APP",
-    "slug": "hospital-allgood",
+    "name": "共好學習",
+    "slug": "allgood-learning",
     "scheme": "app",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./src/assets/images/logo.png",
+    "icon": "./src/assets/images/512x512.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "experiments": {
@@ -21,7 +21,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/logo.png",
+        "foregroundImage": "./src/assets/images/512x512.png",
         "backgroundColor": "#222"
       },
       "package": "com.hospital.allgood",
@@ -34,7 +34,7 @@
       ]
     },
     "web": {
-      "favicon": "./src/assets/images/logo.png",
+      "favicon": "./src/assets/images/512x512.png",
       "output": "static",
       "bundler": "metro"
     },

@@ -88,7 +88,7 @@ export default function PDFScreen() {
       ignoreEventsRef.current = false
     } catch (error) {
       console.error('解鎖方向時發生錯誤:', error)
-      Alert.alert('錯誤', '無法解鎖方向，請稍後再試')
+      // Alert.alert('錯誤', '無法解鎖方向，請稍後再試')
     }
     busyRef.current = false
   }, [])

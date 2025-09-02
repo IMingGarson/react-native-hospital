@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useState } from 'react'
-import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native'
+import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator, KeyboardAvoidingView } from 'react-native'
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Link, useRouter } from 'expo-router'
@@ -296,60 +296,62 @@ const SurveyScreen: React.FC = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView edges={['top']} style={styles.topSafe}>
-        <View style={styles.wrapper}>
-          <ScrollView contentContainerStyle={styles.card}>
-            {/* Date Picker */}
-            {Platform.OS === 'android' ? (
-              <Pressable onPress={() => setShowDate(true)} style={styles.inputWrapper}>
-                <TextInput style={styles.input} value={date.toISOString().slice(0, 10)} editable={false} />
-                <MaterialIcons name="date-range" size={24} color={MUTED} style={styles.inputIcon} />
-                {showDate && <DateTimePicker value={date} mode="date" display="spinner" onChange={onDateChange} />}
-              </Pressable>
-            ) : (
-              <View style={styles.inputWrapperIOS}>
-                <Text style={styles.label}>選擇日期</Text>
-                <DateTimePicker value={date} mode="date" display="default" onChange={onDateChange} />
-              </View>
-            )}
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+          <View style={styles.wrapper}>
+            <ScrollView contentContainerStyle={styles.card}>
+              {/* Date Picker */}
+              {Platform.OS === 'android' ? (
+                <Pressable onPress={() => setShowDate(true)} style={styles.inputWrapper}>
+                  <TextInput style={styles.input} value={date.toISOString().slice(0, 10)} editable={false} />
+                  <MaterialIcons name="date-range" size={24} color={MUTED} style={styles.inputIcon} />
+                  {showDate && <DateTimePicker value={date} mode="date" display="spinner" onChange={onDateChange} />}
+                </Pressable>
+              ) : (
+                <View style={styles.inputWrapperIOS}>
+                  <Text style={styles.label}>選擇日期</Text>
+                  <DateTimePicker value={date} mode="date" display="default" onChange={onDateChange} />
+                </View>
+              )}
 
-            {/* Questions */}
-            {answers.map((ans, idx) => (
-              <View key={idx} style={styles.questionBlock}>
-                <Text style={styles.question}>{ans.symptom}</Text>
+              {/* Questions */}
+              {answers.map((ans, idx) => (
+                <View key={idx} style={styles.questionBlock}>
+                  <Text style={styles.question}>{ans.symptom}</Text>
 
-                {ans.symptom === '其他' ? (
-                  <TextInput style={styles.input} placeholder="請輸入症狀" value={ans.customSymptom ?? ''} onChangeText={changeCustomSymptom} />
-                ) : (
-                  <View style={styles.segment}>
-                    <TouchableOpacity style={[styles.segmentBtn, styles.leftBtn, ans.hasSymptom && styles.segmentActive]} onPress={() => toggleSymptom(idx, true)}>
-                      <Text style={[styles.segmentText, ans.hasSymptom && styles.segmentTextActive]}>有症狀</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.segmentBtn, styles.rightBtn, !ans.hasSymptom && styles.segmentActive]} onPress={() => toggleSymptom(idx, false)}>
-                      <Text style={[styles.segmentText, !ans.hasSymptom && styles.segmentTextActive]}>無症狀</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {(ans.hasSymptom || ans.symptom === '其他') && (
-                  <>
-                    <Text style={styles.subQuestion}>困擾程度</Text>
-                    <View style={styles.severityRow}>
-                      {[0, 1, 2, 3].map((s) => (
-                        <TouchableOpacity key={s} style={[styles.sevBtn, ans.severity === s && styles.sevActive]} onPress={() => changeSeverity(idx, s)}>
-                          <Text style={[styles.sevText, ans.severity === s && styles.sevTextActive]}>{s === 0 ? '無' : s === 1 ? '小' : s === 2 ? '中' : '大'}</Text>
-                        </TouchableOpacity>
-                      ))}
+                  {ans.symptom === '其他' ? (
+                    <TextInput style={styles.input} placeholder="請輸入症狀" value={ans.customSymptom ?? ''} onChangeText={changeCustomSymptom} />
+                  ) : (
+                    <View style={styles.segment}>
+                      <TouchableOpacity style={[styles.segmentBtn, styles.leftBtn, ans.hasSymptom && styles.segmentActive]} onPress={() => toggleSymptom(idx, true)}>
+                        <Text style={[styles.segmentText, ans.hasSymptom && styles.segmentTextActive]}>有症狀</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.segmentBtn, styles.rightBtn, !ans.hasSymptom && styles.segmentActive]} onPress={() => toggleSymptom(idx, false)}>
+                        <Text style={[styles.segmentText, !ans.hasSymptom && styles.segmentTextActive]}>無症狀</Text>
+                      </TouchableOpacity>
                     </View>
-                  </>
-                )}
-              </View>
-            ))}
+                  )}
 
-            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
-              {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>儲存</Text>}
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+                  {(ans.hasSymptom || ans.symptom === '其他') && (
+                    <>
+                      <Text style={styles.subQuestion}>困擾程度</Text>
+                      <View style={styles.severityRow}>
+                        {[0, 1, 2, 3].map((s) => (
+                          <TouchableOpacity key={s} style={[styles.sevBtn, ans.severity === s && styles.sevActive]} onPress={() => changeSeverity(idx, s)}>
+                            <Text style={[styles.sevText, ans.severity === s && styles.sevTextActive]}>{s === 0 ? '無' : s === 1 ? '小' : s === 2 ? '中' : '大'}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </>
+                  )}
+                </View>
+              ))}
+
+              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
+                {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>儲存</Text>}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
       <BottomTabs role="P" />
     </SafeAreaProvider>

@@ -282,23 +282,31 @@ export default function VideoScreen() {
   })
 
   const videoRef = useRef<VideoView>(null)
+  const [isLandscape, setIsLandscape] = useState<boolean>(false)
+
   useEffect(() => {
     const sub = ScreenOrientation.addOrientationChangeListener((event) => {
       const o = event.orientationInfo.orientation
       if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
+        setIsLandscape(false)
         videoRef.current?.enterFullscreen()
+      } else {
+        setIsLandscape(true)
       }
     })
 
     ;(async () => {
       const o = await ScreenOrientation.getOrientationAsync()
       if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
+        setIsLandscape(false)
         videoRef.current?.enterFullscreen()
+      } else {
+        setIsLandscape(true)
       }
     })()
 
     return () => ScreenOrientation.removeOrientationChangeListener(sub)
-  }, [])
+  }, [isLandscape])
 
   const selectVideo = (video: VideoInterface) => {
     handleVideoProgress(player.currentTime)
@@ -422,16 +430,16 @@ export default function VideoScreen() {
           })}
         </ScrollView>
       </SafeAreaView>
-      <BottomTabs role={currentRole} />
+      {isLandscape && <BottomTabs role={currentRole} />}
     </SafeAreaProvider>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG, paddingHorizontal: 16 },
-  videoWrapper: { width: '100%', aspectRatio: 16 / 9, marginTop: 16, borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
+  videoWrapper: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
   video: { width: '100%', height: '100%' },
-  scrollList: { paddingTop: 16, paddingBottom: 32 },
+  scrollList: { paddingTop: 6, paddingBottom: 32 },
   itemCard: {
     backgroundColor: SURFACE,
     borderRadius: 12,
