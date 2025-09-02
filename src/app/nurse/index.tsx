@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
 import AntDesign from '@expo/vector-icons/AntDesign'
+import React, { useEffect, useState } from 'react'
 // import axios from 'axios'
 import { useRouter } from 'expo-router'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import BottomTabs from '../bottomTabs'
 import { APIPatientProgressionData, APISymptomRecord, PatientProgressionData } from '../interfaces'
@@ -30,7 +30,7 @@ export default function NurseScreen() {
   }
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const token = await AsyncStorageGetItem('jwt')
         const role = await AsyncStorageGetItem('role')
@@ -114,20 +114,6 @@ export default function NurseScreen() {
               {expandedId === String(p.id) && (
                 <View style={styles.section}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={styles.sectionTitle}>文件閱讀進度</Text>
-                    <Text style={styles.sectionTitle}>已閱讀時數</Text>
-                  </View>
-                  {p.document.length === 0 && <Text style={{ fontSize: 16, color: TEXT, paddingVertical: 12 }}>尚未閱讀文件</Text>}
-                  {p.document.map((d, i) => (
-                    <View key={i} style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>{d.label}</Text>
-                      <Text style={styles.detailTime}>{timeStamp(d.duration)}</Text>
-                      {/* <TouchableOpacity style={styles.notifyBtn} onPress={() => notifyPatient(String(p.id), 'document', i + 1)}>
-                        <Text style={styles.notifyText}>通知</Text>
-                      </TouchableOpacity> */}
-                    </View>
-                  ))}
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={styles.sectionTitle}>影片觀看進度</Text>
                     <Text style={styles.sectionTitle}>已觀看時數</Text>
                   </View>
@@ -137,6 +123,20 @@ export default function NurseScreen() {
                       <Text style={styles.detailLabel}>{v.title}</Text>
                       <Text style={styles.detailTime}>{timeStamp(v.duration)}</Text>
                       {/* <TouchableOpacity style={styles.notifyBtn} onPress={() => notifyPatient(String(p.id), 'video', i + 1)}>
+                        <Text style={styles.notifyText}>通知</Text>
+                      </TouchableOpacity> */}
+                    </View>
+                  ))}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={styles.sectionTitle}>文件閱讀進度</Text>
+                    <Text style={styles.sectionTitle}>已閱讀時數</Text>
+                  </View>
+                  {p.document.length === 0 && <Text style={{ fontSize: 16, color: TEXT, paddingVertical: 12 }}>尚未閱讀文件</Text>}
+                  {p.document.map((d, i) => (
+                    <View key={i} style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>{d.label}</Text>
+                      <Text style={styles.detailTime}>{timeStamp(d.duration)}</Text>
+                      {/* <TouchableOpacity style={styles.notifyBtn} onPress={() => notifyPatient(String(p.id), 'document', i + 1)}>
                         <Text style={styles.notifyText}>通知</Text>
                       </TouchableOpacity> */}
                     </View>
