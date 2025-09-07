@@ -22,6 +22,7 @@ const TEXT_SECONDARY = '#33475b'
 const BG = '#f0f5f9'
 
 export default function VideoScreen() {
+  const isFullscreenRef = useRef(false);
   const [videos] = useState<VideoInterface[]>([
     {
       id: '1',
@@ -257,8 +258,10 @@ export default function VideoScreen() {
       }
     }))
     setStartTime(time)
-    console.log("handleVideoProgress");
     saveProgress(true)
+    if (player) {
+      player.play()
+    }
   }
 
   const handleVideoEnd = (seconds: number) => {
@@ -266,55 +269,70 @@ export default function VideoScreen() {
       ...prev,
       [currentVideo.id]: { ...prev[currentVideo.id], watched: true, timestamp: seconds }
     }))
-    console.log("handleVideoEnd");
-    saveProgress(true)
+    saveProgress(true);
+    if (player) {
+      player.play()
+    }
   }
 
+  // const player = useVideoPlayer(currentVideo.uri, (p) => {
+  //   p.play()
+  //   p.currentTime = progress[currentVideo.id]?.timestamp || 0
+  // })
   const player = useVideoPlayer(currentVideo.uri, (p) => {
-    p.play()
-    p.currentTime = progress[currentVideo.id]?.timestamp || 0
-  })
+    p.currentTime = progress[currentVideo.id]?.timestamp || 0;
+    p.timeUpdateEventInterval = 1;
+    p.play();
+  });
 
-  useEventListener(player, 'statusChange', () => {
-    handleVideoProgress(player.currentTime)
-    if (Math.abs(player.duration - player.currentTime) <= 10) {
-      handleVideoEnd(player.currentTime)
+  const lastSentRef = useRef(0);
+  useEventListener(player, 'timeUpdate', () => {
+    const now = Date.now();
+    // 每 10 秒才存一次，避免切全螢幕時大量 fetch
+    if (now - lastSentRef.current >= 10_000) {
+      handleVideoProgress(player.currentTime);  // 只更新 state
+      saveProgress(true);                       // 後台存檔
+      lastSentRef.current = now;
     }
-  })
+    // 接近片尾就標記 watched
+    if (Math.abs(player.duration - player.currentTime) <= 10) {
+      handleVideoEnd(player.currentTime);
+    }
+  });
 
-  useEventListener(player, 'playingChange', () => {
-    handleVideoProgress(player.currentTime)
-    if (Math.abs(player.duration - player.currentTime) <= 10) {
-      handleVideoEnd(player.currentTime)
-    }
-  })
+  // useEventListener(player, 'statusChange', () => {
+  //   handleVideoProgress(player.currentTime)
+  //   if (Math.abs(player.duration - player.currentTime) <= 10) {
+  //     handleVideoEnd(player.currentTime)
+  //   }
+  // })
+
+  // useEventListener(player, 'playingChange', () => {
+  //   handleVideoProgress(player.currentTime)
+  //   if (Math.abs(player.duration - player.currentTime) <= 10) {
+  //     handleVideoEnd(player.currentTime)
+  //   }
+  // })
 
   const videoRef = useRef<VideoView>(null)
-  const [isLandscape, setIsLandscape] = useState<boolean>(false)
 
   useEffect(() => {
-    const sub = ScreenOrientation.addOrientationChangeListener((event) => {
-      const o = event.orientationInfo.orientation
-      if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
-        setIsLandscape(false)
-        videoRef.current?.enterFullscreen()
-      } else {
-        setIsLandscape(true)
+    const sub = ScreenOrientation.addOrientationChangeListener(({ orientationInfo }) => {
+      const o = orientationInfo.orientation;
+      const isLand =
+        o === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+
+      if (isLand && !isFullscreenRef.current) {
+        isFullscreenRef.current = true;
+        videoRef.current?.enterFullscreen();
       }
-    })
-
-      ; (async () => {
-        const o = await ScreenOrientation.getOrientationAsync()
-        if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
-          setIsLandscape(false)
-          videoRef.current?.enterFullscreen()
-        } else {
-          setIsLandscape(true)
-        }
-      })()
-
-    return () => ScreenOrientation.removeOrientationChangeListener(sub)
-  }, [isLandscape])
+      if (!isLand && isFullscreenRef.current) {
+        isFullscreenRef.current = false;
+      }
+    });
+    return () => ScreenOrientation.removeOrientationChangeListener(sub);
+  }, []);
 
   const selectVideo = (video: VideoInterface) => {
     handleVideoProgress(player.currentTime)
@@ -438,7 +456,7 @@ export default function VideoScreen() {
           })}
         </ScrollView>
       </SafeAreaView>
-      {isLandscape && <BottomTabs role={currentRole} />}
+      <BottomTabs role={currentRole} />
     </SafeAreaProvider>
   )
 }
