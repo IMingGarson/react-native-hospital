@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useState } from 'react'
-import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator, KeyboardAvoidingView } from 'react-native'
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
+import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Link, useRouter } from 'expo-router'
-import { MaterialCommunityIcons, FontAwesome, Foundation, MaterialIcons } from '@expo/vector-icons'
+import React, { useCallback, useEffect, useState } from 'react'
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { Survey } from '../interfaces'
-import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
+import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString, isValidDate } from '../utils'
+
 // import Constants from 'expo-constants'
 // import * as Device from 'expo-device'
 // import * as Notifications from 'expo-notifications
@@ -304,12 +305,12 @@ const SurveyScreen: React.FC = () => {
                 <Pressable onPress={() => setShowDate(true)} style={styles.inputWrapper}>
                   <TextInput style={styles.input} value={date.toISOString().slice(0, 10)} editable={false} />
                   <MaterialIcons name="date-range" size={24} color={MUTED} style={styles.inputIcon} />
-                  {showDate && <DateTimePicker value={date} mode="date" display="spinner" onChange={onDateChange} />}
+                  {showDate && <DateTimePicker value={isValidDate(date) ? date : new Date()} mode="date" display="spinner" onChange={onDateChange} />}
                 </Pressable>
               ) : (
                 <View style={styles.inputWrapperIOS}>
                   <Text style={styles.label}>選擇日期</Text>
-                  <DateTimePicker value={date} mode="date" display="default" onChange={onDateChange} />
+                  <DateTimePicker value={isValidDate(date) ? date : new Date()} mode="date" display="default" onChange={onDateChange} />
                 </View>
               )}
 

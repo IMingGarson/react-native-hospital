@@ -1,13 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react'
 import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
-import { useVideoPlayer, VideoView } from 'expo-video'
 import { useEventListener } from 'expo'
-import { AppState, Modal, Pressable, StyleSheet, Text, TouchableOpacity, ActivityIndicator, useWindowDimensions, View, ScrollView, Alert } from 'react-native'
+import { useRouter } from 'expo-router'
+import * as ScreenOrientation from 'expo-screen-orientation'
+import { useVideoPlayer, VideoView } from 'expo-video'
+import React, { useEffect, useRef, useState } from 'react'
+import { ActivityIndicator, Alert, AppState, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { ProgressState, VideoInterface } from '../interfaces'
 import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
-import * as ScreenOrientation from 'expo-screen-orientation'
 interface Props {
   role: string
 }
@@ -22,6 +22,7 @@ const TEXT_SECONDARY = '#33475b'
 const BG = '#f0f5f9'
 
 export default function VideoScreen() {
+  const isFullscreenRef = useRef(false);
   const [videos] = useState<VideoInterface[]>([
     {
       id: '1',
@@ -120,7 +121,7 @@ export default function VideoScreen() {
   const [progress, setProgress] = useState<ProgressState>({})
   const [startTime, setStartTime] = useState<number>(Date.now())
   const [currentRole, setCurrentRole] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
 
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt')
@@ -140,19 +141,21 @@ export default function VideoScreen() {
             Authorization: `Bearer ${token}`
           }
         })
-
         const data = await response.json()
         if (response.ok) {
-          let progressionData: VideoInterface[] = []
-
-          try {
-            const parsed = isJsonString(data.patient.video_progression_data) ? JSON.parse(data.patient.video_progression_data) : []
-            progressionData = parsed.length ? parsed : videos
-          } catch {
-            progressionData = videos
+          let parsed = videos;
+          if (isJsonString(data.patient.video_progression_data)) {
+            const d = JSON.parse(data.patient.video_progression_data);
+            if (d.length) {
+              parsed = d;
+            }
           }
-          const updatedProgress: ProgressState = progressionData.reduce((acc, item) => ({ ...acc, [item.id]: { ...item } }), {} as ProgressState)
-          setCurrentVideo(progressionData[0])
+
+          const updatedProgress: ProgressState = {}
+          for (const item of parsed) {
+            updatedProgress[item.id] = { ...item }
+          }
+          setCurrentVideo(parsed[0])
           setProgress(updatedProgress)
         }
       } catch (error) {
@@ -172,7 +175,7 @@ export default function VideoScreen() {
   }
 
   useEffect(() => {
-    fetchProgress()
+    fetchProgress();
     const subscription = AppState.addEventListener('change', async (s) => {
       if (s === 'inactive' || s === 'background') {
         if (currentRole === 'P') {
@@ -184,6 +187,9 @@ export default function VideoScreen() {
   }, [])
 
   const saveProgress = async (background: boolean = false) => {
+    if (loading) {
+      return true;
+    }
     try {
       const token = await AsyncStorageGetItem('jwt')
       if (!token) {
@@ -192,10 +198,10 @@ export default function VideoScreen() {
         }
         return
       }
-
+      const time = Date.now();
       const data = Object.keys(progress).map(function (videoId: string) {
         if (videoId === currentVideo.id) {
-          const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000)
+          const accumulatedTime = Math.ceil((time - startTime) / 1000)
           return {
             id: videoId,
             title: progress[videoId].title,
@@ -214,7 +220,7 @@ export default function VideoScreen() {
           duration: progress[videoId].duration
         }
       })
-      setStartTime(Date.now())
+      setStartTime(time)
       const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
         method: 'PATCH',
         headers: {
@@ -241,7 +247,8 @@ export default function VideoScreen() {
   }
 
   const handleVideoProgress = (seconds: number) => {
-    const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000)
+    const time = Date.now()
+    const accumulatedTime = Math.ceil((time - startTime) / 1000)
     setProgress((prev) => ({
       ...prev,
       [currentVideo.id]: {
@@ -250,8 +257,11 @@ export default function VideoScreen() {
         duration: accumulatedTime + (prev[currentVideo.id]?.duration || 0)
       }
     }))
-    setStartTime(Date.now())
+    setStartTime(time)
     saveProgress(true)
+    if (player) {
+      player.play()
+    }
   }
 
   const handleVideoEnd = (seconds: number) => {
@@ -259,54 +269,70 @@ export default function VideoScreen() {
       ...prev,
       [currentVideo.id]: { ...prev[currentVideo.id], watched: true, timestamp: seconds }
     }))
-    saveProgress(true)
+    saveProgress(true);
+    if (player) {
+      player.play()
+    }
   }
 
+  // const player = useVideoPlayer(currentVideo.uri, (p) => {
+  //   p.play()
+  //   p.currentTime = progress[currentVideo.id]?.timestamp || 0
+  // })
   const player = useVideoPlayer(currentVideo.uri, (p) => {
-    p.play()
-    p.currentTime = progress[currentVideo.id]?.timestamp || 0
-  })
+    p.currentTime = progress[currentVideo.id]?.timestamp || 0;
+    p.timeUpdateEventInterval = 1;
+    p.play();
+  });
 
-  useEventListener(player, 'statusChange', () => {
-    handleVideoProgress(player.currentTime)
-    if (Math.abs(player.duration - player.currentTime) <= 10) {
-      handleVideoEnd(player.currentTime)
+  const lastSentRef = useRef(0);
+  useEventListener(player, 'timeUpdate', () => {
+    const now = Date.now();
+    // 每 10 秒才存一次，避免切全螢幕時大量 fetch
+    if (now - lastSentRef.current >= 10_000) {
+      handleVideoProgress(player.currentTime);  // 只更新 state
+      saveProgress(true);                       // 後台存檔
+      lastSentRef.current = now;
     }
-  })
+    // 接近片尾就標記 watched
+    if (Math.abs(player.duration - player.currentTime) <= 10) {
+      handleVideoEnd(player.currentTime);
+    }
+  });
 
-  useEventListener(player, 'playingChange', () => {
-    handleVideoProgress(player.currentTime)
-    if (Math.abs(player.duration - player.currentTime) <= 10) {
-      handleVideoEnd(player.currentTime)
-    }
-  })
+  // useEventListener(player, 'statusChange', () => {
+  //   handleVideoProgress(player.currentTime)
+  //   if (Math.abs(player.duration - player.currentTime) <= 10) {
+  //     handleVideoEnd(player.currentTime)
+  //   }
+  // })
+
+  // useEventListener(player, 'playingChange', () => {
+  //   handleVideoProgress(player.currentTime)
+  //   if (Math.abs(player.duration - player.currentTime) <= 10) {
+  //     handleVideoEnd(player.currentTime)
+  //   }
+  // })
 
   const videoRef = useRef<VideoView>(null)
-  const [isLandscape, setIsLandscape] = useState<boolean>(false)
 
   useEffect(() => {
-    const sub = ScreenOrientation.addOrientationChangeListener((event) => {
-      const o = event.orientationInfo.orientation
-      if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
-        setIsLandscape(false)
-        videoRef.current?.enterFullscreen()
-      } else {
-        setIsLandscape(true)
-      }
-    })
+    const sub = ScreenOrientation.addOrientationChangeListener(({ orientationInfo }) => {
+      const o = orientationInfo.orientation;
+      const isLand =
+        o === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
 
-    ;(async () => {
-      const o = await ScreenOrientation.getOrientationAsync()
-      if (o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT) {
-        setIsLandscape(false)
-        videoRef.current?.enterFullscreen()
-      } else {
-        setIsLandscape(true)
+      if (isLand && !isFullscreenRef.current) {
+        isFullscreenRef.current = true;
+        videoRef.current?.enterFullscreen();
       }
-    })()
-
-    return () => ScreenOrientation.removeOrientationChangeListener(sub)
-  }, [isLandscape])
+      if (!isLand && isFullscreenRef.current) {
+        isFullscreenRef.current = false;
+      }
+    });
+    return () => ScreenOrientation.removeOrientationChangeListener(sub);
+  }, []);
 
   const selectVideo = (video: VideoInterface) => {
     handleVideoProgress(player.currentTime)
@@ -384,7 +410,7 @@ export default function VideoScreen() {
     }
 
     return (
-      <TouchableOpacity style={bottoms.tabItem} onPress={handlePress}>
+      <TouchableOpacity style={bottoms.tabItem} onPress={(e) => { e.preventDefault(); handlePress(); }}>
         <View style={bottoms.tabIcon}>{icon}</View>
         <View style={bottoms.tab}>
           <Text style={bottoms.tabText}>{label}</Text>
@@ -407,7 +433,7 @@ export default function VideoScreen() {
   return (
     <SafeAreaProvider>
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
-        <View style={styles.videoWrapper}>
+        <View style={[styles.videoWrapper, Platform.OS === 'android' && { marginTop: 16 }]}>
           <VideoView style={styles.video} player={player} ref={videoRef} allowsFullscreen allowsPictureInPicture />
         </View>
         <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollList}>
@@ -430,7 +456,7 @@ export default function VideoScreen() {
           })}
         </ScrollView>
       </SafeAreaView>
-      {isLandscape && <BottomTabs role={currentRole} />}
+      <BottomTabs role={currentRole} />
     </SafeAreaProvider>
   )
 }

@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { View, Text, TextInput, StyleSheet, Alert, ScrollView, Modal, Platform, TouchableOpacity } from 'react-native'
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import AntDesign from '@expo/vector-icons/AntDesign'
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
+import { useRouter } from 'expo-router'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Alert, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import RNPickerSelect from 'react-native-picker-select'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import BottomTabs from '../bottomTabs'
 import { APIPatientProgressionData, PSAData } from '../interfaces'
 import { AsyncStorageGetItem } from '../utils'
-import { useRouter } from 'expo-router'
-import RNPickerSelect from 'react-native-picker-select'
 
 const PRIMARY = '#6366F1'
 const BG = '#f0f5f9'
@@ -16,10 +16,25 @@ const TEXT = '#1f2d3a'
 const MUTED = '#6b7280'
 const BORDER = '#d1d7dd'
 
+/** ---------- 日期工具：本地字串/解析/驗證/正規化 ---------- */
+const isValidDate = (d: any): d is Date => d instanceof Date && Number.isFinite(d.getTime())
+const formatLocalDate = (d: Date) => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+const parseLocalDate = (s: string): Date => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (!m) return new Date()
+  const [, y, mo, d] = m
+  return new Date(Number(y), Number(mo) - 1, Number(d)) // 本地時區的 00:00
+}
+const normalizeYMD = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
 const daysAgo = (n: number) => {
   const d = new Date()
   d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
+  return formatLocalDate(d) // 不用 ISO，避免 UTC 位移
 }
 
 export default function PSAList() {
@@ -29,19 +44,19 @@ export default function PSAList() {
   const [psa, setPsa] = useState<string>('')
   const [currentRole, setCurrentRole] = useState('')
 
-  // 預設顯示過去兩週的資料 (P 與 M 都如此)
-  const [searchStartDate, setSearchStartDate] = useState<string>(daysAgo(14))
+  // 預設顯示區間與新增日期（字串：YYYY-MM-DD）
+  const [searchStartDate, setSearchStartDate] = useState<string>(daysAgo(90))
   const [searchEndDate, setSearchEndDate] = useState<string>(daysAgo(0))
   const [addDate, setAddDate] = useState<string>(daysAgo(0))
 
   // 當角色為 M 時，需有病患選擇功能
   const [patientOptions, setPatientOptions] = useState<{ id: number; name: string; value: string; label: string }[]>([])
-  const [currentPatient, setCurrentPatient] = useState<{
-    id: number
-    name: string
-    value: string
-    label: string
-  }>({ id: -1, name: '', value: '', label: '' })
+  const [currentPatient, setCurrentPatient] = useState<{ id: number; name: string; value: string; label: string }>({
+    id: -1,
+    name: '',
+    value: '',
+    label: ''
+  })
 
   const [showSearchModal, setShowSearchModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -49,32 +64,46 @@ export default function PSAList() {
   const [showEndDate, setShowEndDate] = useState(false)
   const [showAddDate, setShowAddDate] = useState(false)
 
-  // const filteredData = useMemo(
-  //   () =>
-  //     allPSAData.filter((item) => {
-  //       const d = new Date(item.date)
-  //       return d >= new Date(searchStartDate) && d <= new Date(searchEndDate)
-  //     }),
-  //   [allPSAData, searchStartDate, searchEndDate]
-  // )
-
-  const onStartChange = useCallback((_: DateTimePickerEvent, d?: Date) => {
+  /** 事件處理：加入 dismissed 與有效性檢查；統一使用本地日期字串 */
+  const onStartChange = useCallback((e: DateTimePickerEvent, d?: Date) => {
     setShowStartDate(false)
-    if (d) setSearchStartDate(d.toISOString().split('T')[0])
-  }, [])
+    if (e.type === 'dismissed' || !d || !isValidDate(d)) return
+    const newStr = formatLocalDate(d)
+    setSearchStartDate(newStr)
+
+    // 若結束 < 開始，順便把結束拉到開始（避免 UI 變成無效狀態）
+    const end = parseLocalDate(searchEndDate)
+    const start = parseLocalDate(newStr)
+    if (normalizeYMD(end) < normalizeYMD(start)) {
+      setSearchEndDate(newStr)
+    }
+  }, [searchEndDate])
 
   const onEndChange = useCallback(
-    (_: DateTimePickerEvent, d?: Date) => {
+    (e: DateTimePickerEvent, d?: Date) => {
       setShowEndDate(false)
-      if (d && d >= new Date(searchStartDate)) setSearchEndDate(d.toISOString().split('T')[0])
-      if (d && d < new Date(searchStartDate)) Alert.alert('錯誤', '結束不可早於開始')
+      if (e.type === 'dismissed' || !d || !isValidDate(d)) return
+      const start = normalizeYMD(parseLocalDate(searchStartDate))
+      const picked = normalizeYMD(d)
+      if (picked < start) {
+        Alert.alert('錯誤', '結束不可早於開始')
+        return
+      }
+      setSearchEndDate(formatLocalDate(d))
     },
     [searchStartDate]
   )
-  const onAddChange = useCallback((_: DateTimePickerEvent, d?: Date) => {
+
+  const onAddChange = useCallback((e: DateTimePickerEvent, d?: Date) => {
     setShowAddDate(false)
-    if (d && d <= new Date()) setAddDate(d.toISOString().split('T')[0])
-    if (d && d > new Date()) Alert.alert('錯誤', '不可選未來日期')
+    if (e.type === 'dismissed' || !d || !isValidDate(d)) return
+    const today = normalizeYMD(new Date())
+    const picked = normalizeYMD(d)
+    if (picked > today) {
+      Alert.alert('錯誤', '不可選未來日期')
+      return
+    }
+    setAddDate(formatLocalDate(d))
   }, [])
 
   // 取得所有病患資料 (僅角色為 M 時使用)
@@ -134,16 +163,16 @@ export default function PSAList() {
         }
         const currentPatientData = (await AsyncStorageGetItem('currentPatient')) as APIPatientProgressionData
         if (!currentPatientData) {
-          const response = await fetch('https://allgood.peiren.info/api/patient/get', {
+          const r = await fetch('https://allgood.peiren.info/api/patient/get', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`
             }
           })
-          const data = await response.json()
-          if (response.ok && data.patient) {
-            setCurrentPatient(data.patient)
+          const j = await r.json()
+          if (r.ok && j.patient) {
+            setCurrentPatient(j.patient)
           }
         } else {
           setCurrentPatient({
@@ -213,7 +242,10 @@ export default function PSAList() {
     }
     try {
       const token = await AsyncStorageGetItem('jwt')
-      const body = currentRole === 'M' ? { date: addDate, psa: parseFloat(psa), pid: currentPatient.id } : { date: addDate, psa: parseFloat(psa) }
+      const body =
+        currentRole === 'M'
+          ? { date: addDate, psa: parseFloat(psa), pid: currentPatient.id }
+          : { date: addDate, psa: parseFloat(psa) }
       const response = await fetch('https://allgood.peiren.info/api/patient/psa', {
         method: 'PATCH',
         headers: {
@@ -259,6 +291,7 @@ export default function PSAList() {
       setCurrentPatient(patient)
     }
   }
+
   return (
     <SafeAreaProvider>
       <SafeAreaView edges={['top']} style={styles.page}>
@@ -309,25 +342,48 @@ export default function PSAList() {
             {Platform.OS === 'android' ? (
               <>
                 <Text>開始日期</Text>
-                {showStartDate && <DateTimePicker value={new Date(searchStartDate)} mode="date" display="calendar" onChange={onStartChange} />}
+                {showStartDate && (
+                  <DateTimePicker
+                    value={parseLocalDate(searchStartDate)}
+                    mode="date"
+                    display="calendar"
+                    onChange={onStartChange}
+                  />
+                )}
                 <TouchableOpacity onPress={() => setShowStartDate(true)} style={styles.modalInput}>
                   <Text>{searchStartDate}</Text>
                 </TouchableOpacity>
+
                 <Text>結束日期</Text>
-                {showEndDate && <DateTimePicker value={new Date(searchEndDate)} mode="date" display="calendar" onChange={onEndChange} />}
+                {showEndDate && (
+                  <DateTimePicker
+                    value={parseLocalDate(searchEndDate)}
+                    mode="date"
+                    display="calendar"
+                    onChange={onEndChange}
+                  />
+                )}
                 <TouchableOpacity onPress={() => setShowEndDate(true)} style={styles.modalInput}>
                   <Text>{searchEndDate}</Text>
                 </TouchableOpacity>
               </>
             ) : (
-              <View style={{ display: 'flex', flexDirection: 'column', gap: '10' }}>
+              <View style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text>開始日期</Text>
-                  <DateTimePicker value={new Date(searchStartDate)} mode="date" onChange={onStartChange} />
+                  <DateTimePicker
+                    value={parseLocalDate(searchStartDate)}
+                    mode="date"
+                    onChange={onStartChange}
+                  />
                 </View>
                 <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text>結束日期</Text>
-                  <DateTimePicker value={new Date(searchEndDate)} mode="date" onChange={onEndChange} />
+                  <DateTimePicker
+                    value={parseLocalDate(searchEndDate)}
+                    mode="date"
+                    onChange={onEndChange}
+                  />
                 </View>
               </View>
             )}
@@ -372,7 +428,14 @@ export default function PSAList() {
             {Platform.OS === 'android' ? (
               <>
                 <Text>選擇日期</Text>
-                {showAddDate && <DateTimePicker value={new Date(addDate)} mode="date" display="calendar" onChange={onAddChange} />}
+                {showAddDate && (
+                  <DateTimePicker
+                    value={parseLocalDate(addDate)}
+                    mode="date"
+                    display="calendar"
+                    onChange={onAddChange}
+                  />
+                )}
                 <TouchableOpacity onPress={() => setShowAddDate(true)} style={styles.modalInput}>
                   <Text>{addDate}</Text>
                 </TouchableOpacity>
@@ -380,7 +443,11 @@ export default function PSAList() {
             ) : (
               <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text>選擇日期</Text>
-                <DateTimePicker value={new Date(addDate)} mode="date" onChange={onAddChange} />
+                <DateTimePicker
+                  value={parseLocalDate(addDate)}
+                  mode="date"
+                  onChange={onAddChange}
+                />
               </View>
             )}
             <TextInput style={styles.modalInput} placeholder="PSA" keyboardType="numeric" value={psa} onChangeText={setPsa} />

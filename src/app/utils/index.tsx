@@ -5,6 +5,8 @@ interface Store {
     ttl: Date;
 }
 
+export const isValidDate = (d: any): d is Date => d instanceof Date && Number.isFinite(d.getTime());
+
 export const AsyncStorageRemoveItem = async (key: string) => {
     try {
         await AsyncStorage.removeItem(key);
@@ -52,7 +54,7 @@ export const isJsonString = (data: string | null) => {
     }
     try {
         JSON.parse(data);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e: unknown) {
         return false;
     }

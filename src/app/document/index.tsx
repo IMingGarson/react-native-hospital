@@ -1,11 +1,11 @@
 import { FontAwesome, Foundation, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
+import * as ScreenOrientation from 'expo-screen-orientation'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, AppState, Modal, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import WebView from 'react-native-webview'
-import * as ScreenOrientation from 'expo-screen-orientation'
-import { AsyncStorageRemoveItem, AsyncStorageGetItem, isJsonString } from '../utils'
+import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
 interface PDFInterface {
   id: string
   label: string
@@ -73,7 +73,7 @@ export default function PDFScreen() {
       }
       ignoreEventsRef.current = true
     } catch (error) {
-      console.error('解鎖方向時發生錯誤:', error)
+      // console.error('解鎖方向時發生錯誤:', error)
       // Alert.alert('錯誤', '無法解鎖方向，請稍後再試')
     }
     busyRef.current = false
@@ -87,7 +87,7 @@ export default function PDFScreen() {
       await ScreenOrientation.lockAsync(defaultLock)
       ignoreEventsRef.current = false
     } catch (error) {
-      console.error('解鎖方向時發生錯誤:', error)
+      // console.error('解鎖方向時發生錯誤:', error)
       // Alert.alert('錯誤', '無法解鎖方向，請稍後再試')
     }
     busyRef.current = false
@@ -103,14 +103,14 @@ export default function PDFScreen() {
       StatusBar.setHidden(land, 'fade')
     })
 
-    ;(async () => {
-      const o = await ScreenOrientation.getOrientationAsync()
-      const land = o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      if (mountedRef.current) {
-        setIsLandscape(land)
-        StatusBar.setHidden(land, 'fade')
-      }
-    })()
+      ; (async () => {
+        const o = await ScreenOrientation.getOrientationAsync()
+        const land = o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+        if (mountedRef.current) {
+          setIsLandscape(land)
+          StatusBar.setHidden(land, 'fade')
+        }
+      })()
 
     return () => {
       mountedRef.current = false
@@ -199,13 +199,19 @@ export default function PDFScreen() {
   }, [])
 
   const handleSelectPDF = (pdf: PDFInterface) => {
-    const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000)
-    setProgress((prev) => ({
-      ...prev,
-      [pdf.id]: { ...pdf, duration: accumulatedTime + (progress[pdf.id]?.duration ?? 0) }
-    }))
+    const time = Date.now()
+    const elapsed = Math.ceil((time - startTime) / 1000)
+    const prevKey = parseInt(currentPDF.id)
+
+    setProgress((prev) => {
+      const prevItem = prev[prevKey] ?? { ...currentPDF, duration: 0 }
+      return {
+        ...prev,
+        [prevKey]: { ...prevItem, duration: (prevItem.duration ?? 0) + elapsed }
+      }
+    })
     setCurrentPDF(pdf)
-    setStartTime(Date.now())
+    setStartTime(time)
     return true
   }
 
@@ -216,12 +222,12 @@ export default function PDFScreen() {
         if (!background) Alert.alert('錯誤', '無法儲存進度')
         return
       }
-      const data = Object.keys(progress).map((id) => {
-        if (id === currentPDF.id) {
+      const data = Object.values(progress).map((p) => {
+        if (p.id === currentPDF.id) {
           const accumulatedTime = Math.ceil((Date.now() - startTime) / 1000)
-          return { id, label: progress[id].label, value: progress[id].value, duration: accumulatedTime + progress[id].duration }
+          return { id: p.id, label: p.label, value: p.value, duration: accumulatedTime + p.duration }
         }
-        return { id, label: progress[id].label, value: progress[id].value, duration: progress[id].duration }
+        return { id: p.id, label: p.label, value: p.value, duration: p.duration }
       })
       const response = await fetch('https://allgood.peiren.info/api/patient/update_data', {
         method: 'PATCH',
@@ -259,12 +265,12 @@ export default function PDFScreen() {
       }, 120)
     })
 
-    ;(async () => {
-      const o = await ScreenOrientation.getOrientationAsync()
-      const land = o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      setIsLandscape(land)
-      StatusBar.setHidden(land, 'fade')
-    })()
+      ; (async () => {
+        const o = await ScreenOrientation.getOrientationAsync()
+        const land = o === ScreenOrientation.Orientation.LANDSCAPE_LEFT || o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+        setIsLandscape(land)
+        StatusBar.setHidden(land, 'fade')
+      })()
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -285,7 +291,9 @@ export default function PDFScreen() {
     }
 
     const handleSignOut = async () => {
-      await saveProgress(true)
+      if (currentRole === 'P') {
+        await saveProgress(true)
+      }
       await AsyncStorageRemoveItem('jwt')
       await AsyncStorageRemoveItem('role')
       await closeLogout()
@@ -328,9 +336,7 @@ export default function PDFScreen() {
                   style={[modalStyles.btn, modalStyles.primary]}
                   onPress={() => {
                     handleSignOut()
-                    if (currentRole === 'P') {
-                      saveProgress(true)
-                    }
+
                   }}>
                   <Text style={[modalStyles.btnText, { color: SURFACE }]}>確定</Text>
                 </TouchableOpacity>
@@ -356,7 +362,7 @@ export default function PDFScreen() {
     }
 
     return (
-      <TouchableOpacity style={bottoms.tabItem} onPress={handlePress}>
+      <TouchableOpacity style={bottoms.tabItem} onPress={(e) => { e.preventDefault(); handlePress() }}>
         <View style={bottoms.tabIcon}>{icon}</View>
         <View style={bottoms.tab}>
           <Text style={bottoms.tabText}>{label}</Text>
@@ -391,6 +397,7 @@ export default function PDFScreen() {
                     style={[styles.modalItem, currentPDF?.id === pdf.id && styles.modalItemActive]}
                     onPress={() => {
                       handleSelectPDF(pdf)
+                      saveProgress(true)
                       closeDropdown()
                     }}>
                     <Text style={[styles.modalText, { fontSize: dynamic.item }, currentPDF?.id === pdf.id && styles.modalTextActive]}>{pdf.label}</Text>
