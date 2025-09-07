@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { Survey } from '../interfaces'
-import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString, isValidDate } from '../utils'
+import { AsyncStorageGetItem, AsyncStorageRemoveItem, isJsonString } from '../utils'
 
 // import Constants from 'expo-constants'
 // import * as Device from 'expo-device'
@@ -35,6 +35,19 @@ interface BottomTabsProps {
   role: string
   customedStyle?: Styles
 }
+
+const fmtLocal = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+const parseLocal = (s: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return new Date();
+  const [, y, mo, d] = m;
+  return new Date(Number(y), Number(mo) - 1, Number(d));
+};
 
 /** 自訂 hook：處理 push notifications 的註冊與監聽 */
 // const usePushNotifications = (): { expoPushToken: string; deepLink: string } => {
@@ -201,7 +214,7 @@ const SurveyScreen: React.FC = () => {
             }
           })
           setPastSurvey(newPastSurvey)
-          const dateKey = date.toISOString().split('T')[0]
+          const dateKey = fmtLocal(date)
           if (dateKey in newPastSurvey) {
             setAnswers(newPastSurvey[dateKey])
           } else {
@@ -257,7 +270,7 @@ const SurveyScreen: React.FC = () => {
         },
         body: JSON.stringify({
           survey_data: JSON.stringify(answers),
-          date: date.toISOString().split('T')[0]
+          date: fmtLocal(date)
         })
       })
       if (response.ok) {
@@ -274,7 +287,7 @@ const SurveyScreen: React.FC = () => {
   const onDateChange = useCallback(
     (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
       if (selectedDate) {
-        const newDate = selectedDate.toISOString().split('T')[0]
+        const newDate = fmtLocal(selectedDate);
         if (newDate in pastSurvey) {
           setAnswers(pastSurvey[newDate])
         } else {
@@ -303,14 +316,14 @@ const SurveyScreen: React.FC = () => {
               {/* Date Picker */}
               {Platform.OS === 'android' ? (
                 <Pressable onPress={() => setShowDate(true)} style={styles.inputWrapper}>
-                  <TextInput style={styles.input} value={date.toISOString().slice(0, 10)} editable={false} />
+                  <TextInput style={styles.input} value={fmtLocal(date)} editable={false} />
                   <MaterialIcons name="date-range" size={24} color={MUTED} style={styles.inputIcon} />
-                  {showDate && <DateTimePicker value={isValidDate(date) ? date : new Date()} mode="date" display="spinner" onChange={onDateChange} />}
+                  {showDate && <DateTimePicker value={date} mode="date" display="spinner" onChange={onDateChange} />}
                 </Pressable>
               ) : (
                 <View style={styles.inputWrapperIOS}>
                   <Text style={styles.label}>選擇日期</Text>
-                  <DateTimePicker value={isValidDate(date) ? date : new Date()} mode="date" display="default" onChange={onDateChange} />
+                  <DateTimePicker value={date} mode="date" display="default" onChange={onDateChange} />
                 </View>
               )}
 
