@@ -13,7 +13,19 @@ const BG = '#f0f5f9'
 const CARD_BG = '#fff'
 const BORDER = '#d1d7dd'
 const TEXT = '#1f2d3a'
-
+const videosTotalTime = [
+  0,
+  4 * 60 + 17,
+  16 * 60 + 44,
+  11 * 60 + 17,
+  23 * 60 * 29,
+  18 * 60 + 27,
+  11 * 60 + 34,
+  14 * 60 + 40,
+  7 * 60 + 25,
+  6 * 60 + 52,
+  3 * 60 + 52,
+]
 export default function NurseScreen() {
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([])
   const [currentRole, setCurrentRole] = useState<string>('')
@@ -88,6 +100,10 @@ export default function NurseScreen() {
     setExpandedId(expandedId === String(id) ? null : String(id))
   }
 
+  const videoTotalTime = (id: number, sec: number) => {
+    return videosTotalTime[id] <= sec ? `觀看完畢` : timeStamp(sec);
+  }
+
   const timeStamp = (sec: number) => `${Math.floor(sec / 60)}分${String(sec % 60).padStart(2, '0')}秒`
 
   if (loading) {
@@ -121,7 +137,7 @@ export default function NurseScreen() {
                   {p.video.map((v, i) => (
                     <View key={i} style={styles.detailRow}>
                       <Text style={styles.detailLabel}>{v.title}</Text>
-                      <Text style={styles.detailTime}>{timeStamp(v.duration)}</Text>
+                      <Text style={styles.detailTime}>{videoTotalTime(parseInt(v.id), v.duration)}</Text>
                       {/* <TouchableOpacity style={styles.notifyBtn} onPress={() => notifyPatient(String(p.id), 'video', i + 1)}>
                         <Text style={styles.notifyText}>通知</Text>
                       </TouchableOpacity> */}

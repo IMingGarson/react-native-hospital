@@ -58,7 +58,7 @@ export default function VideoScreen() {
       timestamp: 0,
       watched: false,
       duration: 0,
-      length: '3:11'
+      length: '23:29'
     },
     {
       id: '5',
