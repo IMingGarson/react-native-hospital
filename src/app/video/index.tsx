@@ -21,13 +21,15 @@ const MUTED = '#6b7280'
 const TEXT_SECONDARY = '#33475b'
 const BG = '#f0f5f9'
 
+const ANDROID_STALL_SAFE = (u: string) => (Platform.OS === 'android' ? u + '' : u) // CHANGED
+
 export default function VideoScreen() {
   const isFullscreenRef = useRef(false);
   const [videos] = useState<VideoInterface[]>([
     {
       id: '1',
       title: '共好學習',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-1.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-1.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -36,7 +38,7 @@ export default function VideoScreen() {
     {
       id: '2',
       title: '愛-溝通',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-2.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-2.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -45,7 +47,7 @@ export default function VideoScreen() {
     {
       id: '3',
       title: '資源補帖',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-3.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-3-v2.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -54,7 +56,7 @@ export default function VideoScreen() {
     {
       id: '4',
       title: '疲憊防護',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-4.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-4.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -62,8 +64,8 @@ export default function VideoScreen() {
     },
     {
       id: '5',
-      title: '照顧心靈',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-5.mp4',
+      title: '照護心靈',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-5-v2.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -72,7 +74,7 @@ export default function VideoScreen() {
     {
       id: '6',
       title: '排尿康復',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-1.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-1.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -81,7 +83,7 @@ export default function VideoScreen() {
     {
       id: '7',
       title: '性福滿分',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-2.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-6-2.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -90,7 +92,7 @@ export default function VideoScreen() {
     {
       id: '8',
       title: '電療筆記',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-1.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-1.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -99,7 +101,7 @@ export default function VideoScreen() {
     {
       id: '9',
       title: '荷爾蒙站',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-2.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-7-2.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -108,7 +110,7 @@ export default function VideoScreen() {
     {
       id: '10',
       title: '共好統整',
-      uri: 'https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-8.mp4',
+      uri: ANDROID_STALL_SAFE('https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-videos/section-8.mp4'), // CHANGED
       timestamp: 0,
       watched: false,
       duration: 0,
@@ -122,6 +124,16 @@ export default function VideoScreen() {
   const [startTime, setStartTime] = useState<number>(Date.now())
   const [currentRole, setCurrentRole] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(true)
+
+  const [isBuffering, setIsBuffering] = useState<boolean>(true) // CHANGED
+
+  // === Stall Detector & Guards ===
+  const stallDetectTimerRef = useRef<ReturnType<typeof setInterval> | null>(null) // ADDED
+  const lastCTRef = useRef<number>(0) // ADDED
+  const lastCTWallTimeRef = useRef<number>(0) // ADDED
+  const stallCooldownRef = useRef<number>(0) // ADDED
+  const stallLikelyAtRef = useRef<number>(0) // ADDED
+  const programmaticPauseAtRef = useRef<number>(0) // ADDED
 
   const fetchProgress = async () => {
     const token = await AsyncStorageGetItem('jwt')
@@ -150,7 +162,6 @@ export default function VideoScreen() {
               parsed = d;
             }
           }
-
           const updatedProgress: ProgressState = {}
           for (const item of parsed) {
             updatedProgress[item.id] = { ...item }
@@ -258,11 +269,7 @@ export default function VideoScreen() {
       }
     }))
     setStartTime(time)
-    saveProgress(true)
-    if (player) {
-      player.play()
-    }
-  }
+  } // CHANGED
 
   const handleVideoEnd = (seconds: number) => {
     setProgress((prev) => ({
@@ -270,49 +277,98 @@ export default function VideoScreen() {
       [currentVideo.id]: { ...prev[currentVideo.id], watched: true, timestamp: seconds }
     }))
     saveProgress(true);
-    if (player) {
-      player.play()
-    }
-  }
+  } // CHANGED
 
-  // const player = useVideoPlayer(currentVideo.uri, (p) => {
-  //   p.play()
-  //   p.currentTime = progress[currentVideo.id]?.timestamp || 0
-  // })
   const player = useVideoPlayer(currentVideo.uri, (p) => {
-    p.currentTime = progress[currentVideo.id]?.timestamp || 0;
-    p.timeUpdateEventInterval = 1;
-    p.play();
-  });
+    p.currentTime = progress[currentVideo.id]?.timestamp || 0
+    p.timeUpdateEventInterval = 1
+    p.play()
+  }) // CHANGED
 
   const lastSentRef = useRef(0);
   useEventListener(player, 'timeUpdate', () => {
     const now = Date.now();
-    // 每 10 秒才存一次，避免切全螢幕時大量 fetch
-    if (now - lastSentRef.current >= 10_000) {
-      handleVideoProgress(player.currentTime);  // 只更新 state
-      saveProgress(true);                       // 後台存檔
+
+    if (now - lastSentRef.current >= 10000) {
+      handleVideoProgress(player.currentTime)
+      saveProgress(true)
       lastSentRef.current = now;
     }
-    // 接近片尾就標記 watched
-    if (Math.abs(player.duration - player.currentTime) <= 10) {
-      handleVideoEnd(player.currentTime);
+    if (player.duration > 0 && Math.abs(player.duration - player.currentTime) <= 10) {
+      handleVideoEnd(player.currentTime)
     }
-  });
 
-  // useEventListener(player, 'statusChange', () => {
-  //   handleVideoProgress(player.currentTime)
-  //   if (Math.abs(player.duration - player.currentTime) <= 10) {
-  //     handleVideoEnd(player.currentTime)
-  //   }
-  // })
+    // 保險：既然真的在播，就不該顯示轉圈圈
+    if (player.playing && isBuffering) { // ADDED
+      setIsBuffering(false) // ADDED
+    }
+  })
 
-  // useEventListener(player, 'playingChange', () => {
-  //   handleVideoProgress(player.currentTime)
-  //   if (Math.abs(player.duration - player.currentTime) <= 10) {
-  //     handleVideoEnd(player.currentTime)
-  //   }
-  // })
+  // playingChange：只做 Stall Detector，不動 overlay
+  useEventListener(player, 'playingChange', () => {
+    if (player.playing) {
+      // 啟動偵測（更高頻）
+      lastCTRef.current = Number.isFinite(player.currentTime) ? player.currentTime : 0
+      lastCTWallTimeRef.current = Date.now()
+      if (stallDetectTimerRef.current) clearInterval(stallDetectTimerRef.current)
+      stallDetectTimerRef.current = setInterval(() => { // CHANGED: 100ms
+        // 僅在播放中、非 buffering 才偵測
+        if (!player.playing || isBuffering) return
+        const now = Date.now()
+        const ct = Number.isFinite(player.currentTime) ? player.currentTime : 0
+
+        const progressed = Math.abs(ct - lastCTRef.current) > 0.005 // CHANGED: 更敏感
+        if (progressed) {
+          lastCTRef.current = ct
+          lastCTWallTimeRef.current = now
+          return
+        }
+
+        const stalledFor = now - lastCTWallTimeRef.current
+        const onCooldown = now - stallCooldownRef.current < 800 // CHANGED: 縮短冷卻 0.8s
+        const nearTail = player.duration > 0 && Math.abs(player.duration - ct) <= 0.8 // CHANGED: 收緊
+
+        if (stalledFor > 100 && !nearTail) { // CHANGED: 0.1s 標記 stall likely
+          stallLikelyAtRef.current = now // ADDED
+        }
+
+        if (stalledFor > 250 && !onCooldown && !nearTail) { // CHANGED: 0.25s 就自救
+          try {
+            programmaticPauseAtRef.current = now // ADDED
+            player.pause()
+            setTimeout(() => { try { player.play() } catch { } }, 0)
+            stallCooldownRef.current = now
+            lastCTWallTimeRef.current = now
+          } catch { }
+        }
+      }, 100) // CHANGED: 每 100ms 掃描
+    } else {
+      // 停止偵測
+      if (stallDetectTimerRef.current) {
+        clearInterval(stallDetectTimerRef.current)
+        stallDetectTimerRef.current = null
+      }
+
+      // 二階自救：剛判定過 stall 且不是我們剛 pause 的話，自動 play
+      const now = Date.now()
+      const recentStall = now - stallLikelyAtRef.current <= 2000
+      const ourPauseRecent = now - programmaticPauseAtRef.current <= 800 // CHANGED: 與冷卻一致
+      const nearEnd = player.duration > 0 && Math.abs(player.duration - player.currentTime) <= 0.5
+      if (!nearEnd && recentStall && !ourPauseRecent) { // ADDED
+        try { player.play() } catch { }
+      }
+    }
+  }) // CHANGED
+
+  // overlay 的唯一真相來源：statusChange
+  useEventListener(player, 'statusChange', () => { // CHANGED
+    const s = (player as any).status
+    if (s === 'loading' || s === 'buffering') {
+      setIsBuffering(true)
+    } else if (s === 'ready' || s === 'idle') {
+      setIsBuffering(false)
+    }
+  }) // CHANGED
 
   const videoRef = useRef<VideoView>(null)
 
@@ -336,10 +392,42 @@ export default function VideoScreen() {
 
   const selectVideo = (video: VideoInterface) => {
     handleVideoProgress(player.currentTime)
+    setIsBuffering(true) // 切換時先顯示，等待 status=ready 關掉
+    programmaticPauseAtRef.current = Date.now() // ADDED：這次 pause 是我們自己觸發
+    player.pause()
+
+    if (stallDetectTimerRef.current) { clearInterval(stallDetectTimerRef.current); stallDetectTimerRef.current = null }
+    lastCTRef.current = 0
+    lastCTWallTimeRef.current = Date.now()
+    stallCooldownRef.current = 0
+    stallLikelyAtRef.current = 0
+
     setCurrentVideo(video)
+    setStartTime(Date.now())
   }
 
   const fontSize = Math.max(14, Math.min(18, width * 0.045))
+
+  // 卸載清理（放在任何條件 return 之前，以維持 hooks 順序）
+  useEffect(() => { // ADDED
+    return () => {
+      if (stallDetectTimerRef.current) {
+        clearInterval(stallDetectTimerRef.current)
+        stallDetectTimerRef.current = null
+      }
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView edges={['top', 'left', 'right']} style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={PRIMARY} />
+          <Text style={styles.loadingText}>取得資料中</Text>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    )
+  }
 
   const BottomTabs: React.FC<Props> = ({ role }: Props) => {
     const router = useRouter()
@@ -419,22 +507,23 @@ export default function VideoScreen() {
     )
   }
 
-  if (loading) {
-    return (
-      <SafeAreaProvider>
-        <SafeAreaView edges={['top', 'left', 'right']} style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={PRIMARY} />
-          <Text style={styles.loadingText}>取得資料中</Text>
-        </SafeAreaView>
-      </SafeAreaProvider>
-    )
-  }
-
   return (
     <SafeAreaProvider>
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
         <View style={[styles.videoWrapper, Platform.OS === 'android' && { marginTop: 16 }]}>
-          <VideoView style={styles.video} player={player} ref={videoRef} allowsFullscreen allowsPictureInPicture />
+          <VideoView
+            key={currentVideo.id} // CHANGED
+            style={styles.video}
+            player={player}
+            ref={videoRef}
+            allowsFullscreen
+            allowsPictureInPicture
+          />
+          {isBuffering && (
+            <View style={styles.bufferOverlay}>
+              <ActivityIndicator size="large" color={PRIMARY} />
+            </View>
+          )}
         </View>
         <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollList}>
           {videos.map((item) => {
@@ -463,8 +552,9 @@ export default function VideoScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG, paddingHorizontal: 16 },
-  videoWrapper: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
+  videoWrapper: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#000', position: 'relative' },
   video: { width: '100%', height: '100%' },
+  bufferOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.2)' },
   scrollList: { paddingTop: 6, paddingBottom: 32 },
   itemCard: {
     backgroundColor: SURFACE,
@@ -545,7 +635,7 @@ const modal = StyleSheet.create({
 
 const bottoms = StyleSheet.create({
   bottomSafeview: { backgroundColor: SURFACE },
-  container: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: BORDER, backgroundColor: SURFACE },
+  container: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: BORDER },
   tab: {
     alignItems: 'center',
     justifyContent: 'center'

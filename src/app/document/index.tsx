@@ -25,7 +25,7 @@ const iOS_PDFS: PDFInterface[] = [
   { id: '1', label: '愛-溝通', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf`, duration: 0 },
   { id: '2', label: '資源補帖', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf`, duration: 0 },
   { id: '3', label: '疲憊防護', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-4.pdf`, duration: 0 },
-  { id: '4', label: '照顧心靈', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf`, duration: 0 },
+  { id: '4', label: '照護心靈', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf`, duration: 0 },
   { id: '5', label: '排尿康復', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-1.pdf`, duration: 0 },
   { id: '6', label: '性福滿分', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-2.pdf`, duration: 0 },
   { id: '7', label: '電療筆記', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-1.pdf`, duration: 0 },
@@ -33,17 +33,18 @@ const iOS_PDFS: PDFInterface[] = [
   { id: '9', label: '共好統整', value: `https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf`, duration: 0 }
 ]
 const HOST_PREFIX = 'https://docs.google.com/gview?embedded=true&url='
+const toAndroidGView = (url: string) => `${HOST_PREFIX}${encodeURIComponent(url)}`
 const ANDRIOD_PDFS: PDFInterface[] = [
-  { id: '0', label: '共好學習', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-1.pdf`, duration: 0 },
-  { id: '1', label: '愛-溝通', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf`, duration: 0 },
-  { id: '2', label: '資源補帖', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf`, duration: 0 },
-  { id: '3', label: '疲憊防護', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-4.pdf`, duration: 0 },
-  { id: '4', label: '照顧心靈', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf`, duration: 0 },
-  { id: '5', label: '排尿康復', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-1.pdf`, duration: 0 },
-  { id: '6', label: '性福滿分', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-2.pdf`, duration: 0 },
-  { id: '7', label: '電療筆記', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-1.pdf`, duration: 0 },
-  { id: '8', label: '荷爾蒙站', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-2.pdf`, duration: 0 },
-  { id: '9', label: '共好統整', value: `${HOST_PREFIX}https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf`, duration: 0 }
+  { id: '0', label: '共好學習', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-1.pdf`), duration: 0 },
+  { id: '1', label: '愛-溝通', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-2.pdf`), duration: 0 },
+  { id: '2', label: '資源補帖', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-3.pdf`), duration: 0 },
+  { id: '3', label: '疲憊防護', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-4.pdf`), duration: 0 },
+  { id: '4', label: '照護心靈', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-5.pdf`), duration: 0 },
+  { id: '5', label: '排尿康復', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-1.pdf`), duration: 0 },
+  { id: '6', label: '性福滿分', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-6-2.pdf`), duration: 0 },
+  { id: '7', label: '電療筆記', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-1.pdf`), duration: 0 },
+  { id: '8', label: '荷爾蒙站', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-7-2.pdf`), duration: 0 },
+  { id: '9', label: '共好統整', value: toAndroidGView(`https://allgood-hospital-static-files-bucket.s3.us-east-1.amazonaws.com/healthcare-documents/section-8.pdf`), duration: 0 }
 ]
 
 export default function PDFScreen() {
