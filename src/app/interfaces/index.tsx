@@ -29,6 +29,7 @@ interface PatientProgressionData {
   records: SymptomRecord[]
   pushToken?: string
   birthday?: string
+  is_active: boolean
 }
 
 interface APIPatientProgressionData {
@@ -40,6 +41,7 @@ interface APIPatientProgressionData {
   symptom_records: APISymptomRecord[]
   push_token?: string
   birthday?: string
+  deleted_at?: string
 }
 
 interface SymptomRecord {
@@ -72,14 +74,7 @@ interface PSAData {
 }
 
 export type {
-  PatientProgressionData as PatientProgressionData,
   APIPatientProgressionData as APIPatientProgressionData,
-  APISymptomRecord as APISymptomRecord,
-  SymptomRecord as SymptomRecord,
-  Document as Document,
-  Survey as Survey,
-  Video as Video,
-  ProgressState as ProgressState,
-  VideoInterface as VideoInterface,
-  PSAData as PSAData
+  APISymptomRecord as APISymptomRecord, Document as Document, PatientProgressionData as PatientProgressionData, ProgressState as ProgressState, PSAData as PSAData, Survey as Survey, SymptomRecord as SymptomRecord, Video as Video, VideoInterface as VideoInterface
 }
+

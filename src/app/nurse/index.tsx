@@ -1,7 +1,6 @@
 import AntDesign from '@expo/vector-icons/AntDesign'
-import React, { useEffect, useState } from 'react'
-// import axios from 'axios'
 import { useRouter } from 'expo-router'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import BottomTabs from '../bottomTabs'
@@ -26,6 +25,7 @@ const videosTotalTime = [
   6 * 60 + 52,
   3 * 60 + 52,
 ]
+
 export default function NurseScreen() {
   const [patientData, setPatientData] = useState<PatientProgressionData[]>([])
   const [currentRole, setCurrentRole] = useState<string>('')
@@ -67,10 +67,10 @@ export default function NurseScreen() {
             data: isJsonString(s.survey_data) ? JSON.parse(s.survey_data) : []
           })),
           pushToken: d.push_token ?? undefined,
-          birthday: d.birthday ? toMinguoDate(d.birthday) : '未提供生日'
+          birthday: d.birthday ? toMinguoDate(d.birthday) : '未提供生日',
+          is_active: d.deleted_at ? false : true
         }))
         setPatientData(patients)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
         Alert.alert('錯誤', '無法取得資料')
         router.replace('/login')
@@ -80,31 +80,42 @@ export default function NurseScreen() {
     })()
   }, [])
 
-  // const notifyPatient = async (pid: string, type: string, idx = 0) => {
-  //   let body = ''
-  //   if (type === 'all') body = '提醒您記得觀看影片與文件喔 😊'
-  //   if (type === 'video') body = `提醒您觀看第${idx}部影片 😊`
-  //   if (type === 'document') body = `提醒您閱讀第${idx}篇文件 😊`
-  //   await axios.post('https://app.nativenotify.com/api/indie/notification', {
-  //     subID: `PUSH_ID_${pid}`,
-  //     appId: 28399,
-  //     appToken: 'UWdYG1804clZ7YhxKB1yMd',
-  //     title: '📢 通知',
-  //     message: body,
-  //     pushData: { _page: type }
-  //   })
-  //   Alert.alert('通知已發送')
-  // }
-
   const toggleExpand = (id: number) => {
     setExpandedId(expandedId === String(id) ? null : String(id))
   }
 
   const videoTotalTime = (id: number, sec: number) => {
-    return videosTotalTime[id] <= sec ? `觀看完畢` : timeStamp(sec);
+    return videosTotalTime[id] <= sec ? `觀看完畢` : timeStamp(sec)
   }
 
   const timeStamp = (sec: number) => `${Math.floor(sec / 60)}分${String(sec % 60).padStart(2, '0')}秒`
+
+  const deletePatient = async (pid: number) => {
+    try {
+      const token = await AsyncStorageGetItem('jwt')
+      if (typeof token !== 'string' || !token) {
+        throw new Error()
+      }
+      const res = await fetch('https://allgood.peiren.info/api/user/delete_patient', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ patient_id: pid }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.message)
+      }
+      setPatientData(prev =>
+        prev.map(p => (p.id === pid ? { ...p, is_active: false } : p))
+      )
+      Alert.alert('成功', '病患已刪除')
+    } catch (e) {
+      Alert.alert('錯誤', '刪除失敗')
+    }
+  }
 
   if (loading) {
     return (
@@ -120,7 +131,7 @@ export default function NurseScreen() {
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           <Text style={styles.header}>病人列表</Text>
           {patientData.map((p: PatientProgressionData) => (
-            <Pressable key={p.id} style={styles.card} onPress={() => toggleExpand(p.id)}>
+            <Pressable key={p.id} style={[styles.card, !p.is_active && styles.cardInactive]} onPress={() => toggleExpand(p.id)}>
               <View style={styles.row}>
                 <Text style={styles.name}>{p.name}</Text>
                 <View style={styles.badge}>
@@ -138,9 +149,6 @@ export default function NurseScreen() {
                     <View key={i} style={styles.detailRow}>
                       <Text style={styles.detailLabel}>{v.title}</Text>
                       <Text style={styles.detailTime}>{videoTotalTime(parseInt(v.id), v.duration)}</Text>
-                      {/* <TouchableOpacity style={styles.notifyBtn} onPress={() => notifyPatient(String(p.id), 'video', i + 1)}>
-                        <Text style={styles.notifyText}>通知</Text>
-                      </TouchableOpacity> */}
                     </View>
                   ))}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -152,14 +160,28 @@ export default function NurseScreen() {
                     <View key={i} style={styles.detailRow}>
                       <Text style={styles.detailLabel}>{d.label}</Text>
                       <Text style={styles.detailTime}>{timeStamp(d.duration)}</Text>
-                      {/* <TouchableOpacity style={styles.notifyBtn} onPress={() => notifyPatient(String(p.id), 'document', i + 1)}>
-                        <Text style={styles.notifyText}>通知</Text>
-                      </TouchableOpacity> */}
                     </View>
                   ))}
                   <Pressable style={styles.viewRecords} onPress={() => router.push(`/records/${p.id}`)}>
                     <Text style={styles.viewText}>查看症狀紀錄</Text>
                     <AntDesign name="rightcircle" size={20} color={TEXT} style={{ marginTop: 2.5 }} />
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.deleteBtn,
+                      !p.is_active && styles.deleteBtnDisabled
+                    ]}
+                    onPress={() => deletePatient(p.id)}
+                    disabled={!p.is_active}
+                  >
+                    <Text
+                      style={[
+                        styles.deleteText,
+                        !p.is_active && styles.deleteTextDisabled
+                      ]}
+                    >
+                      {p.is_active ? '刪除病患' : '已刪除'}
+                    </Text>
                   </Pressable>
                 </View>
               )}
@@ -198,6 +220,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3
+  },
+  cardInactive: {
+    opacity: 0.5
   },
   row: {
     flexDirection: 'row',
@@ -271,6 +296,25 @@ const styles = StyleSheet.create({
     color: TEXT,
     marginRight: 6,
     fontWeight: '600'
+  },
+  deleteBtn: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    backgroundColor: '#ef4444',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6
+  },
+  deleteBtnDisabled: {
+    backgroundColor: BORDER
+  },
+  deleteText: {
+    color: CARD_BG,
+    fontSize: 14,
+    fontWeight: '600'
+  },
+  deleteTextDisabled: {
+    color: TEXT
   },
   loading: {
     flex: 1,

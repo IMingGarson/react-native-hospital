@@ -16,8 +16,8 @@ import {
   useWindowDimensions,
   View
 } from 'react-native'
-import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
+import { AsyncStorageGetItem, AsyncStorageSetItem } from '../utils'
 
 const IMAGE_SOURCE = require('../../assets/images/main.jpg')
 
@@ -67,6 +67,10 @@ const LoginScreen: React.FC = (): JSX.Element => {
       if (res.ok) {
         const token = data.access_token
         const resRole = data.role
+        if (data.role === 'P' && data.data.deleted_at !== null) {
+          Alert.alert('登入錯誤', '此帳號已停用，請通知負責人員')
+          return true;
+        }
         if (!token || !['M', 'P'].includes(resRole)) {
           Alert.alert('登入錯誤', '請通知負責人員')
         } else {
